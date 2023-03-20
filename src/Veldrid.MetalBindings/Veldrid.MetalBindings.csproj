@@ -1,5 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <PropertyGroup Label="Nuget">
+    <PackageId>ppy.Veldrid.MetalBindings</PackageId>
+    <Version>0.0.0</Version>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
