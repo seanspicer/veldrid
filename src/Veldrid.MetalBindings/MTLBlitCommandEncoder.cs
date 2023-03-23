@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.InteropServices;
 using static Veldrid.MetalBindings.ObjectiveCRuntime;
 
 namespace Veldrid.MetalBindings
@@ -29,9 +30,9 @@ namespace Veldrid.MetalBindings
             UIntPtr destinationSlice,
             UIntPtr destinationLevel,
             MTLOrigin destinationOrigin)
-            => objc_msgSend(
+        {
+            copyFromBuffer(
                 NativePtr,
-                sel_copyFromBuffer1,
                 sourceBuffer.NativePtr,
                 sourceOffset,
                 sourceBytesPerRow,
@@ -40,7 +41,25 @@ namespace Veldrid.MetalBindings
                 destinationTexture.NativePtr,
                 destinationSlice,
                 destinationLevel,
-                destinationOrigin);
+                destinationOrigin.x,
+                destinationOrigin.y,
+                destinationOrigin.z);
+        }
+
+        [DllImport("@rpath/metal_mono_workaround.framework/metal_mono_workaround")]
+        private static extern void copyFromBuffer(
+            IntPtr encoder,
+            IntPtr sourceBuffer,
+            UIntPtr sourceOffset,
+            UIntPtr sourceBytesPerRow,
+            UIntPtr sourceBytesPerImage,
+            MTLSize sourceSize,
+            IntPtr destinationTexture,
+            UIntPtr destinationSlice,
+            UIntPtr destinationLevel,
+            UIntPtr destinationOriginX,
+            UIntPtr destinationOriginY,
+            UIntPtr destinationOriginZ);
 
         public void copyTextureToBuffer(
             MTLTexture sourceTexture,
