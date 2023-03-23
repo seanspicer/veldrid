@@ -64,7 +64,7 @@ namespace Veldrid.MetalBindings
             }
         }
 
-        [DllImport("@rpath/metal_mono_workaround.framework/metal_mono_workaround")]
+        [DllImport("@rpath/metal_mono_workaround.framework/metal_mono_workaround", EntryPoint = "copyFromBuffer")]
         private static extern void copyFromBuffer_iOS(
             IntPtr encoder,
             IntPtr sourceBuffer,
