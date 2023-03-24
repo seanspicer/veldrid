@@ -99,7 +99,7 @@ namespace Veldrid.D3D11
                     OutputWindow = win32Source.Hwnd,
                     SampleDescription = new SampleDescription(1, 0),
                     SwapEffect = SwapEffect.FlipDiscard,
-                    BufferUsage = Usage.RenderTargetOutput
+                    BufferUsage = Usage.RenderTargetOutput,
                     Flags = _flags
                 };
 
