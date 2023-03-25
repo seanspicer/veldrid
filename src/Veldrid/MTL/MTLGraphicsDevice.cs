@@ -210,6 +210,10 @@ namespace Veldrid.MTL
             }
         }
 
+        private protected override void WaitForNextFrameReadyCore()
+        {
+        }
+
         public override TextureSampleCount GetSampleCountLimit(PixelFormat format, bool depthFormat)
         {
             for (int i = _supportedSampleCounts.Length - 1; i >= 0; i--)
