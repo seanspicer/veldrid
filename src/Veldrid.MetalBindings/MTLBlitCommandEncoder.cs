@@ -29,25 +29,43 @@ namespace Veldrid.MetalBindings
             MTLTexture destinationTexture,
             UIntPtr destinationSlice,
             UIntPtr destinationLevel,
-            MTLOrigin destinationOrigin)
+            MTLOrigin destinationOrigin,
+            bool isMacOS)
         {
-            copyFromBuffer(
-                NativePtr,
-                sourceBuffer.NativePtr,
-                sourceOffset,
-                sourceBytesPerRow,
-                sourceBytesPerImage,
-                sourceSize,
-                destinationTexture.NativePtr,
-                destinationSlice,
-                destinationLevel,
-                destinationOrigin.x,
-                destinationOrigin.y,
-                destinationOrigin.z);
+            if (!isMacOS)
+            {
+                copyFromBuffer_iOS(
+                    NativePtr,
+                    sourceBuffer.NativePtr,
+                    sourceOffset,
+                    sourceBytesPerRow,
+                    sourceBytesPerImage,
+                    sourceSize,
+                    destinationTexture.NativePtr,
+                    destinationSlice,
+                    destinationLevel,
+                    destinationOrigin.x,
+                    destinationOrigin.y,
+                    destinationOrigin.z);
+            }
+            else
+            {
+                objc_msgSend(NativePtr,
+                    sel_copyFromBuffer1,
+                    sourceBuffer.NativePtr,
+                    sourceOffset,
+                    sourceBytesPerRow,
+                    sourceBytesPerImage,
+                    sourceSize,
+                    destinationTexture.NativePtr,
+                    destinationSlice,
+                    destinationLevel,
+                    destinationOrigin);
+            }
         }
 
-        [DllImport("@rpath/metal_mono_workaround.framework/metal_mono_workaround")]
-        private static extern void copyFromBuffer(
+        [DllImport("@rpath/metal_mono_workaround.framework/metal_mono_workaround", EntryPoint = "copyFromBuffer")]
+        private static extern void copyFromBuffer_iOS(
             IntPtr encoder,
             IntPtr sourceBuffer,
             UIntPtr sourceOffset,
