@@ -103,15 +103,13 @@ namespace Veldrid.MTL
 
             SetSyncToVerticalBlank(_syncToVerticalBlank);
 
-            GetNextDrawable();
-
             _framebuffer = new MTLSwapchainFramebuffer(
                 gd,
                 this,
-                width,
-                height,
                 description.DepthFormat,
                 format);
+
+            GetNextDrawable();
         }
 
         public void GetNextDrawable()
@@ -125,6 +123,8 @@ namespace Veldrid.MTL
             {
                 _drawable = _metalLayer.nextDrawable();
                 ObjectiveCRuntime.retain(_drawable.NativePtr);
+
+                _framebuffer.UpdateTextures(_drawable, _metalLayer.drawableSize);
             }
         }
 
@@ -134,7 +134,6 @@ namespace Veldrid.MTL
                 _metalLayer.frame = _uiView.frame;
 
             _metalLayer.drawableSize = new CGSize(width, height);
-            _framebuffer.Resize(width, height);
 
             GetNextDrawable();
         }
