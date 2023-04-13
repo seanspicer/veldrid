@@ -109,10 +109,10 @@ namespace Veldrid.MTL
                 description.DepthFormat,
                 format);
 
-            GetNextDrawable();
+            getNextDrawable();
         }
 
-        public void GetNextDrawable()
+        private bool getNextDrawable()
         {
             if (!_drawable.IsNull)
             {
@@ -122,9 +122,15 @@ namespace Veldrid.MTL
             using (NSAutoreleasePool.Begin())
             {
                 _drawable = _metalLayer.nextDrawable();
-                ObjectiveCRuntime.retain(_drawable.NativePtr);
 
-                _framebuffer.UpdateTextures(_drawable, _metalLayer.drawableSize);
+                if (!_drawable.IsNull)
+                {
+                    ObjectiveCRuntime.retain(_drawable.NativePtr);
+                    _framebuffer.UpdateTextures(_drawable, _metalLayer.drawableSize);
+                    return true;
+                }
+
+                return false;
             }
         }
 
@@ -135,7 +141,15 @@ namespace Veldrid.MTL
 
             _metalLayer.drawableSize = new CGSize(width, height);
 
-            GetNextDrawable();
+            getNextDrawable();
+        }
+
+        public bool EnsureDrawableAvailable() => !_drawable.IsNull || getNextDrawable();
+
+        public void InvalidateDrawable()
+        {
+            ObjectiveCRuntime.release(_drawable.NativePtr);
+            _drawable = default;
         }
 
         private void SetSyncToVerticalBlank(bool value)

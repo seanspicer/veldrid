@@ -308,9 +308,9 @@ namespace Veldrid.MTL
                     submitCB.presentDrawable(currentDrawablePtr);
                     submitCB.commit();
                 }
-            }
 
-            mtlSC.GetNextDrawable();
+                mtlSC.InvalidateDrawable();
+            }
         }
 
         private protected override void UpdateBufferCore(DeviceBuffer buffer, uint bufferOffsetInBytes, IntPtr source, uint sizeInBytes)
