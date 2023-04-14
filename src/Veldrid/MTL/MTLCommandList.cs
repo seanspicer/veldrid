@@ -22,8 +22,8 @@ namespace Veldrid.MTL
         private MTLBuffer _indexBuffer;
         private uint _ibOffset;
         private MTLIndexType _indexType;
+        private MTLPipeline _lastGraphicsPipeline;
         private new MTLPipeline _graphicsPipeline;
-        private bool _graphicsPipelineChanged;
         private new MTLPipeline _computePipeline;
         private bool _computePipelineChanged;
         private MTLViewport[] _viewports = Array.Empty<MTLViewport>();
@@ -174,22 +174,38 @@ namespace Veldrid.MTL
                     FlushScissorRects();
                     _scissorRectsChanged = false;
                 }
-                if (_graphicsPipelineChanged)
-                {
-                    Debug.Assert(_graphicsPipeline != null);
+
+                Debug.Assert(_graphicsPipeline != null);
+
+                if (_graphicsPipeline.RenderPipelineState.NativePtr != _lastGraphicsPipeline?.RenderPipelineState.NativePtr)
                     _rce.setRenderPipelineState(_graphicsPipeline.RenderPipelineState);
+
+                if (_graphicsPipeline.CullMode != _lastGraphicsPipeline?.CullMode)
                     _rce.setCullMode(_graphicsPipeline.CullMode);
+
+                if (_graphicsPipeline.FrontFace != _lastGraphicsPipeline?.FrontFace)
                     _rce.setFrontFacing(_graphicsPipeline.FrontFace);
+
+                if (_graphicsPipeline.FillMode != _lastGraphicsPipeline?.FillMode)
                     _rce.setTriangleFillMode(_graphicsPipeline.FillMode);
-                    RgbaFloat blendColor = _graphicsPipeline.BlendColor;
+
+                RgbaFloat blendColor = _graphicsPipeline.BlendColor;
+                if (blendColor != _lastGraphicsPipeline?.BlendColor)
                     _rce.setBlendColor(blendColor.R, blendColor.G, blendColor.B, blendColor.A);
-                    if (_framebuffer.DepthTarget != null)
-                    {
+
+                if (_framebuffer.DepthTarget != null)
+                {
+                    if (_graphicsPipeline.DepthStencilState.NativePtr != _lastGraphicsPipeline?.DepthStencilState.NativePtr)
                         _rce.setDepthStencilState(_graphicsPipeline.DepthStencilState);
+
+                    if (_graphicsPipeline.DepthClipMode != _lastGraphicsPipeline?.DepthClipMode)
                         _rce.setDepthClipMode(_graphicsPipeline.DepthClipMode);
+
+                    if (_graphicsPipeline.StencilReference != _lastGraphicsPipeline?.StencilReference)
                         _rce.setStencilReferenceValue(_graphicsPipeline.StencilReference);
-                    }
                 }
+
+                _lastGraphicsPipeline = _graphicsPipeline;
 
                 for (uint i = 0; i < _graphicsResourceSetCount; i++)
                 {
@@ -305,8 +321,6 @@ namespace Veldrid.MTL
                 Util.EnsureArrayMinimumSize(ref _vbOffsets, _vertexBufferCount);
                 Util.EnsureArrayMinimumSize(ref _vertexBuffersActive, _vertexBufferCount);
                 Util.ClearArray(_vertexBuffersActive);
-
-                _graphicsPipelineChanged = true;
             }
         }
 
@@ -1055,8 +1069,10 @@ namespace Veldrid.MTL
             _rce.endEncoding();
             ObjectiveCRuntime.release(_rce.NativePtr);
             _rce = default(MTLRenderCommandEncoder);
-            _graphicsPipelineChanged = true;
+
+            _lastGraphicsPipeline = null;
             Util.ClearArray(_graphicsResourceSetsActive);
+
             _viewportsChanged = true;
             _scissorRectsChanged = true;
         }
