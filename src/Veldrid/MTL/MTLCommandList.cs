@@ -227,6 +227,7 @@ namespace Veldrid.MTL
                             _vertexBuffers[i].DeviceBuffer,
                             (UIntPtr)_vbOffsets[i],
                             index);
+                        _vertexBuffersActive[i] = true;
                     }
                 }
                 return true;
@@ -1118,6 +1119,7 @@ namespace Veldrid.MTL
             _boundFragmentTextures.Clear();
             _boundFragmentSamplers.Clear();
             Util.ClearArray(_graphicsResourceSetsActive);
+            Util.ClearArray(_vertexBuffersActive);
 
             _viewportsChanged = true;
             _scissorRectsChanged = true;
