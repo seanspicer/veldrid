@@ -123,17 +123,54 @@ namespace Veldrid.MetalBindings
             MTLTexture destinationTexture,
             UIntPtr destinationSlice,
             UIntPtr destinationLevel,
-            MTLOrigin destinationOrigin)
-            => objc_msgSend(NativePtr, sel_copyFromTexture1,
-                sourceTexture,
-                sourceSlice,
-                sourceLevel,
-                sourceOrigin,
-                sourceSize,
-                destinationTexture,
-                destinationSlice,
-                destinationLevel,
-                destinationOrigin);
+            MTLOrigin destinationOrigin,
+            bool isMacOS)
+        {
+            if (!isMacOS)
+            {
+                copyFromTexture_iOS(
+                    NativePtr,
+                    sourceTexture.NativePtr,
+                    sourceSlice,
+                    sourceLevel,
+                    sourceOrigin,
+                    sourceSize,
+                    destinationTexture.NativePtr,
+                    destinationSlice,
+                    destinationLevel,
+                    destinationOrigin.x,
+                    destinationOrigin.y,
+                    destinationOrigin.z);
+            }
+            else
+            {
+                objc_msgSend(NativePtr, sel_copyFromTexture1,
+                    sourceTexture,
+                    sourceSlice,
+                    sourceLevel,
+                    sourceOrigin,
+                    sourceSize,
+                    destinationTexture,
+                    destinationSlice,
+                    destinationLevel,
+                    destinationOrigin);
+            }
+        }
+
+        [DllImport("@rpath/metal_mono_workaround.framework/metal_mono_workaround", EntryPoint = "copyFromTexture")]
+        private static extern void copyFromTexture_iOS(
+            IntPtr encoder,
+            IntPtr sourceTexture,
+            UIntPtr sourceSlice,
+            UIntPtr sourceLevel,
+            MTLOrigin sourceOrigin,
+            MTLSize sourceSize,
+            IntPtr destinationTexture,
+            UIntPtr destinationSlice,
+            UIntPtr destinationLevel,
+            UIntPtr destinationOriginX,
+            UIntPtr destinationOriginY,
+            UIntPtr destinationOriginZ);
 
         private static readonly Selector sel_copyFromBuffer0 = "copyFromBuffer:sourceOffset:toBuffer:destinationOffset:size:";
         private static readonly Selector sel_copyFromBuffer1 = "copyFromBuffer:sourceOffset:sourceBytesPerRow:sourceBytesPerImage:sourceSize:toTexture:destinationSlice:destinationLevel:destinationOrigin:";

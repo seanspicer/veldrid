@@ -25,3 +25,27 @@ void copyFromBuffer(id<MTLBlitCommandEncoder> encoder,
            destinationLevel:destinationLevel
           destinationOrigin:MTLOriginMake(destinationOriginX, destinationOriginY, destinationOriginZ)];
 }
+
+void copyFromTexture(id<MTLBlitCommandEncoder> encoder,
+                     id<MTLTexture> sourceTexture,
+                     NSUInteger sourceSlice,
+                     NSUInteger sourceLevel,
+                     MTLOrigin sourceOrigin,
+                     MTLSize sourceSize,
+                     id<MTLTexture> destinationTexture,
+                     NSUInteger destinationSlice,
+                     NSUInteger destinationLevel,
+                     NSUInteger destinationOriginX,
+                     NSUInteger destinationOriginY,
+                     NSUInteger destinationOriginZ)
+{
+    [encoder copyFromTexture:sourceTexture
+                 sourceSlice:sourceSlice
+                 sourceLevel:sourceLevel
+                sourceOrigin:sourceOrigin
+                  sourceSize:sourceSize
+                   toTexture:destinationTexture
+            destinationSlice:destinationSlice
+            destinationLevel:destinationLevel
+           destinationOrigin:MTLOriginMake(destinationOriginX, destinationOriginY, destinationOriginZ)];
+}

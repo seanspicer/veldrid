@@ -671,7 +671,8 @@ namespace Veldrid.MTL
                         dstMTLTexture.DeviceTexture,
                         (UIntPtr)(dstBaseArrayLayer + layer),
                         (UIntPtr)dstMipLevel,
-                        new MTLOrigin(dstX, dstY, dstZ));
+                        new MTLOrigin(dstX, dstY, dstZ),
+                        _gd.MetalFeatures.IsMacOS);
                 }
             }
         }
