@@ -43,6 +43,9 @@ namespace Veldrid.MTL
         private readonly IntPtr _completionBlockDescriptor;
         private readonly IntPtr _completionBlockLiteral;
 
+        private readonly IMTLDisplayLink _displayLink;
+        private readonly AutoResetEvent _nextFrameReadyEvent;
+
         public MTLDevice Device => _device;
         public MTLCommandQueue CommandQueue => _commandQueue;
         public MTLFeatureSupport MetalFeatures { get; }
@@ -95,11 +98,18 @@ namespace Veldrid.MTL
                 _libSystem = new NativeLibrary("libSystem.dylib");
                 _concreteGlobalBlock = _libSystem.LoadFunction("_NSConcreteGlobalBlock");
                 _completionHandler = OnCommandBufferCompleted;
+                _displayLink = new MTLCVDisplayLink();
             }
             else
             {
                 _concreteGlobalBlock = IntPtr.Zero;
                 _completionHandler = OnCommandBufferCompleted_Static;
+            }
+
+            if (_displayLink != null)
+            {
+                _displayLink.Callback += OnDisplayLinkCallback;
+                _nextFrameReadyEvent = new AutoResetEvent(true);
             }
 
             _completionHandlerFuncPtr = Marshal.GetFunctionPointerForDelegate<MTLCommandBufferHandler>(_completionHandler);
@@ -218,6 +228,12 @@ namespace Veldrid.MTL
 
         private protected override void WaitForNextFrameReadyCore()
         {
+            _nextFrameReadyEvent.WaitOne(TimeSpan.FromSeconds(1)); // Should never time out.
+        }
+
+        private void OnDisplayLinkCallback()
+        {
+            _nextFrameReadyEvent.Set();
         }
 
         public override TextureSampleCount GetSampleCountLimit(PixelFormat format, bool depthFormat)
@@ -453,6 +469,8 @@ namespace Veldrid.MTL
             _libSystem?.Dispose();
             Marshal.FreeHGlobal(_completionBlockDescriptor);
             Marshal.FreeHGlobal(_completionBlockLiteral);
+
+            _displayLink?.Dispose();
         }
 
         public override bool GetMetalInfo(out BackendInfoMetal info)
