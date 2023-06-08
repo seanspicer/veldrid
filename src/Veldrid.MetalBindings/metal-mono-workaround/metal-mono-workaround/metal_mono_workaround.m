@@ -1,21 +1,6 @@
 @import Metal;
-@import QuartzCore;
 
 #import "metal_mono_workaround.h"
-
-@implementation CADisplayLinkProxy
-
-- (nonnull instancetype)initWithCallback:(nonnull CADisplayLinkCallback)callback {
-    _displayLink = [CADisplayLink displayLinkWithTarget:self selector: @selector(onDisplayLinkCallback:)];
-    _callback = callback;
-    return self;
-}
-
-- (void)onDisplayLinkCallback:(id)displayLink {
-    _callback((void*)&self);
-}
-
-@end
 
 void copyFromBuffer(id<MTLBlitCommandEncoder> encoder,
                     id<MTLBuffer> sourceBuffer,
@@ -63,9 +48,4 @@ void copyFromTexture(id<MTLBlitCommandEncoder> encoder,
             destinationSlice:destinationSlice
             destinationLevel:destinationLevel
            destinationOrigin:MTLOriginMake(destinationOriginX, destinationOriginY, destinationOriginZ)];
-}
-
-CADisplayLinkProxy* createDisplayLinkProxy(CADisplayLinkCallback callback)
-{
-    return [[CADisplayLinkProxy alloc] initWithCallback:callback];
 }

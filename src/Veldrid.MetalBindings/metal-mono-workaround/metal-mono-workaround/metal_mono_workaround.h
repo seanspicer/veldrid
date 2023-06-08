@@ -1,13 +1,4 @@
 #import <Foundation/Foundation.h>
-#import <QuartzCore/QuartzCore.h>
-
-typedef void (*CADisplayLinkCallback)(void* proxy);
-
-@interface CADisplayLinkProxy : NSObject
-@property (nonatomic, readonly, nonnull) CADisplayLinkCallback callback;
-@property (nonatomic, strong, nonnull) CADisplayLink* displayLink;
-- (nonnull instancetype)initWithCallback:(nonnull CADisplayLinkCallback)callback;
-@end
 
 void copyFromBuffer(id<MTLBlitCommandEncoder> encoder,
                     id<MTLBuffer> sourceBuffer,
@@ -34,5 +25,3 @@ void copyFromTexture(id<MTLBlitCommandEncoder> encoder,
                      NSUInteger destinationOriginX,
                      NSUInteger destinationOriginY,
                      NSUInteger destinationOriginZ);
-
-CADisplayLinkProxy* createDisplayLinkProxy(CADisplayLinkCallback callback);

@@ -104,7 +104,6 @@ namespace Veldrid.MTL
             {
                 _concreteGlobalBlock = IntPtr.Zero;
                 _completionHandler = OnCommandBufferCompleted_Static;
-                _displayLink = new MTLCADisplayLink();
             }
 
             if (_displayLink != null)
