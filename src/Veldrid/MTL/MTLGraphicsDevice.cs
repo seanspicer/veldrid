@@ -228,7 +228,7 @@ namespace Veldrid.MTL
 
         private protected override void WaitForNextFrameReadyCore()
         {
-            _nextFrameReadyEvent.WaitOne(TimeSpan.FromSeconds(1)); // Should never time out.
+            _nextFrameReadyEvent?.WaitOne(TimeSpan.FromSeconds(1)); // Should never time out.
         }
 
         private void OnDisplayLinkCallback()
