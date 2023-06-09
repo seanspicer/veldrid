@@ -39,7 +39,7 @@ namespace Veldrid
 
         /// <summary>
         /// Gets a value identifying whether texture coordinates begin in the top left corner of a Texture.
-        /// If true, (0, 0) refers to the top-left texel of a Texture. If false, (0, 0) refers to the bottom-left 
+        /// If true, (0, 0) refers to the top-left texel of a Texture. If false, (0, 0) refers to the bottom-left
         /// texel of a Texture. This property is useful for determining how the output of a Framebuffer should be sampled.
         /// </summary>
         public abstract bool IsUvOriginTopLeft { get; }
@@ -975,7 +975,7 @@ namespace Veldrid
         /// <param name="y"></param> y coordinate of the display's origin
         /// <param name="w"></param> display's width
         /// <param name="h"></param> display's height
-        public virtual void DisplayLinkUpdateActiveMonitor(int x, int y, int w, int h)
+        public virtual void UpdateActiveMonitor(int x, int y, int w, int h)
         {
             return;
         }

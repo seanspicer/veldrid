@@ -57,7 +57,7 @@ namespace Veldrid.MTL
         {
         }
 
-        public override void DisplayLinkUpdateActiveMonitor(int x, int y, int w, int h)
+        public override void UpdateActiveMonitor(int x, int y, int w, int h)
         {
             if (_displayLink != null)
             {
