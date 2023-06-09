@@ -9,6 +9,7 @@ namespace Veldrid.MetalBindings
     public struct CVDisplayLink
     {
         private const string CVFramework = "/System/Library/Frameworks/CoreVideo.framework/CoreVideo";
+        private const string CGFramework = "/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics";
 
         public readonly IntPtr NativePtr;
         public static implicit operator IntPtr(CVDisplayLink c) => c.NativePtr;
@@ -31,6 +32,31 @@ namespace Veldrid.MetalBindings
             CVDisplayLinkStart(this);
         }
 
+        public void UpdateActiveMonitor(int x, int y, int w, int h)
+        {
+            uint[] displays = new uint[1];
+            uint displayCount = 0;
+            CGRect rect = new CGRect(new CGPoint(x, y), new CGSize(w, h));
+            int err = CGGetDisplaysWithRect(rect, 1, displays, ref displayCount);
+            if (err != 0)
+            {
+                return;
+            }
+
+            if (displayCount > 0)
+            {
+                CVDisplayLinkSetCurrentCGDisplay(this, displays[0]);
+            }
+        }
+
+        [DllImport(CGFramework)]
+        private static extern int CGGetDisplaysWithRect(CGRect rect, int maxDisplays, uint[] displays, ref uint displayCount);
+
+        public double GetActualOutputVideoRefreshPeriod()
+        {
+            return CVDisplayLinkGetActualOutputVideoRefreshPeriod(this);
+        }
+
         public void Stop()
         {
             CVDisplayLinkStop(this);
@@ -45,7 +71,13 @@ namespace Veldrid.MetalBindings
         private static extern int CVDisplayLinkCreateWithActiveCGDisplays(out CVDisplayLink displayLink);
 
         [DllImport(CVFramework)]
+        private static extern double CVDisplayLinkGetActualOutputVideoRefreshPeriod(CVDisplayLink displayLink);
+
+        [DllImport(CVFramework)]
         private static extern int CVDisplayLinkSetOutputCallback(CVDisplayLink displayLink, CVDisplayLinkOutputCallbackDelegate callback, IntPtr userData);
+
+        [DllImport(CVFramework)]
+        private static extern int CVDisplayLinkSetCurrentCGDisplay(CVDisplayLink displayLink, uint displayId);
 
         [DllImport(CVFramework)]
         private static extern int CVDisplayLinkStart(CVDisplayLink displayLink);

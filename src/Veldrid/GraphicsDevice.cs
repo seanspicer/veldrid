@@ -967,6 +967,27 @@ namespace Veldrid
 
             return info;
         }
+
+        /// <summary>
+        /// Updates CVDisplayLink active display using the display's origin and size.
+        /// </summary>
+        /// <param name="x"></param> x coordinate of the display's origin
+        /// <param name="y"></param> y coordinate of the display's origin
+        /// <param name="w"></param> display's width
+        /// <param name="h"></param> display's height
+        public virtual void DisplayLinkUpdateActiveMonitor(int x, int y, int w, int h)
+        {
+            return;
+        }
+
+        /// <summary>
+        /// Calls CVDisplayLinkGetActualOutputVideoRefreshPeriod
+        /// </summary>
+        /// <returns>The actual refresh period of the currently selected CVDisplayLink display in seconds</returns>
+        public virtual double DisplayLinkGetActualOutputVideoRefreshPeriod()
+        {
+            return -1.0f;
+        }
 #endif
 
         /// <summary>

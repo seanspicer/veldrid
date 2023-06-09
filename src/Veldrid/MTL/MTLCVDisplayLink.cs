@@ -21,6 +21,16 @@ namespace Veldrid.MTL
             _displayLink.Start();
         }
 
+        public void UpdateActiveMonitor(int x, int y, int w, int h)
+        {
+            _displayLink.UpdateActiveMonitor(x, y, w, h);
+        }
+
+        public double GetActualOutputVideoRefreshPeriod()
+        {
+            return _displayLink.GetActualOutputVideoRefreshPeriod();
+        }
+
         private int OnCallback(CVDisplayLink displaylink, CVTimeStamp* innow, CVTimeStamp* inoutputtime, long flagsin, long flagsout, IntPtr userdata)
         {
             Callback?.Invoke();
