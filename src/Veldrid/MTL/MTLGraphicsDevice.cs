@@ -57,7 +57,7 @@ namespace Veldrid.MTL
         {
         }
 
-        public override void UpdateActiveMonitor(int x, int y, int w, int h)
+        public override void UpdateActiveDisplay(int x, int y, int w, int h)
         {
             if (_displayLink != null)
             {
@@ -65,7 +65,7 @@ namespace Veldrid.MTL
             }
         }
 
-        public override double DisplayLinkGetActualOutputVideoRefreshPeriod()
+        public override double GetActualRefreshPeriod()
         {
             if (_displayLink != null)
             {
