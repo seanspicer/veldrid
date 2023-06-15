@@ -977,13 +977,12 @@ namespace Veldrid
         /// <param name="h"></param> display's height
         public virtual void UpdateActiveDisplay(int x, int y, int w, int h)
         {
-            return;
         }
 
         /// <summary>
-        /// If running on MTL, retrieves the refresh period of the currently active display.
+        /// Retrieves the refresh period of the currently active display, or -1 if not supported.
         /// </summary>
-        /// <returns>The actual refresh period of the currently selected CVDisplayLink display in seconds</returns>
+        /// <returns>The actual refresh period (seconds per frame) of the currently selected display in seconds.</returns>
         public virtual double GetActualRefreshPeriod()
         {
             return -1.0f;

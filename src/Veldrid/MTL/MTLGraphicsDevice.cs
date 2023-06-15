@@ -72,6 +72,7 @@ namespace Veldrid.MTL
             {
                 return _displayLink.GetActualOutputVideoRefreshPeriod();
             }
+
             return -1.0f;
         }
 
