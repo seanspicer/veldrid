@@ -45,6 +45,7 @@ namespace Veldrid.MTL
 
         private readonly IMTLDisplayLink _displayLink;
         private readonly AutoResetEvent _nextFrameReadyEvent;
+        private readonly AutoResetEvent _frameEndedEvent = new AutoResetEvent(true);
 
         public MTLDevice Device => _device;
         public MTLCommandQueue CommandQueue => _commandQueue;
@@ -251,6 +252,7 @@ namespace Veldrid.MTL
         private void OnDisplayLinkCallback()
         {
             _nextFrameReadyEvent.Set();
+            _frameEndedEvent.WaitOne();
         }
 
         public override TextureSampleCount GetSampleCountLimit(PixelFormat format, bool depthFormat)
@@ -352,6 +354,8 @@ namespace Veldrid.MTL
 
                 mtlSC.InvalidateDrawable();
             }
+
+            _frameEndedEvent.Set();
         }
 
         private protected override void UpdateBufferCore(DeviceBuffer buffer, uint bufferOffsetInBytes, IntPtr source, uint sizeInBytes)

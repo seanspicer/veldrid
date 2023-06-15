@@ -11,9 +11,12 @@ namespace Veldrid.MetalBindings
             NativePtr = ptr;
         }
 
-        public CGFloat nativeScale => CGFloat_objc_msgSend(NativePtr, "nativeScale");
+        public CGFloat nativeScale => CGFloat_objc_msgSend(NativePtr, sel_nativeScale);
 
         public static UIScreen mainScreen
-            => objc_msgSend<UIScreen>(new ObjCClass(nameof(UIScreen)), "mainScreen");
+            => objc_msgSend<UIScreen>(new ObjCClass(nameof(UIScreen)), sel_mainScreen);
+
+        private static readonly Selector sel_nativeScale = "nativeScale";
+        private static readonly Selector sel_mainScreen = "mainScreen";
     }
 }
