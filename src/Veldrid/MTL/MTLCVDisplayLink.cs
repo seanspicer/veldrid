@@ -21,7 +21,7 @@ namespace Veldrid.MTL
             _displayLink.Start();
         }
 
-        public void UpdateActiveMonitor(int x, int y, int w, int h)
+        public void UpdateActiveDisplay(int x, int y, int w, int h)
         {
             _displayLink.UpdateActiveMonitor(x, y, w, h);
         }

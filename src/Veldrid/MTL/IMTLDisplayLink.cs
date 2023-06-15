@@ -9,6 +9,6 @@ namespace Veldrid.MTL
     {
         event Action Callback;
         public double GetActualOutputVideoRefreshPeriod();
-        public void UpdateActiveMonitor(int x, int y, int w, int h);
+        public void UpdateActiveDisplay(int x, int y, int w, int h);
     }
 }

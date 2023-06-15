@@ -62,7 +62,8 @@ namespace Veldrid.MTL
         {
             if (_displayLink != null)
             {
-                _displayLink.UpdateActiveMonitor(x, y, w, h);
+                _frameEndedEvent.Set();
+                _displayLink.UpdateActiveDisplay(x, y, w, h);
             }
         }
 
