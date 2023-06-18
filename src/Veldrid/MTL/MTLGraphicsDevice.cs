@@ -45,7 +45,7 @@ namespace Veldrid.MTL
 
         private readonly IMTLDisplayLink _displayLink;
         private readonly AutoResetEvent _nextFrameReadyEvent;
-        private readonly AutoResetEvent _frameEndedEvent = new AutoResetEvent(true);
+        private readonly EventWaitHandle _frameEndedEvent = new EventWaitHandle(true, EventResetMode.ManualReset);
 
         public MTLDevice Device => _device;
         public MTLCommandQueue CommandQueue => _commandQueue;
@@ -56,6 +56,24 @@ namespace Veldrid.MTL
         public MTLGraphicsDevice(GraphicsDeviceOptions options, SwapchainDescription? swapchainDesc)
             : this(options, swapchainDesc, new MetalDeviceOptions())
         {
+        }
+
+        public override void UpdateActiveDisplay(int x, int y, int w, int h)
+        {
+            if (_displayLink != null)
+            {
+                _displayLink.UpdateActiveDisplay(x, y, w, h);
+            }
+        }
+
+        public override double GetActualRefreshPeriod()
+        {
+            if (_displayLink != null)
+            {
+                return _displayLink.GetActualOutputVideoRefreshPeriod();
+            }
+
+            return -1.0f;
         }
 
         public MTLGraphicsDevice(
@@ -229,6 +247,7 @@ namespace Veldrid.MTL
 
         private protected override void WaitForNextFrameReadyCore()
         {
+            _frameEndedEvent.Reset();
             _nextFrameReadyEvent?.WaitOne(TimeSpan.FromSeconds(1)); // Should never time out.
         }
 

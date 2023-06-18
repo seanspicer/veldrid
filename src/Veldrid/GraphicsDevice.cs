@@ -39,7 +39,7 @@ namespace Veldrid
 
         /// <summary>
         /// Gets a value identifying whether texture coordinates begin in the top left corner of a Texture.
-        /// If true, (0, 0) refers to the top-left texel of a Texture. If false, (0, 0) refers to the bottom-left 
+        /// If true, (0, 0) refers to the top-left texel of a Texture. If false, (0, 0) refers to the bottom-left
         /// texel of a Texture. This property is useful for determining how the output of a Framebuffer should be sampled.
         /// </summary>
         public abstract bool IsUvOriginTopLeft { get; }
@@ -966,6 +966,26 @@ namespace Veldrid
             }
 
             return info;
+        }
+
+        /// <summary>
+        /// Updates the active display using the display's origin and size.
+        /// </summary>
+        /// <param name="x"></param> x coordinate of the display's origin
+        /// <param name="y"></param> y coordinate of the display's origin
+        /// <param name="w"></param> display's width
+        /// <param name="h"></param> display's height
+        public virtual void UpdateActiveDisplay(int x, int y, int w, int h)
+        {
+        }
+
+        /// <summary>
+        /// Retrieves the refresh period of the currently active display, or -1 if not supported.
+        /// </summary>
+        /// <returns>The actual refresh period (seconds per frame) of the currently selected display in seconds.</returns>
+        public virtual double GetActualRefreshPeriod()
+        {
+            return -1.0f;
         }
 #endif
 
