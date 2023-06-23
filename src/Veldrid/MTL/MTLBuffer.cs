@@ -47,7 +47,8 @@ namespace Veldrid.MTL
 
             unsafe
             {
-                Pointer = DeviceBuffer.contents();
+                if (sharedMemory)
+                    Pointer = DeviceBuffer.contents();
             }
         }
 
