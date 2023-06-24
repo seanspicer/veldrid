@@ -366,7 +366,9 @@ namespace Veldrid.MTL
             void* destPtr = mtlBuffer.Pointer;
             byte* destOffsetPtr = (byte*)destPtr + bufferOffsetInBytes;
 
-            Debug.Assert(destPtr != null, "Attempting to write to a MTLBuffer that is inaccessible from a CPU.");
+            if (destPtr == null)
+                throw new VeldridException("Attempting to write to a MTLBuffer that is inaccessible from a CPU.");
+
             Unsafe.CopyBlock(destOffsetPtr, source.ToPointer(), sizeInBytes);
         }
 
