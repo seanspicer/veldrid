@@ -249,6 +249,14 @@ namespace Veldrid.MTL
         {
             _frameEndedEvent.Reset();
             _nextFrameReadyEvent?.WaitOne(TimeSpan.FromSeconds(1)); // Should never time out.
+
+            // in iOS, if one frame takes longer than the next V-Sync request, the next frame will be processed immediately rather than being delayed to a subsequent V-Sync request,
+            // therefore we will request the next drawable here as a method of waiting until we're ready to draw the next frame.
+            if (!MetalFeatures.IsMacOS)
+            {
+                MTLSwapchainFramebuffer mtlSwapchainFramebuffer = Util.AssertSubtype<Framebuffer, MTLSwapchainFramebuffer>(_mainSwapchain.Framebuffer);
+                mtlSwapchainFramebuffer.EnsureDrawableAvailable();
+            }
         }
 
         private void OnDisplayLinkCallback()
