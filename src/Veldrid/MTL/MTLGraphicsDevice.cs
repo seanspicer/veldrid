@@ -531,12 +531,12 @@ namespace Veldrid.MTL
         }
 
         public override bool WaitForFence(Fence fence, ulong nanosecondTimeout) =>
-            throw new NotImplementedException("Fences are now handled by GPU, this requires establishing a notification listener for the underlying event and waiting for a signal.");
+            // this can be supported by setting up a MTLSharedEventListener and waiting for a signal by the GPU.
+            throw new NotImplementedException("Waiting for fences on Metal is not implemented yet.");
 
-        public override bool WaitForFences(Fence[] fences, bool waitAll, ulong nanosecondTimeout)
-        {
-            throw new NotImplementedException("Fences are now handled by GPU, this requires establishing a notification listener for the underlying event and waiting for a signal.");
-        }
+        public override bool WaitForFences(Fence[] fences, bool waitAll, ulong nanosecondTimeout) =>
+            // this can be supported by setting up a MTLSharedEventListener and waiting for a signal by the GPU.
+            throw new NotImplementedException("Waiting for fences on Metal is not implemented yet.");
 
         public override void ResetFence(Fence fence)
         {
