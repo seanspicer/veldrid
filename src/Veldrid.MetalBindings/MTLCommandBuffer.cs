@@ -32,6 +32,9 @@ namespace Veldrid.MetalBindings
         public void addCompletedHandler(IntPtr block)
             => objc_msgSend(NativePtr, sel_addCompletedHandler, block);
 
+        public void encodeSignalEvent(IntPtr @event, ulong value)
+            => objc_msgSend(NativePtr, sel_encodeSignalEvent, @event, value);
+
         public MTLCommandBufferStatus status => (MTLCommandBufferStatus)uint_objc_msgSend(NativePtr, sel_status);
 
         private static readonly Selector sel_renderCommandEncoderWithDescriptor = "renderCommandEncoderWithDescriptor:";
@@ -41,6 +44,7 @@ namespace Veldrid.MetalBindings
         private static readonly Selector sel_computeCommandEncoder = "computeCommandEncoder";
         private static readonly Selector sel_waitUntilCompleted = "waitUntilCompleted";
         private static readonly Selector sel_addCompletedHandler = "addCompletedHandler:";
+        private static readonly Selector sel_encodeSignalEvent = "encodeSignalEvent:value:";
         private static readonly Selector sel_status = "status";
     }
 }
