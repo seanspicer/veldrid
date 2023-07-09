@@ -234,10 +234,12 @@ namespace Veldrid.MTL
         private protected override void SubmitCommandsCore(CommandList commandList, Fence fence)
         {
             MTLCommandList mtlCL = Util.AssertSubtype<CommandList, MTLCommandList>(commandList);
-            MTLFence mtlFence = Util.AssertSubtype<Fence, MTLFence>(fence);
 
-            if (mtlFence != null)
+            if (fence != null)
+            {
+                MTLFence mtlFence = Util.AssertSubtype<Fence, MTLFence>(fence);
                 mtlCL.CommandBuffer.encodeSignalEvent(mtlFence.SharedEvent.NativePtr, MTLFence.SIGNALED);
+            }
 
             mtlCL.CommandBuffer.addCompletedHandler(_completionBlockLiteral);
 
