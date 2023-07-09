@@ -13,6 +13,7 @@ namespace Veldrid.MTL
     internal unsafe class MTLGraphicsDevice : GraphicsDevice
     {
         private static readonly Lazy<bool> s_isSupported = new Lazy<bool>(GetIsSupported);
+
         private static readonly Dictionary<IntPtr, MTLGraphicsDevice> s_aotRegisteredBlocks
             = new Dictionary<IntPtr, MTLGraphicsDevice>();
 
@@ -157,10 +158,12 @@ namespace Veldrid.MTL
 
             TextureSampleCount[] allSampleCounts = (TextureSampleCount[])Enum.GetValues(typeof(TextureSampleCount));
             _supportedSampleCounts = new bool[allSampleCounts.Length];
+
             for (int i = 0; i < allSampleCounts.Length; i++)
             {
                 TextureSampleCount count = allSampleCounts[i];
                 uint uintValue = FormatHelpers.GetSampleCountUInt32(count);
+
                 if (_device.supportsTextureSampleCount((UIntPtr)uintValue))
                 {
                     _supportedSampleCounts[i] = true;
@@ -231,15 +234,15 @@ namespace Veldrid.MTL
         private protected override void SubmitCommandsCore(CommandList commandList, Fence fence)
         {
             MTLCommandList mtlCL = Util.AssertSubtype<CommandList, MTLCommandList>(commandList);
+            MTLFence mtlFence = Util.AssertSubtype<Fence, MTLFence>(fence);
+
+            if (mtlFence != null)
+                mtlCL.CommandBuffer.encodeSignalEvent(mtlFence.SharedEvent.NativePtr, MTLFence.SIGNALED);
 
             mtlCL.CommandBuffer.addCompletedHandler(_completionBlockLiteral);
+
             lock (_submittedCommandsLock)
             {
-                if (fence != null)
-                {
-                    mtlCL.SetCompletionFence(Util.AssertSubtype<Fence, MTLFence>(fence));
-                }
-
                 _submittedCLs.Add(mtlCL.CommandBuffer, mtlCL);
                 _latestSubmittedCB = mtlCL.Commit();
             }
@@ -305,6 +308,7 @@ namespace Veldrid.MTL
             uint maxWidth;
             uint maxHeight;
             uint maxDepth;
+
             if (type == TextureType.Texture1D)
             {
                 maxWidth = MTLFormats.GetMaxTexture1DWidth(maxFeatureSet);
@@ -314,6 +318,7 @@ namespace Veldrid.MTL
             else if (type == TextureType.Texture2D)
             {
                 uint maxDimensions;
+
                 if ((usage & TextureUsage.Cubemap) != 0)
                 {
                     maxDimensions = MTLFormats.GetMaxTextureCubeDimensions(maxFeatureSet);
@@ -353,6 +358,7 @@ namespace Veldrid.MTL
         {
             MTLSwapchain mtlSC = Util.AssertSubtype<Swapchain, MTLSwapchain>(swapchain);
             IntPtr currentDrawablePtr = mtlSC.CurrentDrawable.NativePtr;
+
             if (currentDrawablePtr != IntPtr.Zero)
             {
                 using (NSAutoreleasePool.Begin())
@@ -394,6 +400,7 @@ namespace Veldrid.MTL
             uint arrayLayer)
         {
             MTLTexture mtlTex = Util.AssertSubtype<Texture, MTLTexture>(texture);
+
             if (mtlTex.StagingBuffer.IsNull)
             {
                 Texture stagingTex = ResourceFactory.CreateTexture(new TextureDescription(
@@ -432,6 +439,7 @@ namespace Veldrid.MTL
         private protected override void WaitForIdleCore()
         {
             MTLCommandBuffer lastCB = default(MTLCommandBuffer);
+
             lock (_submittedCommandsLock)
             {
                 lastCB = _latestSubmittedCB;
@@ -487,11 +495,13 @@ namespace Veldrid.MTL
         protected override void PlatformDispose()
         {
             WaitForIdle();
+
             if (!_unalignedBufferCopyPipeline.IsNull)
             {
                 _unalignedBufferCopyShader.Dispose();
                 ObjectiveCRuntime.release(_unalignedBufferCopyPipeline.NativePtr);
             }
+
             _mainSwapchain?.Dispose();
             ObjectiveCRuntime.release(_commandQueue.NativePtr);
             ObjectiveCRuntime.release(_device.NativePtr);
@@ -518,69 +528,12 @@ namespace Veldrid.MTL
         {
         }
 
-        public override bool WaitForFence(Fence fence, ulong nanosecondTimeout)
-        {
-            return Util.AssertSubtype<Fence, MTLFence>(fence).Wait(nanosecondTimeout);
-        }
+        public override bool WaitForFence(Fence fence, ulong nanosecondTimeout) =>
+            throw new NotImplementedException("Fences are now handled by GPU, this requires establishing a notification listener for the underlying event and waiting for a signal.");
 
         public override bool WaitForFences(Fence[] fences, bool waitAll, ulong nanosecondTimeout)
         {
-            int msTimeout;
-            if (nanosecondTimeout == ulong.MaxValue)
-            {
-                msTimeout = -1;
-            }
-            else
-            {
-                msTimeout = (int)Math.Min(nanosecondTimeout / 1_000_000, int.MaxValue);
-            }
-
-            ManualResetEvent[] events = GetResetEventArray(fences.Length);
-            for (int i = 0; i < fences.Length; i++)
-            {
-                events[i] = Util.AssertSubtype<Fence, MTLFence>(fences[i]).ResetEvent;
-            }
-            bool result;
-            if (waitAll)
-            {
-                result = WaitHandle.WaitAll(events, msTimeout);
-            }
-            else
-            {
-                int index = WaitHandle.WaitAny(events, msTimeout);
-                result = index != WaitHandle.WaitTimeout;
-            }
-
-            ReturnResetEventArray(events);
-
-            return result;
-        }
-
-        private ManualResetEvent[] GetResetEventArray(int length)
-        {
-            lock (_resetEventsLock)
-            {
-                for (int i = _resetEvents.Count - 1; i > 0; i--)
-                {
-                    ManualResetEvent[] array = _resetEvents[i];
-                    if (array.Length == length)
-                    {
-                        _resetEvents.RemoveAt(i);
-                        return array;
-                    }
-                }
-            }
-
-            ManualResetEvent[] newArray = new ManualResetEvent[length];
-            return newArray;
-        }
-
-        private void ReturnResetEventArray(ManualResetEvent[] array)
-        {
-            lock (_resetEventsLock)
-            {
-                _resetEvents.Add(array);
-            }
+            throw new NotImplementedException("Fences are now handled by GPU, this requires establishing a notification listener for the underlying event and waiting for a signal.");
         }
 
         public override void ResetFence(Fence fence)
@@ -593,6 +546,7 @@ namespace Veldrid.MTL
         private static bool GetIsSupported()
         {
             bool result = false;
+
             try
             {
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
@@ -606,6 +560,7 @@ namespace Veldrid.MTL
                     else
                     {
                         MTLDevice defaultDevice = MTLDevice.MTLCreateSystemDefaultDevice();
+
                         if (defaultDevice.NativePtr != IntPtr.Zero)
                         {
                             result = true;
@@ -629,7 +584,7 @@ namespace Veldrid.MTL
                 if (_unalignedBufferCopyPipeline.IsNull)
                 {
                     MTLComputePipelineDescriptor descriptor = MTLUtil.AllocInit<MTLComputePipelineDescriptor>(
-                       nameof(MTLComputePipelineDescriptor));
+                        nameof(MTLComputePipelineDescriptor));
                     MTLPipelineBufferDescriptor buffer0 = descriptor.buffers[0];
                     buffer0.mutability = MTLMutability.Mutable;
                     MTLPipelineBufferDescriptor buffer1 = descriptor.buffers[1];
@@ -637,9 +592,11 @@ namespace Veldrid.MTL
 
                     Debug.Assert(_unalignedBufferCopyShader == null);
                     string name = MetalFeatures.IsMacOS ? UnalignedBufferCopyPipelineMacOSName : UnalignedBufferCopyPipelineiOSName;
+
                     using (Stream resourceStream = typeof(MTLGraphicsDevice).Assembly.GetManifestResourceStream(name))
                     {
                         byte[] data = new byte[resourceStream.Length];
+
                         using (MemoryStream ms = new MemoryStream(data))
                         {
                             resourceStream.CopyTo(ms);
@@ -663,6 +620,8 @@ namespace Veldrid.MTL
 
     internal sealed class MonoPInvokeCallbackAttribute : Attribute
     {
-        public MonoPInvokeCallbackAttribute(Type t) { }
+        public MonoPInvokeCallbackAttribute(Type t)
+        {
+        }
     }
 }

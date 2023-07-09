@@ -77,7 +77,7 @@ namespace Veldrid.MTL
 
         public override Fence CreateFence(bool signaled)
         {
-            return new MTLFence(signaled);
+            return new MTLFence(signaled, _gd);
         }
 
         public override Swapchain CreateSwapchain(ref SwapchainDescription description)
