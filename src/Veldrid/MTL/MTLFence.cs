@@ -13,8 +13,6 @@ namespace Veldrid.MTL
         public MTLFence(bool signaled, MTLGraphicsDevice gd)
         {
             _event = gd.Device.newSharedEvent();
-
-            // _event.signaledValue = signaled ? SIGNALED : NOT_SIGNALED;
         }
 
         public override string Name { get; set; }
