@@ -25,6 +25,13 @@ namespace Veldrid.MTL
         private readonly bool[] _supportedSampleCounts;
         private BackendInfoMetal _metalInfo;
 
+        private readonly object _submittedCommandsLock = new object();
+        private readonly Dictionary<MTLCommandBuffer, MTLCommandList> _submittedCLs = new Dictionary<MTLCommandBuffer, MTLCommandList>();
+        private MTLCommandBuffer _latestSubmittedCB;
+
+        private readonly object _resetEventsLock = new object();
+        private readonly List<ManualResetEvent[]> _resetEvents = new List<ManualResetEvent[]>();
+
         private const string UnalignedBufferCopyPipelineMacOSName = "MTL_UnalignedBufferCopy_macOS";
         private const string UnalignedBufferCopyPipelineiOSName = "MTL_UnalignedBufferCopy_iOS";
         private readonly object _unalignedBufferCopyPipelineLock = new object();
@@ -194,7 +201,22 @@ namespace Veldrid.MTL
 
         public override GraphicsDeviceFeatures Features { get; }
 
-        private void OnCommandBufferCompleted(IntPtr block, MTLCommandBuffer cb) => ObjectiveCRuntime.release(cb.NativePtr);
+        private void OnCommandBufferCompleted(IntPtr block, MTLCommandBuffer cb)
+        {
+            lock (_submittedCommandsLock)
+            {
+                MTLCommandList cl = _submittedCLs[cb];
+                _submittedCLs.Remove(cb);
+                cl.OnCompleted(cb);
+
+                if (_latestSubmittedCB.NativePtr == cb.NativePtr)
+                {
+                    _latestSubmittedCB = default(MTLCommandBuffer);
+                }
+            }
+
+            ObjectiveCRuntime.release(cb.NativePtr);
+        }
 
         // Xamarin AOT requires native callbacks be static.
         [MonoPInvokeCallback(typeof(MTLCommandBufferHandler))]
@@ -220,7 +242,12 @@ namespace Veldrid.MTL
             }
 
             mtlCL.CommandBuffer.addCompletedHandler(_completionBlockLiteral);
-            mtlCL.Commit();
+
+            lock (_submittedCommandsLock)
+            {
+                _submittedCLs.Add(mtlCL.CommandBuffer, mtlCL);
+                _latestSubmittedCB = mtlCL.Commit();
+            }
         }
 
         private protected override void WaitForNextFrameReadyCore()
@@ -413,8 +440,20 @@ namespace Veldrid.MTL
 
         private protected override void WaitForIdleCore()
         {
-            // todo: this may not work as it's not guaranteed that _latestSubmittedCB hasn't already been released yet.
-            throw new NotSupportedException("WaitForIdle is not supported on Metal currently. Use a fence and spin on the signal (because WaitForFence is also unsupported).");
+            MTLCommandBuffer lastCB = default(MTLCommandBuffer);
+
+            lock (_submittedCommandsLock)
+            {
+                lastCB = _latestSubmittedCB;
+                ObjectiveCRuntime.retain(lastCB.NativePtr);
+            }
+
+            if (lastCB.NativePtr != IntPtr.Zero && lastCB.status != MTLCommandBufferStatus.Completed)
+            {
+                lastCB.waitUntilCompleted();
+            }
+
+            ObjectiveCRuntime.release(lastCB.NativePtr);
         }
 
         protected override MappedResource MapCore(MappableResource resource, MapMode mode, uint subresource)
