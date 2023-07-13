@@ -1,35 +1,39 @@
-using Veldrid.MetalBindings;
+using System;
+using System.Threading;
 
 namespace Veldrid.MTL
 {
     internal class MTLFence : Fence
     {
-        public const ulong NOT_SIGNALED = 0;
-        public const ulong SIGNALED = 1;
-
-        private MTLSharedEvent _event;
+        private readonly ManualResetEvent _mre;
         private bool _disposed;
 
-        public MTLFence(bool signaled, MTLGraphicsDevice gd)
+        public MTLFence(bool signaled)
         {
-            _event = gd.Device.newSharedEvent();
+            _mre = new ManualResetEvent(signaled);
         }
 
         public override string Name { get; set; }
+        public ManualResetEvent ResetEvent => _mre;
 
-        public override void Reset() => _event.signaledValue = NOT_SIGNALED;
-        public MTLSharedEvent SharedEvent => _event;
-
-        public override bool Signaled => _event.signaledValue == SIGNALED;
+        public void Set() => _mre.Set();
+        public override void Reset() => _mre.Reset();
+        public override bool Signaled => _mre.WaitOne(0);
         public override bool IsDisposed => _disposed;
 
         public override void Dispose()
         {
             if (!_disposed)
             {
-                ObjectiveCRuntime.release(_event.NativePtr);
+                _mre.Dispose();
                 _disposed = true;
             }
+        }
+
+        internal bool Wait(ulong nanosecondTimeout)
+        {
+            ulong timeout = Math.Min(int.MaxValue, nanosecondTimeout / 1_000_000);
+            return _mre.WaitOne((int)timeout);
         }
     }
 }

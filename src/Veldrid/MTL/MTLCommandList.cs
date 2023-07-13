@@ -46,6 +46,7 @@ namespace Veldrid.MTL
         private readonly List<MTLBuffer> _availableStagingBuffers = new List<MTLBuffer>();
         private readonly Dictionary<MTLCommandBuffer, List<MTLBuffer>> _submittedStagingBuffers = new Dictionary<MTLCommandBuffer, List<MTLBuffer>>();
         private readonly object _submittedCommandsLock = new object();
+        private MTLFence _completionFence;
 
         public MTLCommandBuffer CommandBuffer => _cb;
 
@@ -407,8 +408,17 @@ namespace Veldrid.MTL
             return Util.AssertSubtype<DeviceBuffer, MTLBuffer>(staging);
         }
 
+        public void SetCompletionFence(MTLFence fence)
+        {
+            Debug.Assert(_completionFence == null);
+            _completionFence = fence;
+        }
+
         public void OnCompleted(MTLCommandBuffer cb)
         {
+            _completionFence?.Set();
+            _completionFence = null;
+
             lock (_submittedCommandsLock)
             {
                 if (_submittedStagingBuffers.TryGetValue(cb, out List<MTLBuffer> bufferList))
