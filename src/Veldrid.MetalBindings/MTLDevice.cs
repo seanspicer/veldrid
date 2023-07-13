@@ -116,9 +116,6 @@ namespace Veldrid.MetalBindings
         public MTLDepthStencilState newDepthStencilStateWithDescriptor(MTLDepthStencilDescriptor descriptor)
             => objc_msgSend<MTLDepthStencilState>(NativePtr, sel_newDepthStencilStateWithDescriptor, descriptor.NativePtr);
 
-        public MTLSharedEvent newSharedEvent()
-            => objc_msgSend<MTLSharedEvent>(NativePtr, sel_newSharedEvent);
-
         public Bool8 supportsTextureSampleCount(UIntPtr sampleCount)
             => bool8_objc_msgSend(NativePtr, sel_supportsTextureSampleCount, sampleCount);
 
@@ -146,7 +143,6 @@ namespace Veldrid.MetalBindings
         private static readonly Selector sel_newTextureWithDescriptor = "newTextureWithDescriptor:";
         private static readonly Selector sel_newSamplerStateWithDescriptor = "newSamplerStateWithDescriptor:";
         private static readonly Selector sel_newDepthStencilStateWithDescriptor = "newDepthStencilStateWithDescriptor:";
-        private static readonly Selector sel_newSharedEvent = "newSharedEvent";
         private static readonly Selector sel_supportsTextureSampleCount = "supportsTextureSampleCount:";
         private static readonly Selector sel_supportsFeatureSet = "supportsFeatureSet:";
         private static readonly Selector sel_isDepth24Stencil8PixelFormatSupported = "isDepth24Stencil8PixelFormatSupported";
