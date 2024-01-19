@@ -39,8 +39,9 @@ namespace Veldrid.MTL
         private uint _vertexBufferCount;
         private uint _nonVertexBufferCount;
         private MTLBuffer[] _vertexBuffers;
-        private uint[] _vbOffsets;
         private bool[] _vertexBuffersActive;
+        private uint[] _vbOffsets;
+        private bool[] _vbOffsetsActive;
         private bool _disposed;
 
         private readonly List<MTLBuffer> _availableStagingBuffers = new List<MTLBuffer>();
@@ -225,7 +226,22 @@ namespace Veldrid.MTL
                             _vertexBuffers[i].DeviceBuffer,
                             (UIntPtr)_vbOffsets[i],
                             index);
+
                         _vertexBuffersActive[i] = true;
+                        _vbOffsetsActive[i] = true;
+                    }
+
+                    if (!_vbOffsetsActive[i])
+                    {
+                        UIntPtr index = (UIntPtr)(_graphicsPipeline.ResourceBindingModel == ResourceBindingModel.Improved
+                            ? _nonVertexBufferCount + i
+                            : i);
+
+                        _rce.setVertexBufferOffset(
+                            (UIntPtr)_vbOffsets[i],
+                            index);
+
+                        _vbOffsetsActive[i] = true;
                     }
                 }
                 return true;
@@ -331,7 +347,9 @@ namespace Veldrid.MTL
                 Util.EnsureArrayMinimumSize(ref _vertexBuffers, _vertexBufferCount);
                 Util.EnsureArrayMinimumSize(ref _vbOffsets, _vertexBufferCount);
                 Util.EnsureArrayMinimumSize(ref _vertexBuffersActive, _vertexBufferCount);
+                Util.EnsureArrayMinimumSize(ref _vbOffsetsActive, _vertexBufferCount);
                 Util.ClearArray(_vertexBuffersActive);
+                Util.ClearArray(_vbOffsetsActive);
             }
         }
 
@@ -938,10 +956,14 @@ namespace Veldrid.MTL
                         ? slot + baseBuffer
                         : slot + _vertexBufferCount + baseBuffer);
 
-                    if (!_boundVertexBuffers.TryGetValue(index, out var boundBuffer) || !range.Equals(boundBuffer))
+                    if (!_boundVertexBuffers.TryGetValue(index, out var boundBuffer))
                     {
                         _rce.setVertexBuffer(mtlBuffer.DeviceBuffer, (UIntPtr)range.Offset, index);
                         _boundVertexBuffers[index] = range;
+                    }
+                    else if (!range.Equals(boundBuffer))
+                    {
+                        _rce.setVertexBufferOffset((UIntPtr)range.Offset, index);
                     }
                 }
 
@@ -949,10 +971,14 @@ namespace Veldrid.MTL
                 {
                     UIntPtr index = (UIntPtr)(slot + baseBuffer);
 
-                    if (!_boundFragmentBuffers.TryGetValue(index, out var boundBuffer) || !range.Equals(boundBuffer))
+                    if (!_boundFragmentBuffers.TryGetValue(index, out var boundBuffer))
                     {
                         _rce.setFragmentBuffer(mtlBuffer.DeviceBuffer, (UIntPtr)range.Offset, (UIntPtr)(slot + baseBuffer));
                         _boundFragmentBuffers[index] = range;
+                    }
+                    else if (!range.Equals(boundBuffer))
+                    {
+                        _rce.setFragmentBufferOffset((UIntPtr)range.Offset, (UIntPtr)(slot + baseBuffer));
                     }
                 }
             }
@@ -1132,6 +1158,7 @@ namespace Veldrid.MTL
             _boundFragmentSamplers.Clear();
             Util.ClearArray(_graphicsResourceSetsActive);
             Util.ClearArray(_vertexBuffersActive);
+            Util.ClearArray(_vbOffsetsActive);
 
             Util.ClearArray(_activeScissorRects);
 
@@ -1218,12 +1245,19 @@ namespace Veldrid.MTL
             Util.EnsureArrayMinimumSize(ref _vertexBuffers, index + 1);
             Util.EnsureArrayMinimumSize(ref _vbOffsets, index + 1);
             Util.EnsureArrayMinimumSize(ref _vertexBuffersActive, index + 1);
-            if (_vertexBuffers[index] != buffer || _vbOffsets[index] != offset)
+            Util.EnsureArrayMinimumSize(ref _vbOffsetsActive, index + 1);
+
+            if (_vertexBuffers[index] != buffer)
             {
                 MTLBuffer mtlBuffer = Util.AssertSubtype<DeviceBuffer, MTLBuffer>(buffer);
                 _vertexBuffers[index] = mtlBuffer;
-                _vbOffsets[index] = offset;
                 _vertexBuffersActive[index] = false;
+            }
+
+            if (_vbOffsets[index] != offset)
+            {
+                _vbOffsets[index] = offset;
+                _vbOffsetsActive[index] = false;
             }
         }
 
