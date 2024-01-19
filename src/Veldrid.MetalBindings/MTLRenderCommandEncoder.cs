@@ -20,9 +20,19 @@ namespace Veldrid.MetalBindings
                 offset,
                 index);
 
+        public void setVertexBufferOffset( UIntPtr offset, UIntPtr index)
+            => objc_msgSend(NativePtr, sel_setVertexBufferOffset,
+                offset,
+                index);
+
         public void setFragmentBuffer(MTLBuffer buffer, UIntPtr offset, UIntPtr index)
             => objc_msgSend(NativePtr, sel_setFragmentBuffer,
                 buffer.NativePtr,
+                offset,
+                index);
+
+        public void setFragmentBufferOffset(UIntPtr offset, UIntPtr index)
+            => objc_msgSend(NativePtr, sel_setFragmentBufferOffset,
                 offset,
                 index);
 
@@ -142,7 +152,9 @@ namespace Veldrid.MetalBindings
 
         private static readonly Selector sel_setRenderPipelineState = "setRenderPipelineState:";
         private static readonly Selector sel_setVertexBuffer = "setVertexBuffer:offset:atIndex:";
+        private static readonly Selector sel_setVertexBufferOffset = "setVertexBufferOffset:atIndex:";
         private static readonly Selector sel_setFragmentBuffer = "setFragmentBuffer:offset:atIndex:";
+        private static readonly Selector sel_setFragmentBufferOffset = "setFragmentBufferOffset:atIndex:";
         private static readonly Selector sel_setVertexTexture = "setVertexTexture:atIndex:";
         private static readonly Selector sel_setFragmentTexture = "setFragmentTexture:atIndex:";
         private static readonly Selector sel_setVertexSamplerState = "setVertexSamplerState:atIndex:";
