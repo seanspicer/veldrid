@@ -956,7 +956,7 @@ namespace Veldrid.MTL
                         ? slot + baseBuffer
                         : slot + _vertexBufferCount + baseBuffer);
 
-                    if (!_boundVertexBuffers.TryGetValue(index, out var boundBuffer))
+                    if (!_boundVertexBuffers.TryGetValue(index, out var boundBuffer) || boundBuffer.Buffer != range.Buffer)
                     {
                         _rce.setVertexBuffer(mtlBuffer.DeviceBuffer, (UIntPtr)range.Offset, index);
                         _boundVertexBuffers[index] = range;
@@ -964,6 +964,7 @@ namespace Veldrid.MTL
                     else if (!range.Equals(boundBuffer))
                     {
                         _rce.setVertexBufferOffset((UIntPtr)range.Offset, index);
+                        _boundVertexBuffers[index] = range;
                     }
                 }
 
@@ -971,7 +972,7 @@ namespace Veldrid.MTL
                 {
                     UIntPtr index = (UIntPtr)(slot + baseBuffer);
 
-                    if (!_boundFragmentBuffers.TryGetValue(index, out var boundBuffer))
+                    if (!_boundFragmentBuffers.TryGetValue(index, out var boundBuffer) || boundBuffer.Buffer != range.Buffer)
                     {
                         _rce.setFragmentBuffer(mtlBuffer.DeviceBuffer, (UIntPtr)range.Offset, (UIntPtr)(slot + baseBuffer));
                         _boundFragmentBuffers[index] = range;
@@ -979,6 +980,7 @@ namespace Veldrid.MTL
                     else if (!range.Equals(boundBuffer))
                     {
                         _rce.setFragmentBufferOffset((UIntPtr)range.Offset, (UIntPtr)(slot + baseBuffer));
+                        _boundFragmentBuffers[index] = range;
                     }
                 }
             }
