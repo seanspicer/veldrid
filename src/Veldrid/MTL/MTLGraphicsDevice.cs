@@ -237,7 +237,7 @@ namespace Veldrid.MTL
             {
                 if (fence != null)
                 {
-                    mtlCL.SetCompletionFence(Util.AssertSubtype<Fence, MTLFence>(fence));
+                    mtlCL.SetCompletionFence(mtlCL.CommandBuffer, Util.AssertSubtype<Fence, MTLFence>(fence));
                 }
 
                 _submittedCLs.Add(mtlCL.CommandBuffer, mtlCL);
