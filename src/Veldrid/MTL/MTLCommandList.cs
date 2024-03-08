@@ -430,7 +430,7 @@ namespace Veldrid.MTL
         {
             lock (_submittedCommandsLock)
             {
-                Debug.Assert(_completionFences.ContainsKey(cb));
+                Debug.Assert(!_completionFences.ContainsKey(cb));
                 _completionFences[cb] = fence;
             }
         }
