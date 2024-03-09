@@ -44,7 +44,7 @@ namespace Veldrid.MTL
         private readonly IntPtr _completionBlockLiteral;
 
         private readonly IMTLDisplayLink _displayLink;
-        private readonly AutoResetEvent _nextFrameReadyEvent = new AutoResetEvent(true);
+        private readonly AutoResetEvent _nextFrameReadyEvent;
         private readonly EventWaitHandle _frameEndedEvent = new EventWaitHandle(true, EventResetMode.ManualReset);
 
         public MTLDevice Device => _device;
@@ -126,7 +126,10 @@ namespace Veldrid.MTL
             }
 
             if (_displayLink != null)
+            {
+                _nextFrameReadyEvent = new AutoResetEvent(true);
                 _displayLink.Callback += OnDisplayLinkCallback;
+            }
 
             _completionHandlerFuncPtr = Marshal.GetFunctionPointerForDelegate<MTLCommandBufferHandler>(_completionHandler);
             _completionBlockDescriptor = Marshal.AllocHGlobal(Unsafe.SizeOf<BlockDescriptor>());
