@@ -127,8 +127,8 @@ namespace Veldrid.MTL
 
             if (_displayLink != null)
             {
-                _displayLink.Callback += OnDisplayLinkCallback;
                 _nextFrameReadyEvent = new AutoResetEvent(true);
+                _displayLink.Callback += OnDisplayLinkCallback;
             }
 
             _completionHandlerFuncPtr = Marshal.GetFunctionPointerForDelegate<MTLCommandBufferHandler>(_completionHandler);
