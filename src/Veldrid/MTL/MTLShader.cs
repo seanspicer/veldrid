@@ -4,21 +4,21 @@ using Veldrid.MetalBindings;
 
 namespace Veldrid.MTL
 {
-    internal class MTLShader : Shader
+    internal class MtlShader : Shader
     {
         public bool HasFunctionConstants { get; }
-        public override bool IsDisposed => _disposed;
+        public override bool IsDisposed => disposed;
 
         public MTLLibrary Library { get; }
         public MTLFunction Function { get; }
         public override string Name { get; set; }
-        private readonly MTLGraphicsDevice _device;
-        private bool _disposed;
+        private readonly MtlGraphicsDevice device;
+        private bool disposed;
 
-        public unsafe MTLShader(ref ShaderDescription description, MTLGraphicsDevice gd)
+        public unsafe MtlShader(ref ShaderDescription description, MtlGraphicsDevice gd)
             : base(description.Stage, description.EntryPoint)
         {
-            _device = gd;
+            device = gd;
 
             if (description.ShaderBytes.Length > 4
                 && description.ShaderBytes[0] == 0x4d
@@ -69,9 +69,9 @@ namespace Veldrid.MTL
 
         public override void Dispose()
         {
-            if (!_disposed)
+            if (!disposed)
             {
-                _disposed = true;
+                disposed = true;
                 ObjectiveCRuntime.release(Function.NativePtr);
                 ObjectiveCRuntime.release(Library.NativePtr);
             }

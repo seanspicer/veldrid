@@ -15,28 +15,28 @@ namespace Veldrid
         /// <summary>
         ///     Gets a pointer to the ID3D11Device controlled by the GraphicsDevice.
         /// </summary>
-        public IntPtr Device => _gd.Device.NativePointer;
+        public IntPtr Device => gd.Device.NativePointer;
 
         /// <summary>
         ///     Gets a pointer to the IAdapter used to create the GraphicsDevice.
         /// </summary>
-        public IntPtr Adapter => _gd.Adapter.NativePointer;
+        public IntPtr Adapter => gd.Adapter.NativePointer;
 
         /// <summary>
         ///     Returns the feature level of the D3D11 device.
         /// </summary>
-        public FeatureLevel FeatureLevel => _gd.Device.FeatureLevel;
+        public FeatureLevel FeatureLevel => gd.Device.FeatureLevel;
 
         /// <summary>
         ///     Gets the PCI ID of the hardware device.
         /// </summary>
-        public int DeviceId => _gd.DeviceId;
+        public int DeviceId => gd.DeviceId;
 
-        private readonly D3D11GraphicsDevice _gd;
+        private readonly D3D11GraphicsDevice gd;
 
         internal BackendInfoD3D11(D3D11GraphicsDevice gd)
         {
-            _gd = gd;
+            this.gd = gd;
         }
 
         /// <summary>

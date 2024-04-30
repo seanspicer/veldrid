@@ -16,13 +16,13 @@ namespace Veldrid
                     return 1;
 
                 case VertexElementFormat.Float2:
-                case VertexElementFormat.Byte2_Norm:
+                case VertexElementFormat.Byte2Norm:
                 case VertexElementFormat.Byte2:
-                case VertexElementFormat.SByte2_Norm:
+                case VertexElementFormat.SByte2Norm:
                 case VertexElementFormat.SByte2:
-                case VertexElementFormat.UShort2_Norm:
+                case VertexElementFormat.UShort2Norm:
                 case VertexElementFormat.UShort2:
-                case VertexElementFormat.Short2_Norm:
+                case VertexElementFormat.Short2Norm:
                 case VertexElementFormat.Short2:
                 case VertexElementFormat.UInt2:
                 case VertexElementFormat.Int2:
@@ -35,13 +35,13 @@ namespace Veldrid
                     return 3;
 
                 case VertexElementFormat.Float4:
-                case VertexElementFormat.Byte4_Norm:
+                case VertexElementFormat.Byte4Norm:
                 case VertexElementFormat.Byte4:
-                case VertexElementFormat.SByte4_Norm:
+                case VertexElementFormat.SByte4Norm:
                 case VertexElementFormat.SByte4:
-                case VertexElementFormat.UShort4_Norm:
+                case VertexElementFormat.UShort4Norm:
                 case VertexElementFormat.UShort4:
-                case VertexElementFormat.Short4_Norm:
+                case VertexElementFormat.Short4Norm:
                 case VertexElementFormat.Short4:
                 case VertexElementFormat.UInt4:
                 case VertexElementFormat.Int4:
@@ -57,25 +57,25 @@ namespace Veldrid
         {
             switch (format)
             {
-                case PixelFormat.BC1_Rgb_UNorm:
-                case PixelFormat.BC1_Rgb_UNorm_SRgb:
-                case PixelFormat.BC1_Rgba_UNorm:
-                case PixelFormat.BC1_Rgba_UNorm_SRgb:
-                case PixelFormat.BC4_UNorm:
-                case PixelFormat.BC4_SNorm:
-                case PixelFormat.ETC2_R8_G8_B8_UNorm:
-                case PixelFormat.ETC2_R8_G8_B8_A1_UNorm:
+                case PixelFormat.Bc1RgbUNorm:
+                case PixelFormat.Bc1RgbUNormSRgb:
+                case PixelFormat.Bc1RgbaUNorm:
+                case PixelFormat.Bc1RgbaUNormSRgb:
+                case PixelFormat.Bc4UNorm:
+                case PixelFormat.Bc4SNorm:
+                case PixelFormat.Etc2R8G8B8UNorm:
+                case PixelFormat.Etc2R8G8B8A1UNorm:
                     return 8;
 
-                case PixelFormat.BC2_UNorm:
-                case PixelFormat.BC2_UNorm_SRgb:
-                case PixelFormat.BC3_UNorm:
-                case PixelFormat.BC3_UNorm_SRgb:
-                case PixelFormat.BC5_UNorm:
-                case PixelFormat.BC5_SNorm:
-                case PixelFormat.BC7_UNorm:
-                case PixelFormat.BC7_UNorm_SRgb:
-                case PixelFormat.ETC2_R8_G8_B8_A8_UNorm:
+                case PixelFormat.Bc2UNorm:
+                case PixelFormat.Bc2UNormSRgb:
+                case PixelFormat.Bc3UNorm:
+                case PixelFormat.Bc3UNormSRgb:
+                case PixelFormat.Bc5UNorm:
+                case PixelFormat.Bc5SNorm:
+                case PixelFormat.Bc7UNorm:
+                case PixelFormat.Bc7UNormSRgb:
+                case PixelFormat.Etc2R8G8B8A8UNorm:
                     return 16;
 
                 default:
@@ -112,59 +112,59 @@ namespace Veldrid
 
         internal static bool IsStencilFormat(PixelFormat format)
         {
-            return format == PixelFormat.D24_UNorm_S8_UInt || format == PixelFormat.D32_Float_S8_UInt;
+            return format == PixelFormat.D24UNormS8UInt || format == PixelFormat.D32FloatS8UInt;
         }
 
         internal static bool IsDepthStencilFormat(PixelFormat format)
         {
-            return format == PixelFormat.D32_Float_S8_UInt
-                   || format == PixelFormat.D24_UNorm_S8_UInt
-                   || format == PixelFormat.R16_UNorm
-                   || format == PixelFormat.R32_Float;
+            return format == PixelFormat.D32FloatS8UInt
+                   || format == PixelFormat.D24UNormS8UInt
+                   || format == PixelFormat.R16UNorm
+                   || format == PixelFormat.R32Float;
         }
 
         internal static bool IsCompressedFormat(PixelFormat format)
         {
-            return format == PixelFormat.BC1_Rgb_UNorm
-                   || format == PixelFormat.BC1_Rgb_UNorm_SRgb
-                   || format == PixelFormat.BC1_Rgba_UNorm
-                   || format == PixelFormat.BC1_Rgba_UNorm_SRgb
-                   || format == PixelFormat.BC2_UNorm
-                   || format == PixelFormat.BC2_UNorm_SRgb
-                   || format == PixelFormat.BC3_UNorm
-                   || format == PixelFormat.BC3_UNorm_SRgb
-                   || format == PixelFormat.BC4_UNorm
-                   || format == PixelFormat.BC4_SNorm
-                   || format == PixelFormat.BC5_UNorm
-                   || format == PixelFormat.BC5_SNorm
-                   || format == PixelFormat.BC7_UNorm
-                   || format == PixelFormat.BC7_UNorm_SRgb
-                   || format == PixelFormat.ETC2_R8_G8_B8_UNorm
-                   || format == PixelFormat.ETC2_R8_G8_B8_A1_UNorm
-                   || format == PixelFormat.ETC2_R8_G8_B8_A8_UNorm;
+            return format == PixelFormat.Bc1RgbUNorm
+                   || format == PixelFormat.Bc1RgbUNormSRgb
+                   || format == PixelFormat.Bc1RgbaUNorm
+                   || format == PixelFormat.Bc1RgbaUNormSRgb
+                   || format == PixelFormat.Bc2UNorm
+                   || format == PixelFormat.Bc2UNormSRgb
+                   || format == PixelFormat.Bc3UNorm
+                   || format == PixelFormat.Bc3UNormSRgb
+                   || format == PixelFormat.Bc4UNorm
+                   || format == PixelFormat.Bc4SNorm
+                   || format == PixelFormat.Bc5UNorm
+                   || format == PixelFormat.Bc5SNorm
+                   || format == PixelFormat.Bc7UNorm
+                   || format == PixelFormat.Bc7UNormSRgb
+                   || format == PixelFormat.Etc2R8G8B8UNorm
+                   || format == PixelFormat.Etc2R8G8B8A1UNorm
+                   || format == PixelFormat.Etc2R8G8B8A8UNorm;
         }
 
         internal static uint GetRowPitch(uint width, PixelFormat format)
         {
             switch (format)
             {
-                case PixelFormat.BC1_Rgb_UNorm:
-                case PixelFormat.BC1_Rgb_UNorm_SRgb:
-                case PixelFormat.BC1_Rgba_UNorm:
-                case PixelFormat.BC1_Rgba_UNorm_SRgb:
-                case PixelFormat.BC2_UNorm:
-                case PixelFormat.BC2_UNorm_SRgb:
-                case PixelFormat.BC3_UNorm:
-                case PixelFormat.BC3_UNorm_SRgb:
-                case PixelFormat.BC4_UNorm:
-                case PixelFormat.BC4_SNorm:
-                case PixelFormat.BC5_UNorm:
-                case PixelFormat.BC5_SNorm:
-                case PixelFormat.BC7_UNorm:
-                case PixelFormat.BC7_UNorm_SRgb:
-                case PixelFormat.ETC2_R8_G8_B8_UNorm:
-                case PixelFormat.ETC2_R8_G8_B8_A1_UNorm:
-                case PixelFormat.ETC2_R8_G8_B8_A8_UNorm:
+                case PixelFormat.Bc1RgbUNorm:
+                case PixelFormat.Bc1RgbUNormSRgb:
+                case PixelFormat.Bc1RgbaUNorm:
+                case PixelFormat.Bc1RgbaUNormSRgb:
+                case PixelFormat.Bc2UNorm:
+                case PixelFormat.Bc2UNormSRgb:
+                case PixelFormat.Bc3UNorm:
+                case PixelFormat.Bc3UNormSRgb:
+                case PixelFormat.Bc4UNorm:
+                case PixelFormat.Bc4SNorm:
+                case PixelFormat.Bc5UNorm:
+                case PixelFormat.Bc5SNorm:
+                case PixelFormat.Bc7UNorm:
+                case PixelFormat.Bc7UNormSRgb:
+                case PixelFormat.Etc2R8G8B8UNorm:
+                case PixelFormat.Etc2R8G8B8A1UNorm:
+                case PixelFormat.Etc2R8G8B8A8UNorm:
                     uint blocksPerRow = (width + 3) / 4;
                     uint blockSizeInBytes = GetBlockSizeInBytes(format);
                     return blocksPerRow * blockSizeInBytes;
@@ -177,7 +177,7 @@ namespace Veldrid
         internal static bool IsFormatViewCompatible(PixelFormat viewFormat, PixelFormat realFormat)
         {
             if (IsCompressedFormat(realFormat))
-                return IsSrgbCounterpart(viewFormat, realFormat);
+                return isSrgbCounterpart(viewFormat, realFormat);
             return GetViewFamilyFormat(viewFormat) == GetViewFamilyFormat(realFormat);
         }
 
@@ -185,23 +185,23 @@ namespace Veldrid
         {
             switch (format)
             {
-                case PixelFormat.BC1_Rgb_UNorm:
-                case PixelFormat.BC1_Rgb_UNorm_SRgb:
-                case PixelFormat.BC1_Rgba_UNorm:
-                case PixelFormat.BC1_Rgba_UNorm_SRgb:
-                case PixelFormat.BC2_UNorm:
-                case PixelFormat.BC2_UNorm_SRgb:
-                case PixelFormat.BC3_UNorm:
-                case PixelFormat.BC3_UNorm_SRgb:
-                case PixelFormat.BC4_UNorm:
-                case PixelFormat.BC4_SNorm:
-                case PixelFormat.BC5_UNorm:
-                case PixelFormat.BC5_SNorm:
-                case PixelFormat.BC7_UNorm:
-                case PixelFormat.BC7_UNorm_SRgb:
-                case PixelFormat.ETC2_R8_G8_B8_UNorm:
-                case PixelFormat.ETC2_R8_G8_B8_A1_UNorm:
-                case PixelFormat.ETC2_R8_G8_B8_A8_UNorm:
+                case PixelFormat.Bc1RgbUNorm:
+                case PixelFormat.Bc1RgbUNormSRgb:
+                case PixelFormat.Bc1RgbaUNorm:
+                case PixelFormat.Bc1RgbaUNormSRgb:
+                case PixelFormat.Bc2UNorm:
+                case PixelFormat.Bc2UNormSRgb:
+                case PixelFormat.Bc3UNorm:
+                case PixelFormat.Bc3UNormSRgb:
+                case PixelFormat.Bc4UNorm:
+                case PixelFormat.Bc4SNorm:
+                case PixelFormat.Bc5UNorm:
+                case PixelFormat.Bc5SNorm:
+                case PixelFormat.Bc7UNorm:
+                case PixelFormat.Bc7UNormSRgb:
+                case PixelFormat.Etc2R8G8B8UNorm:
+                case PixelFormat.Etc2R8G8B8A1UNorm:
+                case PixelFormat.Etc2R8G8B8A8UNorm:
                     return (height + 3) / 4;
 
                 default:
@@ -255,101 +255,101 @@ namespace Veldrid
         {
             switch (format)
             {
-                case PixelFormat.R32_G32_B32_A32_Float:
-                case PixelFormat.R32_G32_B32_A32_UInt:
-                case PixelFormat.R32_G32_B32_A32_SInt:
-                    return PixelFormat.R32_G32_B32_A32_Float;
+                case PixelFormat.R32G32B32A32Float:
+                case PixelFormat.R32G32B32A32UInt:
+                case PixelFormat.R32G32B32A32SInt:
+                    return PixelFormat.R32G32B32A32Float;
 
-                case PixelFormat.R16_G16_B16_A16_Float:
-                case PixelFormat.R16_G16_B16_A16_UNorm:
-                case PixelFormat.R16_G16_B16_A16_UInt:
-                case PixelFormat.R16_G16_B16_A16_SNorm:
-                case PixelFormat.R16_G16_B16_A16_SInt:
-                    return PixelFormat.R16_G16_B16_A16_Float;
+                case PixelFormat.R16G16B16A16Float:
+                case PixelFormat.R16G16B16A16UNorm:
+                case PixelFormat.R16G16B16A16UInt:
+                case PixelFormat.R16G16B16A16SNorm:
+                case PixelFormat.R16G16B16A16SInt:
+                    return PixelFormat.R16G16B16A16Float;
 
-                case PixelFormat.R32_G32_Float:
-                case PixelFormat.R32_G32_UInt:
-                case PixelFormat.R32_G32_SInt:
-                    return PixelFormat.R32_G32_Float;
+                case PixelFormat.R32G32Float:
+                case PixelFormat.R32G32UInt:
+                case PixelFormat.R32G32SInt:
+                    return PixelFormat.R32G32Float;
 
-                case PixelFormat.R10_G10_B10_A2_UNorm:
-                case PixelFormat.R10_G10_B10_A2_UInt:
-                    return PixelFormat.R10_G10_B10_A2_UNorm;
+                case PixelFormat.R10G10B10A2UNorm:
+                case PixelFormat.R10G10B10A2UInt:
+                    return PixelFormat.R10G10B10A2UNorm;
 
-                case PixelFormat.R8_G8_B8_A8_UNorm:
-                case PixelFormat.R8_G8_B8_A8_UNorm_SRgb:
-                case PixelFormat.R8_G8_B8_A8_UInt:
-                case PixelFormat.R8_G8_B8_A8_SNorm:
-                case PixelFormat.R8_G8_B8_A8_SInt:
-                    return PixelFormat.R8_G8_B8_A8_UNorm;
+                case PixelFormat.R8G8B8A8UNorm:
+                case PixelFormat.R8G8B8A8UNormSRgb:
+                case PixelFormat.R8G8B8A8UInt:
+                case PixelFormat.R8G8B8A8SNorm:
+                case PixelFormat.R8G8B8A8SInt:
+                    return PixelFormat.R8G8B8A8UNorm;
 
-                case PixelFormat.R16_G16_Float:
-                case PixelFormat.R16_G16_UNorm:
-                case PixelFormat.R16_G16_UInt:
-                case PixelFormat.R16_G16_SNorm:
-                case PixelFormat.R16_G16_SInt:
-                    return PixelFormat.R16_G16_Float;
+                case PixelFormat.R16G16Float:
+                case PixelFormat.R16G16UNorm:
+                case PixelFormat.R16G16UInt:
+                case PixelFormat.R16G16SNorm:
+                case PixelFormat.R16G16SInt:
+                    return PixelFormat.R16G16Float;
 
-                case PixelFormat.R32_Float:
-                case PixelFormat.R32_UInt:
-                case PixelFormat.R32_SInt:
-                    return PixelFormat.R32_Float;
+                case PixelFormat.R32Float:
+                case PixelFormat.R32UInt:
+                case PixelFormat.R32SInt:
+                    return PixelFormat.R32Float;
 
-                case PixelFormat.R8_G8_UNorm:
-                case PixelFormat.R8_G8_UInt:
-                case PixelFormat.R8_G8_SNorm:
-                case PixelFormat.R8_G8_SInt:
-                    return PixelFormat.R8_G8_UNorm;
+                case PixelFormat.R8G8UNorm:
+                case PixelFormat.R8G8UInt:
+                case PixelFormat.R8G8SNorm:
+                case PixelFormat.R8G8SInt:
+                    return PixelFormat.R8G8UNorm;
 
-                case PixelFormat.R16_Float:
-                case PixelFormat.R16_UNorm:
-                case PixelFormat.R16_UInt:
-                case PixelFormat.R16_SNorm:
-                case PixelFormat.R16_SInt:
-                    return PixelFormat.R16_Float;
+                case PixelFormat.R16Float:
+                case PixelFormat.R16UNorm:
+                case PixelFormat.R16UInt:
+                case PixelFormat.R16SNorm:
+                case PixelFormat.R16SInt:
+                    return PixelFormat.R16Float;
 
-                case PixelFormat.R8_UNorm:
-                case PixelFormat.R8_UInt:
-                case PixelFormat.R8_SNorm:
-                case PixelFormat.R8_SInt:
-                    return PixelFormat.R8_UNorm;
+                case PixelFormat.R8UNorm:
+                case PixelFormat.R8UInt:
+                case PixelFormat.R8SNorm:
+                case PixelFormat.R8SInt:
+                    return PixelFormat.R8UNorm;
 
-                case PixelFormat.BC1_Rgba_UNorm:
-                case PixelFormat.BC1_Rgba_UNorm_SRgb:
-                case PixelFormat.BC1_Rgb_UNorm:
-                case PixelFormat.BC1_Rgb_UNorm_SRgb:
-                    return PixelFormat.BC1_Rgba_UNorm;
+                case PixelFormat.Bc1RgbaUNorm:
+                case PixelFormat.Bc1RgbaUNormSRgb:
+                case PixelFormat.Bc1RgbUNorm:
+                case PixelFormat.Bc1RgbUNormSRgb:
+                    return PixelFormat.Bc1RgbaUNorm;
 
-                case PixelFormat.BC2_UNorm:
-                case PixelFormat.BC2_UNorm_SRgb:
-                    return PixelFormat.BC2_UNorm;
+                case PixelFormat.Bc2UNorm:
+                case PixelFormat.Bc2UNormSRgb:
+                    return PixelFormat.Bc2UNorm;
 
-                case PixelFormat.BC3_UNorm:
-                case PixelFormat.BC3_UNorm_SRgb:
-                    return PixelFormat.BC3_UNorm;
+                case PixelFormat.Bc3UNorm:
+                case PixelFormat.Bc3UNormSRgb:
+                    return PixelFormat.Bc3UNorm;
 
-                case PixelFormat.BC4_UNorm:
-                case PixelFormat.BC4_SNorm:
-                    return PixelFormat.BC4_UNorm;
+                case PixelFormat.Bc4UNorm:
+                case PixelFormat.Bc4SNorm:
+                    return PixelFormat.Bc4UNorm;
 
-                case PixelFormat.BC5_UNorm:
-                case PixelFormat.BC5_SNorm:
-                    return PixelFormat.BC5_UNorm;
+                case PixelFormat.Bc5UNorm:
+                case PixelFormat.Bc5SNorm:
+                    return PixelFormat.Bc5UNorm;
 
-                case PixelFormat.B8_G8_R8_A8_UNorm:
-                case PixelFormat.B8_G8_R8_A8_UNorm_SRgb:
-                    return PixelFormat.B8_G8_R8_A8_UNorm;
+                case PixelFormat.B8G8R8A8UNorm:
+                case PixelFormat.B8G8R8A8UNormSRgb:
+                    return PixelFormat.B8G8R8A8UNorm;
 
-                case PixelFormat.BC7_UNorm:
-                case PixelFormat.BC7_UNorm_SRgb:
-                    return PixelFormat.BC7_UNorm;
+                case PixelFormat.Bc7UNorm:
+                case PixelFormat.Bc7UNormSRgb:
+                    return PixelFormat.Bc7UNorm;
 
                 default:
                     return format;
             }
         }
 
-        private static bool IsSrgbCounterpart(PixelFormat viewFormat, PixelFormat realFormat)
+        private static bool isSrgbCounterpart(PixelFormat viewFormat, PixelFormat realFormat)
         {
             throw new NotImplementedException();
         }

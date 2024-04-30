@@ -1,6 +1,6 @@
 namespace Veldrid.MTL
 {
-    internal struct MTLUnalignedBufferCopyInfo
+    internal struct MtlUnalignedBufferCopyInfo
     {
         public uint SourceOffset;
         public uint DestinationOffset;

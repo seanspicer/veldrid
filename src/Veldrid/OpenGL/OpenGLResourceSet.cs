@@ -3,11 +3,11 @@
     internal class OpenGLResourceSet : ResourceSet
     {
         public new OpenGLResourceLayout Layout { get; }
-        public new BindableResource[] Resources { get; }
+        public new IBindableResource[] Resources { get; }
 
-        public override bool IsDisposed => _disposed;
+        public override bool IsDisposed => disposed;
         public override string Name { get; set; }
-        private bool _disposed;
+        private bool disposed;
 
         public OpenGLResourceSet(ref ResourceSetDescription description)
             : base(ref description)
@@ -20,7 +20,7 @@
 
         public override void Dispose()
         {
-            _disposed = true;
+            disposed = true;
         }
 
         #endregion

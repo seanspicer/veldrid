@@ -33,7 +33,7 @@ namespace Veldrid
         ///         vendor-specific information.
         ///     </para>
         /// </remarks>
-        public string Version => _gd.Version;
+        public string Version => gd.Version;
 
         /// <summary>
         ///     Gets the Shader Language Version string of this OpenGL implementation.
@@ -54,18 +54,18 @@ namespace Veldrid
         ///         vendor-specific information.
         ///     </para>
         /// </remarks>
-        public string ShadingLanguageVersion => _gd.ShadingLanguageVersion;
+        public string ShadingLanguageVersion => gd.ShadingLanguageVersion;
 
         /// <summary>
         ///     Gets a collection of available OpenGL extensions.
         /// </summary>
         public ReadOnlyCollection<string> Extensions { get; }
 
-        private readonly OpenGLGraphicsDevice _gd;
+        private readonly OpenGLGraphicsDevice gd;
 
         internal BackendInfoOpenGL(OpenGLGraphicsDevice gd)
         {
-            _gd = gd;
+            this.gd = gd;
             Extensions = new ReadOnlyCollection<string>(gd.Extensions.ToArray());
         }
 
@@ -75,7 +75,7 @@ namespace Veldrid
         /// </summary>
         public void ExecuteOnGLThread(Action action)
         {
-            _gd.ExecuteOnGLThread(action);
+            gd.ExecuteOnGLThread(action);
         }
 
         /// <summary>
@@ -83,7 +83,7 @@ namespace Veldrid
         /// </summary>
         public void FlushAndFinish()
         {
-            _gd.FlushAndFinish();
+            gd.FlushAndFinish();
         }
 
         /// <summary>

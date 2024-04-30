@@ -6,7 +6,7 @@ namespace Veldrid
     ///     A device resource encapsulating a single shader module.
     ///     See <see cref="ShaderDescription" />.
     /// </summary>
-    public abstract class Shader : DeviceResource, IDisposable
+    public abstract class Shader : IDeviceResource, IDisposable
     {
         /// <summary>
         ///     The shader stage this instance can be used in.

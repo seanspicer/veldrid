@@ -59,7 +59,7 @@ namespace Veldrid
         /// <summary>
         ///     Indicates that a <see cref="DeviceBuffer" /> will be used as a staging Buffer. Staging Buffers can be used to
         ///     transfer data
-        ///     to-and-from the CPU using <see cref="GraphicsDevice.Map(MappableResource, MapMode)" />. Staging Buffers can use all
+        ///     to-and-from the CPU using <see cref="GraphicsDevice.Map(IMappableResource, MapMode)" />. Staging Buffers can use all
         ///     <see cref="MapMode" /> values.
         ///     This flag cannot be combined with any other flag.
         /// </summary>

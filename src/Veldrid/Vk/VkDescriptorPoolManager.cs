@@ -7,26 +7,26 @@ namespace Veldrid.Vk
 {
     internal class VkDescriptorPoolManager
     {
-        private readonly VkGraphicsDevice _gd;
-        private readonly List<PoolInfo> _pools = new List<PoolInfo>();
-        private readonly object _lock = new object();
+        private readonly VkGraphicsDevice gd;
+        private readonly List<PoolInfo> pools = new List<PoolInfo>();
+        private readonly object @lock = new object();
 
         public VkDescriptorPoolManager(VkGraphicsDevice gd)
         {
-            _gd = gd;
-            _pools.Add(CreateNewPool());
+            this.gd = gd;
+            pools.Add(createNewPool());
         }
 
         public unsafe DescriptorAllocationToken Allocate(DescriptorResourceCounts counts, VkDescriptorSetLayout setLayout)
         {
-            lock (_lock)
+            lock (@lock)
             {
-                var pool = GetPool(counts);
-                var dsAI = VkDescriptorSetAllocateInfo.New();
-                dsAI.descriptorSetCount = 1;
-                dsAI.pSetLayouts = &setLayout;
-                dsAI.descriptorPool = pool;
-                var result = vkAllocateDescriptorSets(_gd.Device, ref dsAI, out var set);
+                var pool = getPool(counts);
+                var dsAi = VkDescriptorSetAllocateInfo.New();
+                dsAi.descriptorSetCount = 1;
+                dsAi.pSetLayouts = &setLayout;
+                dsAi.descriptorPool = pool;
+                var result = vkAllocateDescriptorSets(gd.Device, ref dsAi, out var set);
                 VulkanUtil.CheckResult(result);
 
                 return new DescriptorAllocationToken(set, pool);
@@ -35,36 +35,36 @@ namespace Veldrid.Vk
 
         public void Free(DescriptorAllocationToken token, DescriptorResourceCounts counts)
         {
-            lock (_lock)
+            lock (@lock)
             {
-                foreach (var poolInfo in _pools)
+                foreach (var poolInfo in pools)
                     if (poolInfo.Pool == token.Pool)
-                        poolInfo.Free(_gd.Device, token, counts);
+                        poolInfo.Free(gd.Device, token, counts);
             }
         }
 
         internal unsafe void DestroyAll()
         {
-            foreach (var poolInfo in _pools) vkDestroyDescriptorPool(_gd.Device, poolInfo.Pool, null);
+            foreach (var poolInfo in pools) vkDestroyDescriptorPool(gd.Device, poolInfo.Pool, null);
         }
 
-        private VkDescriptorPool GetPool(DescriptorResourceCounts counts)
+        private VkDescriptorPool getPool(DescriptorResourceCounts counts)
         {
-            lock (_lock)
+            lock (@lock)
             {
-                foreach (var poolInfo in _pools)
+                foreach (var poolInfo in pools)
                     if (poolInfo.Allocate(counts))
                         return poolInfo.Pool;
 
-                var newPool = CreateNewPool();
-                _pools.Add(newPool);
+                var newPool = createNewPool();
+                pools.Add(newPool);
                 bool result = newPool.Allocate(counts);
                 Debug.Assert(result);
                 return newPool.Pool;
             }
         }
 
-        private unsafe PoolInfo CreateNewPool()
+        private unsafe PoolInfo createNewPool()
         {
             uint totalSets = 1000;
             uint descriptorCount = 100;
@@ -85,13 +85,13 @@ namespace Veldrid.Vk
             sizes[6].type = VkDescriptorType.StorageBufferDynamic;
             sizes[6].descriptorCount = descriptorCount;
 
-            var poolCI = VkDescriptorPoolCreateInfo.New();
-            poolCI.flags = VkDescriptorPoolCreateFlags.FreeDescriptorSet;
-            poolCI.maxSets = totalSets;
-            poolCI.pPoolSizes = sizes;
-            poolCI.poolSizeCount = poolSizeCount;
+            var poolCi = VkDescriptorPoolCreateInfo.New();
+            poolCi.flags = VkDescriptorPoolCreateFlags.FreeDescriptorSet;
+            poolCi.maxSets = totalSets;
+            poolCi.pPoolSizes = sizes;
+            poolCi.poolSizeCount = poolSizeCount;
 
-            var result = vkCreateDescriptorPool(_gd.Device, ref poolCI, null, out var descriptorPool);
+            var result = vkCreateDescriptorPool(gd.Device, ref poolCi, null, out var descriptorPool);
             VulkanUtil.CheckResult(result);
 
             return new PoolInfo(descriptorPool, totalSets, descriptorCount);

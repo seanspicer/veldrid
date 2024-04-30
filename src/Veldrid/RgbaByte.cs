@@ -31,72 +31,72 @@ namespace Veldrid
         /// <summary>
         ///     Red (255, 0, 0, 255)
         /// </summary>
-        public static readonly RgbaByte Red = new RgbaByte(255, 0, 0, 255);
+        public static readonly RgbaByte RED = new RgbaByte(255, 0, 0, 255);
 
         /// <summary>
         ///     Dark Red (153, 0, 0, 255)
         /// </summary>
-        public static readonly RgbaByte DarkRed = new RgbaByte(153, 0, 0, 255);
+        public static readonly RgbaByte DARK_RED = new RgbaByte(153, 0, 0, 255);
 
         /// <summary>
         ///     Green (0, 255, 0, 255)
         /// </summary>
-        public static readonly RgbaByte Green = new RgbaByte(0, 255, 0, 255);
+        public static readonly RgbaByte GREEN = new RgbaByte(0, 255, 0, 255);
 
         /// <summary>
         ///     Blue (0, 0, 255, 255)
         /// </summary>
-        public static readonly RgbaByte Blue = new RgbaByte(0, 0, 255, 255);
+        public static readonly RgbaByte BLUE = new RgbaByte(0, 0, 255, 255);
 
         /// <summary>
         ///     Yellow (255, 255, 0, 255)
         /// </summary>
-        public static readonly RgbaByte Yellow = new RgbaByte(255, 255, 0, 255);
+        public static readonly RgbaByte YELLOW = new RgbaByte(255, 255, 0, 255);
 
         /// <summary>
         ///     Grey (64, 64, 64, 255)
         /// </summary>
-        public static readonly RgbaByte Grey = new RgbaByte(64, 64, 64, 255);
+        public static readonly RgbaByte GREY = new RgbaByte(64, 64, 64, 255);
 
         /// <summary>
         ///     Light Grey (166, 166, 166, 255)
         /// </summary>
-        public static readonly RgbaByte LightGrey = new RgbaByte(166, 166, 166, 255);
+        public static readonly RgbaByte LIGHT_GREY = new RgbaByte(166, 166, 166, 255);
 
         /// <summary>
         ///     Cyan (0, 255, 255, 255)
         /// </summary>
-        public static readonly RgbaByte Cyan = new RgbaByte(0, 255, 255, 255);
+        public static readonly RgbaByte CYAN = new RgbaByte(0, 255, 255, 255);
 
         /// <summary>
         ///     White (255, 255, 255, 255)
         /// </summary>
-        public static readonly RgbaByte White = new RgbaByte(255, 255, 255, 255);
+        public static readonly RgbaByte WHITE = new RgbaByte(255, 255, 255, 255);
 
         /// <summary>
         ///     Cornflower Blue (100, 149, 237, 255)
         /// </summary>
-        public static readonly RgbaByte CornflowerBlue = new RgbaByte(100, 149, 237, 255);
+        public static readonly RgbaByte CORNFLOWER_BLUE = new RgbaByte(100, 149, 237, 255);
 
         /// <summary>
         ///     Clear (0, 0, 0, 0)
         /// </summary>
-        public static readonly RgbaByte Clear = new RgbaByte(0, 0, 0, 0);
+        public static readonly RgbaByte CLEAR = new RgbaByte(0, 0, 0, 0);
 
         /// <summary>
         ///     Black (0, 0, 0, 255)
         /// </summary>
-        public static readonly RgbaByte Black = new RgbaByte(0, 0, 0, 255);
+        public static readonly RgbaByte BLACK = new RgbaByte(0, 0, 0, 255);
 
         /// <summary>
         ///     Pink (255, 155, 191, 255)
         /// </summary>
-        public static readonly RgbaByte Pink = new RgbaByte(255, 155, 191, 255);
+        public static readonly RgbaByte PINK = new RgbaByte(255, 155, 191, 255);
 
         /// <summary>
         ///     Orange (255, 92, 0, 255)
         /// </summary>
-        public static readonly RgbaByte Orange = new RgbaByte(255, 92, 0, 255);
+        public static readonly RgbaByte ORANGE = new RgbaByte(255, 92, 0, 255);
 
         /// <summary>
         ///     Constructs a new RgbaByte from the given components.

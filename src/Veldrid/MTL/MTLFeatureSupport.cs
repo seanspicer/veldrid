@@ -5,22 +5,22 @@ using Veldrid.MetalBindings;
 
 namespace Veldrid.MTL
 {
-    internal class MTLFeatureSupport : IReadOnlyCollection<MTLFeatureSet>
+    internal class MtlFeatureSupport : IReadOnlyCollection<MTLFeatureSet>
     {
         public bool IsMacOS { get; }
 
         public MTLFeatureSet MaxFeatureSet { get; }
 
-        public int Count => _supportedFeatureSets.Count;
-        private readonly HashSet<MTLFeatureSet> _supportedFeatureSets = new HashSet<MTLFeatureSet>();
+        public int Count => supportedFeatureSets.Count;
+        private readonly HashSet<MTLFeatureSet> supportedFeatureSets = new HashSet<MTLFeatureSet>();
 
-        public MTLFeatureSupport(MTLDevice device)
+        public MtlFeatureSupport(MTLDevice device)
         {
             foreach (MTLFeatureSet set in Enum.GetValues(typeof(MTLFeatureSet)))
             {
                 if (device.supportsFeatureSet(set))
                 {
-                    _supportedFeatureSets.Add(set);
+                    supportedFeatureSets.Add(set);
                     MaxFeatureSet = set;
                 }
             }
@@ -32,7 +32,7 @@ namespace Veldrid.MTL
 
         public bool IsSupported(MTLFeatureSet featureSet)
         {
-            return _supportedFeatureSets.Contains(featureSet);
+            return supportedFeatureSets.Contains(featureSet);
         }
 
         public bool IsDrawBaseVertexInstanceSupported()
@@ -47,7 +47,7 @@ namespace Veldrid.MTL
 
         public IEnumerator<MTLFeatureSet> GetEnumerator()
         {
-            return _supportedFeatureSets.GetEnumerator();
+            return supportedFeatureSets.GetEnumerator();
         }
 
         IEnumerator IEnumerable.GetEnumerator()

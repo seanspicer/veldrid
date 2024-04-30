@@ -12,15 +12,15 @@ namespace Veldrid.D3D11
 
         public override string Name
         {
-            get => _name;
+            get => name;
             set
             {
-                _name = value;
+                name = value;
                 DeviceSampler.DebugName = value;
             }
         }
 
-        private string _name;
+        private string name;
 
         public D3D11Sampler(ID3D11Device device, ref SamplerDescription description)
         {
@@ -36,7 +36,7 @@ namespace Veldrid.D3D11
                 MaxAnisotropy = (int)description.MaximumAnisotropy,
                 ComparisonFunc = comparision,
                 MipLODBias = description.LodBias,
-                BorderColor = ToRawColor4(description.BorderColor)
+                BorderColor = toRawColor4(description.BorderColor)
             };
 
             DeviceSampler = device.CreateSamplerState(samplerStateDesc);
@@ -51,7 +51,7 @@ namespace Veldrid.D3D11
 
         #endregion
 
-        private static Color4 ToRawColor4(SamplerBorderColor borderColor)
+        private static Color4 toRawColor4(SamplerBorderColor borderColor)
         {
             switch (borderColor)
             {

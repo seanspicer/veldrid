@@ -15,21 +15,21 @@ namespace Veldrid.D3D11
 
         public override string Name
         {
-            get => _name;
+            get => name;
             set
             {
-                _name = value;
+                name = value;
                 DeviceShader.DebugName = value;
             }
         }
 
-        private readonly ID3D11Device _device;
-        private string _name;
+        private readonly ID3D11Device device;
+        private string name;
 
         public D3D11Shader(ID3D11Device device, ShaderDescription description)
             : base(description.Stage, description.EntryPoint)
         {
-            _device = device;
+            this.device = device;
 
             if (description.ShaderBytes.Length > 4
                 && description.ShaderBytes[0] == 0x44
@@ -38,7 +38,7 @@ namespace Veldrid.D3D11
                 && description.ShaderBytes[3] == 0x43)
                 Bytecode = Util.ShallowClone(description.ShaderBytes);
             else
-                Bytecode = CompileCode(description);
+                Bytecode = compileCode(description);
 
             switch (description.Stage)
             {
@@ -80,34 +80,34 @@ namespace Veldrid.D3D11
 
         #endregion
 
-        private byte[] CompileCode(ShaderDescription description)
+        private byte[] compileCode(ShaderDescription description)
         {
             string profile;
 
             switch (description.Stage)
             {
                 case ShaderStages.Vertex:
-                    profile = _device.FeatureLevel >= FeatureLevel.Level_11_0 ? "vs_5_0" : "vs_4_0";
+                    profile = device.FeatureLevel >= FeatureLevel.Level_11_0 ? "vs_5_0" : "vs_4_0";
                     break;
 
                 case ShaderStages.Geometry:
-                    profile = _device.FeatureLevel >= FeatureLevel.Level_11_0 ? "gs_5_0" : "gs_4_0";
+                    profile = device.FeatureLevel >= FeatureLevel.Level_11_0 ? "gs_5_0" : "gs_4_0";
                     break;
 
                 case ShaderStages.TessellationControl:
-                    profile = _device.FeatureLevel >= FeatureLevel.Level_11_0 ? "hs_5_0" : "hs_4_0";
+                    profile = device.FeatureLevel >= FeatureLevel.Level_11_0 ? "hs_5_0" : "hs_4_0";
                     break;
 
                 case ShaderStages.TessellationEvaluation:
-                    profile = _device.FeatureLevel >= FeatureLevel.Level_11_0 ? "ds_5_0" : "ds_4_0";
+                    profile = device.FeatureLevel >= FeatureLevel.Level_11_0 ? "ds_5_0" : "ds_4_0";
                     break;
 
                 case ShaderStages.Fragment:
-                    profile = _device.FeatureLevel >= FeatureLevel.Level_11_0 ? "ps_5_0" : "ps_4_0";
+                    profile = device.FeatureLevel >= FeatureLevel.Level_11_0 ? "ps_5_0" : "ps_4_0";
                     break;
 
                 case ShaderStages.Compute:
-                    profile = _device.FeatureLevel >= FeatureLevel.Level_11_0 ? "cs_5_0" : "cs_4_0";
+                    profile = device.FeatureLevel >= FeatureLevel.Level_11_0 ? "cs_5_0" : "cs_4_0";
                     break;
 
                 default:

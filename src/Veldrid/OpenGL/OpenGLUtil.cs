@@ -8,7 +8,7 @@ namespace Veldrid.OpenGL
 {
     internal static class OpenGLUtil
     {
-        private static int? MaxLabelLength;
+        private static int? maxLabelLength;
 
         [Conditional("DEBUG")]
         [DebuggerNonUserCode]
@@ -30,29 +30,29 @@ namespace Veldrid.OpenGL
             {
                 int byteCount = Encoding.UTF8.GetByteCount(name);
 
-                if (MaxLabelLength == null)
+                if (maxLabelLength == null)
                 {
                     int maxLabelLength = -1;
                     glGetIntegerv(GetPName.MaxLabelLength, &maxLabelLength);
                     CheckLastError();
-                    MaxLabelLength = maxLabelLength;
+                    OpenGLUtil.maxLabelLength = maxLabelLength;
                 }
 
-                if (byteCount >= MaxLabelLength)
+                if (byteCount >= maxLabelLength)
                 {
-                    name = name.Substring(0, MaxLabelLength.Value - 4) + "...";
+                    name = name.Substring(0, maxLabelLength.Value - 4) + "...";
                     byteCount = Encoding.UTF8.GetByteCount(name);
                 }
 
-                Span<byte> utf8bytes = stackalloc byte[128];
-                if (byteCount + 1 > 128) utf8bytes = new byte[byteCount + 1];
+                Span<byte> utf8Bytes = stackalloc byte[128];
+                if (byteCount + 1 > 128) utf8Bytes = new byte[byteCount + 1];
 
                 fixed (char* namePtr = name)
-                fixed (byte* utf8bytePtr = utf8bytes)
+                fixed (byte* utf8BytePtr = utf8Bytes)
                 {
-                    int written = Encoding.UTF8.GetBytes(namePtr, name.Length, utf8bytePtr, byteCount);
-                    utf8bytePtr[written] = 0;
-                    glObjectLabel(identifier, target, (uint)byteCount, utf8bytePtr);
+                    int written = Encoding.UTF8.GetBytes(namePtr, name.Length, utf8BytePtr, byteCount);
+                    utf8BytePtr[written] = 0;
+                    glObjectLabel(identifier, target, (uint)byteCount, utf8BytePtr);
                     CheckLastError();
                 }
             }

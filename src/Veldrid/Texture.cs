@@ -6,7 +6,7 @@ namespace Veldrid
     ///     A device resource used to store arbitrary image data in a specific format.
     ///     See <see cref="TextureDescription" />.
     /// </summary>
-    public abstract class Texture : DeviceResource, MappableResource, IDisposable, BindableResource
+    public abstract class Texture : IDeviceResource, IMappableResource, IDisposable, IBindableResource
     {
         /// <summary>
         ///     The format of individual texture elements stored in this instance.
@@ -67,8 +67,8 @@ namespace Veldrid
         /// </summary>
         public abstract string Name { get; set; }
 
-        private readonly object _fullTextureViewLock = new object();
-        private TextureView _fullTextureView;
+        private readonly object fullTextureViewLock = new object();
+        private TextureView fullTextureView;
 
         #region Disposal
 
@@ -77,7 +77,7 @@ namespace Veldrid
         /// </summary>
         public virtual void Dispose()
         {
-            lock (_fullTextureViewLock) _fullTextureView?.Dispose();
+            lock (fullTextureViewLock) fullTextureView?.Dispose();
 
             DisposeCore();
         }
@@ -97,11 +97,11 @@ namespace Veldrid
 
         internal TextureView GetFullTextureView(GraphicsDevice gd)
         {
-            lock (_fullTextureViewLock)
+            lock (fullTextureViewLock)
             {
-                if (_fullTextureView == null) _fullTextureView = CreateFullTextureView(gd);
+                if (fullTextureView == null) fullTextureView = CreateFullTextureView(gd);
 
-                return _fullTextureView;
+                return fullTextureView;
             }
         }
 

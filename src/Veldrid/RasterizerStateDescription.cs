@@ -64,7 +64,7 @@ namespace Veldrid
         ///     DepthClipEnabled = true
         ///     ScissorTestEnabled = false
         /// </summary>
-        public static readonly RasterizerStateDescription Default = new RasterizerStateDescription
+        public static readonly RasterizerStateDescription DEFAULT = new RasterizerStateDescription
         {
             CullMode = FaceCullMode.Back,
             FillMode = PolygonFillMode.Solid,
@@ -83,7 +83,7 @@ namespace Veldrid
         ///     DepthClipEnabled = true
         ///     ScissorTestEnabled = false
         /// </summary>
-        public static readonly RasterizerStateDescription CullNone = new RasterizerStateDescription
+        public static readonly RasterizerStateDescription CULL_NONE = new RasterizerStateDescription
         {
             CullMode = FaceCullMode.None,
             FillMode = PolygonFillMode.Solid,

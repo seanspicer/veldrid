@@ -25,11 +25,11 @@ namespace Veldrid.D3D11
 
         public override bool IsComputePipeline { get; }
 
-        public override bool IsDisposed => _disposed;
+        public override bool IsDisposed => disposed;
 
         public override string Name { get; set; }
 
-        private bool _disposed;
+        private bool disposed;
 
         public D3D11Pipeline(D3D11ResourceCache cache, ref GraphicsPipelineDescription description)
             : base(ref description)
@@ -107,7 +107,7 @@ namespace Veldrid.D3D11
 
         public override void Dispose()
         {
-            _disposed = true;
+            disposed = true;
         }
 
         #endregion

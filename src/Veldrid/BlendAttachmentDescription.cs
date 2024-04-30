@@ -120,7 +120,7 @@ namespace Veldrid
         ///     DestinationAlphaFactor = BlendFactor.Zero
         ///     AlphaFunction = BlendFunction.Add
         /// </summary>
-        public static readonly BlendAttachmentDescription OverrideBlend = new BlendAttachmentDescription
+        public static readonly BlendAttachmentDescription OVERRIDE_BLEND = new BlendAttachmentDescription
         {
             BlendEnabled = true,
             SourceColorFactor = BlendFactor.One,
@@ -143,7 +143,7 @@ namespace Veldrid
         ///     DestinationAlphaFactor = BlendFactor.InverseSourceAlpha
         ///     AlphaFunction = BlendFunction.Add
         /// </summary>
-        public static readonly BlendAttachmentDescription AlphaBlend = new BlendAttachmentDescription
+        public static readonly BlendAttachmentDescription ALPHA_BLEND = new BlendAttachmentDescription
         {
             BlendEnabled = true,
             SourceColorFactor = BlendFactor.SourceAlpha,
@@ -166,7 +166,7 @@ namespace Veldrid
         ///     DestinationAlphaFactor = BlendFactor.One
         ///     AlphaFunction = BlendFunction.Add
         /// </summary>
-        public static readonly BlendAttachmentDescription AdditiveBlend = new BlendAttachmentDescription
+        public static readonly BlendAttachmentDescription ADDITIVE_BLEND = new BlendAttachmentDescription
         {
             BlendEnabled = true,
             SourceColorFactor = BlendFactor.SourceAlpha,
@@ -189,7 +189,7 @@ namespace Veldrid
         ///     DestinationAlphaFactor = BlendFactor.Zero
         ///     AlphaFunction = BlendFunction.Add
         /// </summary>
-        public static readonly BlendAttachmentDescription Disabled = new BlendAttachmentDescription
+        public static readonly BlendAttachmentDescription DISABLED = new BlendAttachmentDescription
         {
             BlendEnabled = false,
             SourceColorFactor = BlendFactor.One,

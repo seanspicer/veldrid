@@ -6,12 +6,12 @@ using Veldrid.MetalBindings;
 
 namespace Veldrid.MTL
 {
-    internal class MTLPipeline : Pipeline
+    internal class MtlPipeline : Pipeline
     {
         public MTLRenderPipelineState RenderPipelineState { get; }
         public MTLComputePipelineState ComputePipelineState { get; }
         public MTLPrimitiveType PrimitiveType { get; }
-        public new MTLResourceLayout[] ResourceLayouts { get; }
+        public new MtlResourceLayout[] ResourceLayouts { get; }
         public ResourceBindingModel ResourceBindingModel { get; }
         public uint VertexBufferCount { get; }
         public uint NonVertexBufferCount { get; }
@@ -26,33 +26,33 @@ namespace Veldrid.MTL
         public bool HasStencil { get; }
         public uint StencilReference { get; }
         public RgbaFloat BlendColor { get; }
-        public override bool IsDisposed => _disposed;
+        public override bool IsDisposed => disposed;
         public override string Name { get; set; }
 
         private static readonly Dictionary<RenderPipelineStateLookup, MTLRenderPipelineState> render_pipeline_states = new Dictionary<RenderPipelineStateLookup, MTLRenderPipelineState>();
         private static readonly Dictionary<ComputePipelineStateLookup, MTLComputePipelineState> compute_pipeline_states = new Dictionary<ComputePipelineStateLookup, MTLComputePipelineState>();
         private static readonly Dictionary<DepthStencilStateDescription, MTLDepthStencilState> depth_stencil_states = new Dictionary<DepthStencilStateDescription, MTLDepthStencilState>();
-        private bool _disposed;
-        private List<MTLFunction> _specializedFunctions;
+        private bool disposed;
+        private List<MTLFunction> specializedFunctions;
 
-        public MTLPipeline(ref GraphicsPipelineDescription description, MTLGraphicsDevice gd)
+        public MtlPipeline(ref GraphicsPipelineDescription description, MtlGraphicsDevice gd)
             : base(ref description)
         {
-            PrimitiveType = MTLFormats.VdToMTLPrimitiveTopology(description.PrimitiveTopology);
-            ResourceLayouts = new MTLResourceLayout[description.ResourceLayouts.Length];
+            PrimitiveType = MtlFormats.VdToMtlPrimitiveTopology(description.PrimitiveTopology);
+            ResourceLayouts = new MtlResourceLayout[description.ResourceLayouts.Length];
             NonVertexBufferCount = 0;
 
             for (int i = 0; i < ResourceLayouts.Length; i++)
             {
-                ResourceLayouts[i] = Util.AssertSubtype<ResourceLayout, MTLResourceLayout>(description.ResourceLayouts[i]);
+                ResourceLayouts[i] = Util.AssertSubtype<ResourceLayout, MtlResourceLayout>(description.ResourceLayouts[i]);
                 NonVertexBufferCount += ResourceLayouts[i].BufferCount;
             }
 
             ResourceBindingModel = description.ResourceBindingModel ?? gd.ResourceBindingModel;
 
-            CullMode = MTLFormats.VdToMTLCullMode(description.RasterizerState.CullMode);
-            FrontFace = MTLFormats.VdVoMTLFrontFace(description.RasterizerState.FrontFace);
-            FillMode = MTLFormats.VdToMTLFillMode(description.RasterizerState.FillMode);
+            CullMode = MtlFormats.VdToMtlCullMode(description.RasterizerState.CullMode);
+            FrontFace = MtlFormats.VdVoMtlFrontFace(description.RasterizerState.FrontFace);
+            FillMode = MtlFormats.VdToMtlFillMode(description.RasterizerState.FillMode);
             ScissorTestEnabled = description.RasterizerState.ScissorTestEnabled;
 
             var stateLookup = new RenderPipelineStateLookup { Shaders = description.ShaderSet, BlendState = description.BlendState, Outputs = description.Outputs };
@@ -63,15 +63,15 @@ namespace Veldrid.MTL
 
                 foreach (var shader in description.ShaderSet.Shaders)
                 {
-                    var mtlShader = Util.AssertSubtype<Shader, MTLShader>(shader);
+                    var mtlShader = Util.AssertSubtype<Shader, MtlShader>(shader);
                     MTLFunction specializedFunction;
 
                     if (mtlShader.HasFunctionConstants)
                     {
                         // Need to create specialized MTLFunction.
-                        var constantValues = CreateConstantValues(description.ShaderSet.Specializations);
+                        var constantValues = createConstantValues(description.ShaderSet.Specializations);
                         specializedFunction = mtlShader.Library.newFunctionWithNameConstantValues(mtlShader.EntryPoint, constantValues);
-                        AddSpecializedFunction(specializedFunction);
+                        addSpecializedFunction(specializedFunction);
                         ObjectiveCRuntime.release(constantValues.NativePtr);
 
                         Debug.Assert(specializedFunction.NativePtr != IntPtr.Zero, "Failed to create specialized MTLFunction");
@@ -114,7 +114,7 @@ namespace Veldrid.MTL
                         mtlAttribute.bufferIndex = ResourceBindingModel == ResourceBindingModel.Improved
                             ? NonVertexBufferCount + i
                             : i;
-                        mtlAttribute.format = MTLFormats.VdToMTLVertexFormat(elementDesc.Format);
+                        mtlAttribute.format = MtlFormats.VdToMtlVertexFormat(elementDesc.Format);
                         mtlAttribute.offset = elementDesc.Offset != 0 ? elementDesc.Offset : (UIntPtr)offset;
                         offset += FormatSizeHelpers.GetSizeInBytes(elementDesc.Format);
                         element += 1;
@@ -133,7 +133,7 @@ namespace Veldrid.MTL
                 if (outputs.DepthAttachment != null)
                 {
                     var depthFormat = outputs.DepthAttachment.Value.Format;
-                    var mtlDepthFormat = MTLFormats.VdToMTLPixelFormat(depthFormat, true);
+                    var mtlDepthFormat = MtlFormats.VdToMtlPixelFormat(depthFormat, true);
                     mtlDesc.depthAttachmentPixelFormat = mtlDepthFormat;
 
                     if (FormatHelpers.IsStencilFormat(depthFormat))
@@ -147,16 +147,16 @@ namespace Veldrid.MTL
                 {
                     var attachmentBlendDesc = blendStateDesc.AttachmentStates[i];
                     var colorDesc = mtlDesc.colorAttachments[i];
-                    colorDesc.pixelFormat = MTLFormats.VdToMTLPixelFormat(outputs.ColorAttachments[i].Format, false);
+                    colorDesc.pixelFormat = MtlFormats.VdToMtlPixelFormat(outputs.ColorAttachments[i].Format, false);
                     colorDesc.blendingEnabled = attachmentBlendDesc.BlendEnabled;
-                    colorDesc.writeMask = MTLFormats.VdToMTLColorWriteMask(attachmentBlendDesc.ColorWriteMask.GetOrDefault());
-                    colorDesc.alphaBlendOperation = MTLFormats.VdToMTLBlendOp(attachmentBlendDesc.AlphaFunction);
-                    colorDesc.sourceAlphaBlendFactor = MTLFormats.VdToMTLBlendFactor(attachmentBlendDesc.SourceAlphaFactor);
-                    colorDesc.destinationAlphaBlendFactor = MTLFormats.VdToMTLBlendFactor(attachmentBlendDesc.DestinationAlphaFactor);
+                    colorDesc.writeMask = MtlFormats.VdToMtlColorWriteMask(attachmentBlendDesc.ColorWriteMask.GetOrDefault());
+                    colorDesc.alphaBlendOperation = MtlFormats.VdToMtlBlendOp(attachmentBlendDesc.AlphaFunction);
+                    colorDesc.sourceAlphaBlendFactor = MtlFormats.VdToMtlBlendFactor(attachmentBlendDesc.SourceAlphaFactor);
+                    colorDesc.destinationAlphaBlendFactor = MtlFormats.VdToMtlBlendFactor(attachmentBlendDesc.DestinationAlphaFactor);
 
-                    colorDesc.rgbBlendOperation = MTLFormats.VdToMTLBlendOp(attachmentBlendDesc.ColorFunction);
-                    colorDesc.sourceRGBBlendFactor = MTLFormats.VdToMTLBlendFactor(attachmentBlendDesc.SourceColorFactor);
-                    colorDesc.destinationRGBBlendFactor = MTLFormats.VdToMTLBlendFactor(attachmentBlendDesc.DestinationColorFactor);
+                    colorDesc.rgbBlendOperation = MtlFormats.VdToMtlBlendOp(attachmentBlendDesc.ColorFunction);
+                    colorDesc.sourceRGBBlendFactor = MtlFormats.VdToMtlBlendFactor(attachmentBlendDesc.SourceColorFactor);
+                    colorDesc.destinationRGBBlendFactor = MtlFormats.VdToMtlBlendFactor(attachmentBlendDesc.DestinationColorFactor);
                 }
 
                 mtlDesc.alphaToCoverageEnabled = blendStateDesc.AlphaToCoverageEnabled;
@@ -173,7 +173,7 @@ namespace Veldrid.MTL
                 {
                     var depthDescriptor = MTLUtil.AllocInit<MTLDepthStencilDescriptor>(
                         nameof(MTLDepthStencilDescriptor));
-                    depthDescriptor.depthCompareFunction = MTLFormats.VdToMTLCompareFunction(
+                    depthDescriptor.depthCompareFunction = MtlFormats.VdToMtlCompareFunction(
                         description.DepthStencilState.DepthComparison);
                     depthDescriptor.depthWriteEnabled = description.DepthStencilState.DepthWriteEnabled;
 
@@ -187,20 +187,20 @@ namespace Veldrid.MTL
                         var front = MTLUtil.AllocInit<MTLStencilDescriptor>(nameof(MTLStencilDescriptor));
                         front.readMask = stencilEnabled ? description.DepthStencilState.StencilReadMask : 0u;
                         front.writeMask = stencilEnabled ? description.DepthStencilState.StencilWriteMask : 0u;
-                        front.depthFailureOperation = MTLFormats.VdToMTLStencilOperation(vdFrontDesc.DepthFail);
-                        front.stencilFailureOperation = MTLFormats.VdToMTLStencilOperation(vdFrontDesc.Fail);
-                        front.depthStencilPassOperation = MTLFormats.VdToMTLStencilOperation(vdFrontDesc.Pass);
-                        front.stencilCompareFunction = MTLFormats.VdToMTLCompareFunction(vdFrontDesc.Comparison);
+                        front.depthFailureOperation = MtlFormats.VdToMtlStencilOperation(vdFrontDesc.DepthFail);
+                        front.stencilFailureOperation = MtlFormats.VdToMtlStencilOperation(vdFrontDesc.Fail);
+                        front.depthStencilPassOperation = MtlFormats.VdToMtlStencilOperation(vdFrontDesc.Pass);
+                        front.stencilCompareFunction = MtlFormats.VdToMtlCompareFunction(vdFrontDesc.Comparison);
                         depthDescriptor.frontFaceStencil = front;
 
                         var vdBackDesc = description.DepthStencilState.StencilBack;
                         var back = MTLUtil.AllocInit<MTLStencilDescriptor>(nameof(MTLStencilDescriptor));
                         back.readMask = stencilEnabled ? description.DepthStencilState.StencilReadMask : 0u;
                         back.writeMask = stencilEnabled ? description.DepthStencilState.StencilWriteMask : 0u;
-                        back.depthFailureOperation = MTLFormats.VdToMTLStencilOperation(vdBackDesc.DepthFail);
-                        back.stencilFailureOperation = MTLFormats.VdToMTLStencilOperation(vdBackDesc.Fail);
-                        back.depthStencilPassOperation = MTLFormats.VdToMTLStencilOperation(vdBackDesc.Pass);
-                        back.stencilCompareFunction = MTLFormats.VdToMTLCompareFunction(vdBackDesc.Comparison);
+                        back.depthFailureOperation = MtlFormats.VdToMtlStencilOperation(vdBackDesc.DepthFail);
+                        back.stencilFailureOperation = MtlFormats.VdToMtlStencilOperation(vdBackDesc.Fail);
+                        back.depthStencilPassOperation = MtlFormats.VdToMtlStencilOperation(vdBackDesc.Pass);
+                        back.stencilCompareFunction = MtlFormats.VdToMtlCompareFunction(vdBackDesc.Comparison);
                         depthDescriptor.backFaceStencil = back;
 
                         ObjectiveCRuntime.release(front.NativePtr);
@@ -217,13 +217,13 @@ namespace Veldrid.MTL
             DepthClipMode = description.DepthStencilState.DepthTestEnabled ? MTLDepthClipMode.Clip : MTLDepthClipMode.Clamp;
         }
 
-        public MTLPipeline(ref ComputePipelineDescription description, MTLGraphicsDevice gd)
+        public MtlPipeline(ref ComputePipelineDescription description, MtlGraphicsDevice gd)
             : base(ref description)
         {
             IsComputePipeline = true;
-            ResourceLayouts = new MTLResourceLayout[description.ResourceLayouts.Length];
+            ResourceLayouts = new MtlResourceLayout[description.ResourceLayouts.Length];
 
-            for (int i = 0; i < ResourceLayouts.Length; i++) ResourceLayouts[i] = Util.AssertSubtype<ResourceLayout, MTLResourceLayout>(description.ResourceLayouts[i]);
+            for (int i = 0; i < ResourceLayouts.Length; i++) ResourceLayouts[i] = Util.AssertSubtype<ResourceLayout, MtlResourceLayout>(description.ResourceLayouts[i]);
 
             ThreadsPerThreadgroup = new MTLSize(
                 description.ThreadGroupSizeX,
@@ -237,15 +237,15 @@ namespace Veldrid.MTL
             {
                 var mtlDesc = MTLUtil.AllocInit<MTLComputePipelineDescriptor>(
                     nameof(MTLComputePipelineDescriptor));
-                var mtlShader = Util.AssertSubtype<Shader, MTLShader>(description.ComputeShader);
+                var mtlShader = Util.AssertSubtype<Shader, MtlShader>(description.ComputeShader);
                 MTLFunction specializedFunction;
 
                 if (mtlShader.HasFunctionConstants)
                 {
                     // Need to create specialized MTLFunction.
-                    var constantValues = CreateConstantValues(description.Specializations);
+                    var constantValues = createConstantValues(description.Specializations);
                     specializedFunction = mtlShader.Library.newFunctionWithNameConstantValues(mtlShader.EntryPoint, constantValues);
-                    AddSpecializedFunction(specializedFunction);
+                    addSpecializedFunction(specializedFunction);
                     ObjectiveCRuntime.release(constantValues.NativePtr);
 
                     Debug.Assert(specializedFunction.NativePtr != IntPtr.Zero, "Failed to create specialized MTLFunction");
@@ -290,7 +290,7 @@ namespace Veldrid.MTL
 
         public override void Dispose()
         {
-            if (!_disposed)
+            if (!disposed)
             {
                 if (RenderPipelineState.NativePtr != IntPtr.Zero)
                 {
@@ -310,20 +310,20 @@ namespace Veldrid.MTL
                     ObjectiveCRuntime.release(ComputePipelineState.NativePtr);
                 }
 
-                if (_specializedFunctions != null)
+                if (specializedFunctions != null)
                 {
-                    foreach (var function in _specializedFunctions) ObjectiveCRuntime.release(function.NativePtr);
+                    foreach (var function in specializedFunctions) ObjectiveCRuntime.release(function.NativePtr);
 
-                    _specializedFunctions.Clear();
+                    specializedFunctions.Clear();
                 }
 
-                _disposed = true;
+                disposed = true;
             }
         }
 
         #endregion
 
-        private unsafe MTLFunctionConstantValues CreateConstantValues(SpecializationConstant[] specializations)
+        private unsafe MTLFunctionConstantValues createConstantValues(SpecializationConstant[] specializations)
         {
             var ret = MTLFunctionConstantValues.New();
 
@@ -331,7 +331,7 @@ namespace Veldrid.MTL
             {
                 foreach (var sc in specializations)
                 {
-                    var mtlType = MTLFormats.VdVoMTLShaderConstantType(sc.Type);
+                    var mtlType = MtlFormats.VdVoMtlShaderConstantType(sc.Type);
                     ret.setConstantValuetypeatIndex(&sc.Data, mtlType, sc.ID);
                 }
             }
@@ -339,11 +339,11 @@ namespace Veldrid.MTL
             return ret;
         }
 
-        private void AddSpecializedFunction(MTLFunction function)
+        private void addSpecializedFunction(MTLFunction function)
         {
-            if (_specializedFunctions == null) _specializedFunctions = new List<MTLFunction>();
+            if (specializedFunctions == null) specializedFunctions = new List<MTLFunction>();
 
-            _specializedFunctions.Add(function);
+            specializedFunctions.Add(function);
         }
 
         private struct RenderPipelineStateLookup : IEquatable<RenderPipelineStateLookup>

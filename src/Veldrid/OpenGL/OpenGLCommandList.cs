@@ -7,18 +7,18 @@ namespace Veldrid.OpenGL
 {
     internal class OpenGLCommandList : CommandList
     {
-        public override bool IsDisposed => _disposed;
+        public override bool IsDisposed => disposed;
 
         public override string Name { get; set; }
 
-        internal OpenGLCommandEntryList CurrentCommands { get; private set; }
+        internal IOpenGLCommandEntryList CurrentCommands { get; private set; }
 
         internal OpenGLGraphicsDevice Device { get; }
 
-        private readonly object _lock = new object();
-        private readonly List<OpenGLCommandEntryList> _availableLists = new List<OpenGLCommandEntryList>();
-        private readonly List<OpenGLCommandEntryList> _submittedLists = new List<OpenGLCommandEntryList>();
-        private bool _disposed;
+        private readonly object @lock = new object();
+        private readonly List<IOpenGLCommandEntryList> availableLists = new List<IOpenGLCommandEntryList>();
+        private readonly List<IOpenGLCommandEntryList> submittedLists = new List<IOpenGLCommandEntryList>();
+        private bool disposed;
 
         public OpenGLCommandList(OpenGLGraphicsDevice gd, ref CommandListDescription description)
             : base(ref description, gd.Features, gd.UniformBufferMinOffsetAlignment, gd.StructuredBufferMinOffsetAlignment)
@@ -40,7 +40,7 @@ namespace Veldrid.OpenGL
             ClearCachedState();
             if (CurrentCommands != null) CurrentCommands.Dispose();
 
-            CurrentCommands = GetFreeCommandList();
+            CurrentCommands = getFreeCommandList();
             CurrentCommands.Begin();
         }
 
@@ -64,43 +64,43 @@ namespace Veldrid.OpenGL
             CurrentCommands.SetViewport(index, ref viewport);
         }
 
-        public void OnSubmitted(OpenGLCommandEntryList entryList)
+        public void OnSubmitted(IOpenGLCommandEntryList entryList)
         {
             CurrentCommands = null;
 
-            lock (_lock)
+            lock (@lock)
             {
-                Debug.Assert(!_submittedLists.Contains(entryList));
-                _submittedLists.Add(entryList);
+                Debug.Assert(!submittedLists.Contains(entryList));
+                submittedLists.Add(entryList);
 
-                Debug.Assert(!_availableLists.Contains(entryList));
+                Debug.Assert(!availableLists.Contains(entryList));
             }
         }
 
-        public void OnCompleted(OpenGLCommandEntryList entryList)
+        public void OnCompleted(IOpenGLCommandEntryList entryList)
         {
-            lock (_lock)
+            lock (@lock)
             {
                 entryList.Reset();
 
-                Debug.Assert(!_availableLists.Contains(entryList));
-                _availableLists.Add(entryList);
+                Debug.Assert(!availableLists.Contains(entryList));
+                availableLists.Add(entryList);
 
-                Debug.Assert(_submittedLists.Contains(entryList));
-                _submittedLists.Remove(entryList);
+                Debug.Assert(submittedLists.Contains(entryList));
+                submittedLists.Remove(entryList);
             }
         }
 
         public void DestroyResources()
         {
-            lock (_lock)
+            lock (@lock)
             {
                 CurrentCommands?.Dispose();
-                foreach (var list in _availableLists) list.Dispose();
+                foreach (var list in availableLists) list.Dispose();
 
-                foreach (var list in _submittedLists) list.Dispose();
+                foreach (var list in submittedLists) list.Dispose();
 
-                _disposed = true;
+                disposed = true;
             }
         }
 
@@ -179,14 +179,14 @@ namespace Veldrid.OpenGL
                 layerCount);
         }
 
-        private OpenGLCommandEntryList GetFreeCommandList()
+        private IOpenGLCommandEntryList getFreeCommandList()
         {
-            lock (_lock)
+            lock (@lock)
             {
-                if (_availableLists.Count > 0)
+                if (availableLists.Count > 0)
                 {
-                    var ret = _availableLists[_availableLists.Count - 1];
-                    _availableLists.RemoveAt(_availableLists.Count - 1);
+                    var ret = availableLists[availableLists.Count - 1];
+                    availableLists.RemoveAt(availableLists.Count - 1);
                     return ret;
                 }
 

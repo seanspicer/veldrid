@@ -45,13 +45,13 @@ namespace Veldrid.Vk
 
     internal class Win32VkSurfaceInfo : VkSurfaceSource
     {
-        private readonly IntPtr _hinstance;
-        private readonly IntPtr _hwnd;
+        private readonly IntPtr hinstance;
+        private readonly IntPtr hwnd;
 
         public Win32VkSurfaceInfo(IntPtr hinstance, IntPtr hwnd)
         {
-            _hinstance = hinstance;
-            _hwnd = hwnd;
+            this.hinstance = hinstance;
+            this.hwnd = hwnd;
         }
 
         public override VkSurfaceKHR CreateSurface(VkInstance instance)
@@ -61,19 +61,19 @@ namespace Veldrid.Vk
 
         internal override SwapchainSource GetSurfaceSource()
         {
-            return new Win32SwapchainSource(_hwnd, _hinstance);
+            return new Win32SwapchainSource(hwnd, hinstance);
         }
     }
 
     internal class XlibVkSurfaceInfo : VkSurfaceSource
     {
-        private readonly unsafe Display* _display;
-        private readonly Window _window;
+        private readonly unsafe Display* display;
+        private readonly Window window;
 
         public unsafe XlibVkSurfaceInfo(Display* display, Window window)
         {
-            _display = display;
-            _window = window;
+            this.display = display;
+            this.window = window;
         }
 
         public override VkSurfaceKHR CreateSurface(VkInstance instance)
@@ -83,7 +83,7 @@ namespace Veldrid.Vk
 
         internal override unsafe SwapchainSource GetSurfaceSource()
         {
-            return new XlibSwapchainSource((IntPtr)_display, _window.Value);
+            return new XlibSwapchainSource((IntPtr)display, window.Value);
         }
     }
 }

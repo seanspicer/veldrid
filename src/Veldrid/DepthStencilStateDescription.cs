@@ -117,7 +117,7 @@ namespace Veldrid
         ///     DepthWriteEnabled = true
         ///     ComparisonKind = DepthComparisonKind.LessEqual
         /// </summary>
-        public static readonly DepthStencilStateDescription DepthOnlyLessEqual = new DepthStencilStateDescription
+        public static readonly DepthStencilStateDescription DEPTH_ONLY_LESS_EQUAL = new DepthStencilStateDescription
         {
             DepthTestEnabled = true,
             DepthWriteEnabled = true,
@@ -133,7 +133,7 @@ namespace Veldrid
         ///     DepthWriteEnabled = false
         ///     ComparisonKind = DepthComparisonKind.LessEqual
         /// </summary>
-        public static readonly DepthStencilStateDescription DepthOnlyLessEqualRead = new DepthStencilStateDescription
+        public static readonly DepthStencilStateDescription DEPTH_ONLY_LESS_EQUAL_READ = new DepthStencilStateDescription
         {
             DepthTestEnabled = true,
             DepthWriteEnabled = false,
@@ -148,7 +148,7 @@ namespace Veldrid
         ///     DepthWriteEnabled = true
         ///     ComparisonKind = DepthComparisonKind.GreaterEqual
         /// </summary>
-        public static readonly DepthStencilStateDescription DepthOnlyGreaterEqual = new DepthStencilStateDescription
+        public static readonly DepthStencilStateDescription DEPTH_ONLY_GREATER_EQUAL = new DepthStencilStateDescription
         {
             DepthTestEnabled = true,
             DepthWriteEnabled = true,
@@ -163,7 +163,7 @@ namespace Veldrid
         ///     DepthWriteEnabled = false
         ///     ComparisonKind = DepthComparisonKind.GreaterEqual
         /// </summary>
-        public static readonly DepthStencilStateDescription DepthOnlyGreaterEqualRead = new DepthStencilStateDescription
+        public static readonly DepthStencilStateDescription DEPTH_ONLY_GREATER_EQUAL_READ = new DepthStencilStateDescription
         {
             DepthTestEnabled = true,
             DepthWriteEnabled = false,
@@ -178,7 +178,7 @@ namespace Veldrid
         ///     DepthWriteEnabled = false
         ///     ComparisonKind = DepthComparisonKind.LessEqual
         /// </summary>
-        public static readonly DepthStencilStateDescription Disabled = new DepthStencilStateDescription
+        public static readonly DepthStencilStateDescription DISABLED = new DepthStencilStateDescription
         {
             DepthTestEnabled = false,
             DepthWriteEnabled = false,

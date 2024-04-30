@@ -15,13 +15,13 @@ namespace Veldrid
     {
         public ReadOnlyCollection<MTLFeatureSet> FeatureSet { get; }
 
-        public MTLFeatureSet MaxFeatureSet => _gd.MetalFeatures.MaxFeatureSet;
-        private readonly MTLGraphicsDevice _gd;
+        public MTLFeatureSet MaxFeatureSet => gd.MetalFeatures.MaxFeatureSet;
+        private readonly MtlGraphicsDevice gd;
 
-        internal BackendInfoMetal(MTLGraphicsDevice gd)
+        internal BackendInfoMetal(MtlGraphicsDevice gd)
         {
-            _gd = gd;
-            FeatureSet = new ReadOnlyCollection<MTLFeatureSet>(_gd.MetalFeatures.ToArray());
+            this.gd = gd;
+            FeatureSet = new ReadOnlyCollection<MTLFeatureSet>(this.gd.MetalFeatures.ToArray());
         }
     }
 }

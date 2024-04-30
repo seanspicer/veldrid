@@ -5,19 +5,19 @@ namespace Veldrid.OpenGL
 {
     internal class OpenGLExtensions : IReadOnlyCollection<string>
     {
-        public int Count => _extensions.Count;
+        public int Count => extensions.Count;
 
-        public readonly bool ARB_DirectStateAccess;
-        public readonly bool ARB_MultiBind;
-        public readonly bool ARB_TextureView;
-        public readonly bool ARB_DebugOutput;
-        public readonly bool KHR_Debug;
-        public readonly bool ARB_ViewportArray;
-        public readonly bool ARB_ClipControl;
-        public readonly bool EXT_sRGBWriteControl;
-        public readonly bool EXT_DebugMarker;
-        public readonly bool ARB_GpuShaderFp64;
-        public readonly bool ARB_uniform_buffer_object;
+        public readonly bool ArbDirectStateAccess;
+        public readonly bool ArbMultiBind;
+        public readonly bool ArbTextureView;
+        public readonly bool ArbDebugOutput;
+        public readonly bool KhrDebug;
+        public readonly bool ArbViewportArray;
+        public readonly bool ArbClipControl;
+        public readonly bool ExtSRGBWriteControl;
+        public readonly bool ExtDebugMarker;
+        public readonly bool ArbGpuShaderFp64;
+        public readonly bool ArbUniformBufferObject;
 
         // Differs between GL / GLES
         public readonly bool TextureStorage;
@@ -33,36 +33,36 @@ namespace Veldrid.OpenGL
         public readonly bool MultiDrawIndirect;
         public readonly bool StorageBuffers;
         public readonly bool AnisotropicFilter;
-        private readonly HashSet<string> _extensions;
-        private readonly GraphicsBackend _backend;
-        private readonly int _major;
-        private readonly int _minor;
+        private readonly HashSet<string> extensions;
+        private readonly GraphicsBackend backend;
+        private readonly int major;
+        private readonly int minor;
 
         internal OpenGLExtensions(HashSet<string> extensions, GraphicsBackend backend, int major, int minor)
         {
-            _extensions = extensions;
-            _backend = backend;
-            _major = major;
-            _minor = minor;
+            this.extensions = extensions;
+            this.backend = backend;
+            this.major = major;
+            this.minor = minor;
 
             TextureStorage = IsExtensionSupported("GL_ARB_texture_storage") // OpenGL 4.2 / 4.3 (multisampled)
                              || GLESVersion(3, 0);
             TextureStorageMultisample = IsExtensionSupported("GL_ARB_texture_storage_multisample")
                                         || GLESVersion(3, 1);
-            ARB_DirectStateAccess = IsExtensionSupported("GL_ARB_direct_state_access");
-            ARB_MultiBind = IsExtensionSupported("GL_ARB_multi_bind");
-            ARB_TextureView = GLVersion(4, 3) || IsExtensionSupported("GL_ARB_texture_view") // OpenGL 4.3
+            ArbDirectStateAccess = IsExtensionSupported("GL_ARB_direct_state_access");
+            ArbMultiBind = IsExtensionSupported("GL_ARB_multi_bind");
+            ArbTextureView = GLVersion(4, 3) || IsExtensionSupported("GL_ARB_texture_view") // OpenGL 4.3
                                               || IsExtensionSupported("GL_OES_texture_view");
             CopyImage = IsExtensionSupported("GL_ARB_copy_image")
                         || GLESVersion(3, 2)
                         || IsExtensionSupported("GL_OES_copy_image")
                         || IsExtensionSupported("GL_EXT_copy_image");
-            ARB_DebugOutput = IsExtensionSupported("GL_ARB_debug_output");
-            KHR_Debug = IsExtensionSupported("GL_KHR_debug");
+            ArbDebugOutput = IsExtensionSupported("GL_ARB_debug_output");
+            KhrDebug = IsExtensionSupported("GL_KHR_debug");
 
             ComputeShaders = IsExtensionSupported("GL_ARB_compute_shader") || GLESVersion(3, 1);
 
-            ARB_ViewportArray = IsExtensionSupported("GL_ARB_viewport_array") || GLVersion(4, 1);
+            ArbViewportArray = IsExtensionSupported("GL_ARB_viewport_array") || GLVersion(4, 1);
             TessellationShader = IsExtensionSupported("GL_ARB_tessellation_shader") || GLVersion(4, 0)
                                                                                     || IsExtensionSupported("GL_OES_tessellation_shader");
             GeometryShader = IsExtensionSupported("GL_ARB_geometry_shader4") || GLVersion(3, 2)
@@ -81,13 +81,13 @@ namespace Veldrid.OpenGL
             StorageBuffers = GLVersion(4, 3) || IsExtensionSupported("GL_ARB_shader_storage_buffer_object")
                                              || GLESVersion(3, 1);
 
-            ARB_ClipControl = GLVersion(4, 5) || IsExtensionSupported("GL_ARB_clip_control");
-            EXT_sRGBWriteControl = _backend == GraphicsBackend.OpenGLES && IsExtensionSupported("GL_EXT_sRGB_write_control");
-            EXT_DebugMarker = _backend == GraphicsBackend.OpenGLES && IsExtensionSupported("GL_EXT_debug_marker");
+            ArbClipControl = GLVersion(4, 5) || IsExtensionSupported("GL_ARB_clip_control");
+            ExtSRGBWriteControl = this.backend == GraphicsBackend.OpenGLES && IsExtensionSupported("GL_EXT_sRGB_write_control");
+            ExtDebugMarker = this.backend == GraphicsBackend.OpenGLES && IsExtensionSupported("GL_EXT_debug_marker");
 
-            ARB_GpuShaderFp64 = GLVersion(4, 0) || IsExtensionSupported("GL_ARB_gpu_shader_fp64");
+            ArbGpuShaderFp64 = GLVersion(4, 0) || IsExtensionSupported("GL_ARB_gpu_shader_fp64");
 
-            ARB_uniform_buffer_object = IsExtensionSupported("GL_ARB_uniform_buffer_object");
+            ArbUniformBufferObject = IsExtensionSupported("GL_ARB_uniform_buffer_object");
 
             AnisotropicFilter = IsExtensionSupported("GL_EXT_texture_filter_anisotropic") || IsExtensionSupported("GL_ARB_texture_filter_anisotropic");
         }
@@ -99,16 +99,16 @@ namespace Veldrid.OpenGL
         /// <returns></returns>
         public bool IsExtensionSupported(string extension)
         {
-            return _extensions.Contains(extension);
+            return extensions.Contains(extension);
         }
 
         public bool GLVersion(int major, int minor)
         {
-            if (_backend == GraphicsBackend.OpenGL)
+            if (backend == GraphicsBackend.OpenGL)
             {
-                if (_major > major)
+                if (this.major > major)
                     return true;
-                return _major == major && _minor >= minor;
+                return this.major == major && this.minor >= minor;
             }
 
             return false;
@@ -116,11 +116,11 @@ namespace Veldrid.OpenGL
 
         public bool GLESVersion(int major, int minor)
         {
-            if (_backend == GraphicsBackend.OpenGLES)
+            if (backend == GraphicsBackend.OpenGLES)
             {
-                if (_major > major)
+                if (this.major > major)
                     return true;
-                return _major == major && _minor >= minor;
+                return this.major == major && this.minor >= minor;
             }
 
             return false;
@@ -128,7 +128,7 @@ namespace Veldrid.OpenGL
 
         public IEnumerator<string> GetEnumerator()
         {
-            return _extensions.GetEnumerator();
+            return extensions.GetEnumerator();
         }
 
         IEnumerator IEnumerable.GetEnumerator()

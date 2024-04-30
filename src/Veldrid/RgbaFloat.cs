@@ -9,27 +9,27 @@ namespace Veldrid
     /// </summary>
     public struct RgbaFloat : IEquatable<RgbaFloat>
     {
-        private readonly Vector4 _channels;
+        private readonly Vector4 channels;
 
         /// <summary>
         ///     The red component.
         /// </summary>
-        public float R => _channels.X;
+        public float R => channels.X;
 
         /// <summary>
         ///     The green component.
         /// </summary>
-        public float G => _channels.Y;
+        public float G => channels.Y;
 
         /// <summary>
         ///     The blue component.
         /// </summary>
-        public float B => _channels.Z;
+        public float B => channels.Z;
 
         /// <summary>
         ///     The alpha component.
         /// </summary>
-        public float A => _channels.W;
+        public float A => channels.W;
 
         /// <summary>
         ///     Constructs a new RgbaFloat from the given components.
@@ -40,7 +40,7 @@ namespace Veldrid
         /// <param name="a">The alpha component.</param>
         public RgbaFloat(float r, float g, float b, float a)
         {
-            _channels = new Vector4(r, g, b, a);
+            channels = new Vector4(r, g, b, a);
         }
 
         /// <summary>
@@ -49,83 +49,83 @@ namespace Veldrid
         /// <param name="channels">The vector containing the color components.</param>
         public RgbaFloat(Vector4 channels)
         {
-            _channels = channels;
+            this.channels = channels;
         }
 
         /// <summary>
         ///     The total size, in bytes, of an RgbaFloat value.
         /// </summary>
-        public static readonly int SizeInBytes = 16;
+        public static readonly int SIZE_IN_BYTES = 16;
 
         /// <summary>
         ///     Red (1, 0, 0, 1)
         /// </summary>
-        public static readonly RgbaFloat Red = new RgbaFloat(1, 0, 0, 1);
+        public static readonly RgbaFloat RED = new RgbaFloat(1, 0, 0, 1);
 
         /// <summary>
         ///     Dark Red (0.6f, 0, 0, 1)
         /// </summary>
-        public static readonly RgbaFloat DarkRed = new RgbaFloat(0.6f, 0, 0, 1);
+        public static readonly RgbaFloat DARK_RED = new RgbaFloat(0.6f, 0, 0, 1);
 
         /// <summary>
         ///     Green (0, 1, 0, 1)
         /// </summary>
-        public static readonly RgbaFloat Green = new RgbaFloat(0, 1, 0, 1);
+        public static readonly RgbaFloat GREEN = new RgbaFloat(0, 1, 0, 1);
 
         /// <summary>
         ///     Blue (0, 0, 1, 1)
         /// </summary>
-        public static readonly RgbaFloat Blue = new RgbaFloat(0, 0, 1, 1);
+        public static readonly RgbaFloat BLUE = new RgbaFloat(0, 0, 1, 1);
 
         /// <summary>
         ///     Yellow (1, 1, 0, 1)
         /// </summary>
-        public static readonly RgbaFloat Yellow = new RgbaFloat(1, 1, 0, 1);
+        public static readonly RgbaFloat YELLOW = new RgbaFloat(1, 1, 0, 1);
 
         /// <summary>
         ///     Grey (0.25f, 0.25f, 0.25f, 1)
         /// </summary>
-        public static readonly RgbaFloat Grey = new RgbaFloat(.25f, .25f, .25f, 1);
+        public static readonly RgbaFloat GREY = new RgbaFloat(.25f, .25f, .25f, 1);
 
         /// <summary>
         ///     Light Grey (0.65f, 0.65f, 0.65f, 1)
         /// </summary>
-        public static readonly RgbaFloat LightGrey = new RgbaFloat(.65f, .65f, .65f, 1);
+        public static readonly RgbaFloat LIGHT_GREY = new RgbaFloat(.65f, .65f, .65f, 1);
 
         /// <summary>
         ///     Cyan (0, 1, 1, 1)
         /// </summary>
-        public static readonly RgbaFloat Cyan = new RgbaFloat(0, 1, 1, 1);
+        public static readonly RgbaFloat CYAN = new RgbaFloat(0, 1, 1, 1);
 
         /// <summary>
         ///     White (1, 1, 1, 1)
         /// </summary>
-        public static readonly RgbaFloat White = new RgbaFloat(1, 1, 1, 1);
+        public static readonly RgbaFloat WHITE = new RgbaFloat(1, 1, 1, 1);
 
         /// <summary>
         ///     Cornflower Blue (0.3921f, 0.5843f, 0.9294f, 1)
         /// </summary>
-        public static readonly RgbaFloat CornflowerBlue = new RgbaFloat(0.3921f, 0.5843f, 0.9294f, 1);
+        public static readonly RgbaFloat CORNFLOWER_BLUE = new RgbaFloat(0.3921f, 0.5843f, 0.9294f, 1);
 
         /// <summary>
         ///     Clear (0, 0, 0, 0)
         /// </summary>
-        public static readonly RgbaFloat Clear = new RgbaFloat(0, 0, 0, 0);
+        public static readonly RgbaFloat CLEAR = new RgbaFloat(0, 0, 0, 0);
 
         /// <summary>
         ///     Black (0, 0, 0, 1)
         /// </summary>
-        public static readonly RgbaFloat Black = new RgbaFloat(0, 0, 0, 1);
+        public static readonly RgbaFloat BLACK = new RgbaFloat(0, 0, 0, 1);
 
         /// <summary>
         ///     Pink (1, 0.45f, 0.75f, 1)
         /// </summary>
-        public static readonly RgbaFloat Pink = new RgbaFloat(1f, 0.45f, 0.75f, 1);
+        public static readonly RgbaFloat PINK = new RgbaFloat(1f, 0.45f, 0.75f, 1);
 
         /// <summary>
         ///     Orange (1, 0.36f, 0, 1)
         /// </summary>
-        public static readonly RgbaFloat Orange = new RgbaFloat(1f, 0.36f, 0f, 1);
+        public static readonly RgbaFloat ORANGE = new RgbaFloat(1f, 0.36f, 0f, 1);
 
         /// <summary>
         ///     Converts this RgbaFloat into a Vector4.
@@ -134,7 +134,7 @@ namespace Veldrid
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vector4 ToVector4()
         {
-            return _channels;
+            return channels;
         }
 
         /// <summary>
@@ -145,7 +145,7 @@ namespace Veldrid
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Equals(RgbaFloat other)
         {
-            return _channels.Equals(other._channels);
+            return channels.Equals(other.channels);
         }
 
         /// <summary>

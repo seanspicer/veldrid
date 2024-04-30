@@ -7,25 +7,25 @@
         public int TextureCount { get; }
         public int SamplerCount { get; }
 
-        public override bool IsDisposed => _disposed;
+        public override bool IsDisposed => disposed;
 
         public override string Name { get; set; }
 
-        private readonly ResourceBindingInfo[] _bindingInfosByVdIndex;
-        private bool _disposed;
+        private readonly ResourceBindingInfo[] bindingInfosByVdIndex;
+        private bool disposed;
 
         public D3D11ResourceLayout(ref ResourceLayoutDescription description)
             : base(ref description)
         {
             var elements = description.Elements;
-            _bindingInfosByVdIndex = new ResourceBindingInfo[elements.Length];
+            bindingInfosByVdIndex = new ResourceBindingInfo[elements.Length];
 
             int cbIndex = 0;
             int texIndex = 0;
             int samplerIndex = 0;
             int unorderedAccessIndex = 0;
 
-            for (int i = 0; i < _bindingInfosByVdIndex.Length; i++)
+            for (int i = 0; i < bindingInfosByVdIndex.Length; i++)
             {
                 int slot;
 
@@ -58,7 +58,7 @@
                     default: throw Illegal.Value<ResourceKind>();
                 }
 
-                _bindingInfosByVdIndex[i] = new ResourceBindingInfo(
+                bindingInfosByVdIndex[i] = new ResourceBindingInfo(
                     slot,
                     elements[i].Stages,
                     elements[i].Kind,
@@ -75,21 +75,21 @@
 
         public override void Dispose()
         {
-            _disposed = true;
+            disposed = true;
         }
 
         #endregion
 
         public ResourceBindingInfo GetDeviceSlotIndex(int resourceLayoutIndex)
         {
-            if (resourceLayoutIndex >= _bindingInfosByVdIndex.Length) throw new VeldridException($"Invalid resource index: {resourceLayoutIndex}. Maximum is: {_bindingInfosByVdIndex.Length - 1}.");
+            if (resourceLayoutIndex >= bindingInfosByVdIndex.Length) throw new VeldridException($"Invalid resource index: {resourceLayoutIndex}. Maximum is: {bindingInfosByVdIndex.Length - 1}.");
 
-            return _bindingInfosByVdIndex[resourceLayoutIndex];
+            return bindingInfosByVdIndex[resourceLayoutIndex];
         }
 
         public bool IsDynamicBuffer(int index)
         {
-            return _bindingInfosByVdIndex[index].DynamicBuffer;
+            return bindingInfosByVdIndex[index].DynamicBuffer;
         }
 
         internal struct ResourceBindingInfo

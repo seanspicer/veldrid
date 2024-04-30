@@ -58,44 +58,44 @@ namespace Veldrid
 
         /// <summary>
         ///     Describes a blend state in which a single color target is blended with
-        ///     <see cref="BlendAttachmentDescription.OverrideBlend" />.
+        ///     <see cref="BlendAttachmentDescription.OVERRIDE_BLEND" />.
         /// </summary>
-        public static readonly BlendStateDescription SingleOverrideBlend = new BlendStateDescription
+        public static readonly BlendStateDescription SINGLE_OVERRIDE_BLEND = new BlendStateDescription
         {
-            AttachmentStates = new[] { BlendAttachmentDescription.OverrideBlend }
+            AttachmentStates = new[] { BlendAttachmentDescription.OVERRIDE_BLEND }
         };
 
         /// <summary>
         ///     Describes a blend state in which a single color target is blended with
-        ///     <see cref="BlendAttachmentDescription.AlphaBlend" />.
+        ///     <see cref="BlendAttachmentDescription.ALPHA_BLEND" />.
         /// </summary>
-        public static readonly BlendStateDescription SingleAlphaBlend = new BlendStateDescription
+        public static readonly BlendStateDescription SINGLE_ALPHA_BLEND = new BlendStateDescription
         {
-            AttachmentStates = new[] { BlendAttachmentDescription.AlphaBlend }
+            AttachmentStates = new[] { BlendAttachmentDescription.ALPHA_BLEND }
         };
 
         /// <summary>
         ///     Describes a blend state in which a single color target is blended with
-        ///     <see cref="BlendAttachmentDescription.AdditiveBlend" />.
+        ///     <see cref="BlendAttachmentDescription.ADDITIVE_BLEND" />.
         /// </summary>
-        public static readonly BlendStateDescription SingleAdditiveBlend = new BlendStateDescription
+        public static readonly BlendStateDescription SINGLE_ADDITIVE_BLEND = new BlendStateDescription
         {
-            AttachmentStates = new[] { BlendAttachmentDescription.AdditiveBlend }
+            AttachmentStates = new[] { BlendAttachmentDescription.ADDITIVE_BLEND }
         };
 
         /// <summary>
         ///     Describes a blend state in which a single color target is blended with
-        ///     <see cref="BlendAttachmentDescription.Disabled" />.
+        ///     <see cref="BlendAttachmentDescription.DISABLED" />.
         /// </summary>
-        public static readonly BlendStateDescription SingleDisabled = new BlendStateDescription
+        public static readonly BlendStateDescription SINGLE_DISABLED = new BlendStateDescription
         {
-            AttachmentStates = new[] { BlendAttachmentDescription.Disabled }
+            AttachmentStates = new[] { BlendAttachmentDescription.DISABLED }
         };
 
         /// <summary>
         ///     Describes an empty blend state in which no color targets are used.
         /// </summary>
-        public static readonly BlendStateDescription Empty = new BlendStateDescription
+        public static readonly BlendStateDescription EMPTY = new BlendStateDescription
         {
             AttachmentStates = Array.Empty<BlendAttachmentDescription>()
         };

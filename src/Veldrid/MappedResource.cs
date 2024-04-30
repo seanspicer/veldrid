@@ -4,14 +4,14 @@ using System.Runtime.CompilerServices;
 namespace Veldrid
 {
     /// <summary>
-    ///     A structure describing the layout of a mapped <see cref="MappableResource" /> object.
+    ///     A structure describing the layout of a mapped <see cref="IMappableResource" /> object.
     /// </summary>
     public struct MappedResource
     {
         /// <summary>
         ///     The resource which has been mapped.
         /// </summary>
-        public readonly MappableResource Resource;
+        public readonly IMappableResource Resource;
 
         /// <summary>
         ///     Identifies the <see cref="MapMode" /> that was used to map the resource.
@@ -47,7 +47,7 @@ namespace Veldrid
         public readonly uint DepthPitch;
 
         internal MappedResource(
-            MappableResource resource,
+            IMappableResource resource,
             MapMode mode,
             IntPtr data,
             uint sizeInBytes,
@@ -64,7 +64,7 @@ namespace Veldrid
             DepthPitch = depthPitch;
         }
 
-        internal MappedResource(MappableResource resource, MapMode mode, IntPtr data, uint sizeInBytes)
+        internal MappedResource(IMappableResource resource, MapMode mode, IntPtr data, uint sizeInBytes)
         {
             Resource = resource;
             Mode = mode;
@@ -85,7 +85,7 @@ namespace Veldrid
     /// <typeparam name="T">The blittable value type which mapped data is viewed as.</typeparam>
     public unsafe struct MappedResourceView<T> where T : struct
     {
-        private static readonly int s_sizeofT = Unsafe.SizeOf<T>();
+        private static readonly int s_sizeof_t = Unsafe.SizeOf<T>();
 
         /// <summary>
         ///     The <see cref="MappedResource" /> that this instance views.
@@ -111,7 +111,7 @@ namespace Veldrid
         {
             MappedResource = rawResource;
             SizeInBytes = rawResource.SizeInBytes;
-            Count = (int)(SizeInBytes / s_sizeofT);
+            Count = (int)(SizeInBytes / s_sizeof_t);
         }
 
         /// <summary>
@@ -129,7 +129,7 @@ namespace Veldrid
                         $"Given index ({index}) must be non-negative and less than Count ({Count}).");
                 }
 
-                byte* ptr = (byte*)MappedResource.Data + index * s_sizeofT;
+                byte* ptr = (byte*)MappedResource.Data + index * s_sizeof_t;
                 return ref Unsafe.AsRef<T>(ptr);
             }
         }
@@ -149,7 +149,7 @@ namespace Veldrid
                         $"Given index ({index}) must be less than Count ({Count}).");
                 }
 
-                byte* ptr = (byte*)MappedResource.Data + index * s_sizeofT;
+                byte* ptr = (byte*)MappedResource.Data + index * s_sizeof_t;
                 return ref Unsafe.AsRef<T>(ptr);
             }
         }
@@ -164,7 +164,7 @@ namespace Veldrid
         {
             get
             {
-                byte* ptr = (byte*)MappedResource.Data + y * MappedResource.RowPitch + x * s_sizeofT;
+                byte* ptr = (byte*)MappedResource.Data + y * MappedResource.RowPitch + x * s_sizeof_t;
                 return ref Unsafe.AsRef<T>(ptr);
             }
         }
@@ -179,7 +179,7 @@ namespace Veldrid
         {
             get
             {
-                byte* ptr = (byte*)MappedResource.Data + y * MappedResource.RowPitch + x * s_sizeofT;
+                byte* ptr = (byte*)MappedResource.Data + y * MappedResource.RowPitch + x * s_sizeof_t;
                 return ref Unsafe.AsRef<T>(ptr);
             }
         }
@@ -198,7 +198,7 @@ namespace Veldrid
                 byte* ptr = (byte*)MappedResource.Data
                             + z * MappedResource.DepthPitch
                             + y * MappedResource.RowPitch
-                            + x * s_sizeofT;
+                            + x * s_sizeof_t;
                 return ref Unsafe.AsRef<T>(ptr);
             }
         }
@@ -217,7 +217,7 @@ namespace Veldrid
                 byte* ptr = (byte*)MappedResource.Data
                             + z * MappedResource.DepthPitch
                             + y * MappedResource.RowPitch
-                            + x * s_sizeofT;
+                            + x * s_sizeof_t;
                 return ref Unsafe.AsRef<T>(ptr);
             }
         }

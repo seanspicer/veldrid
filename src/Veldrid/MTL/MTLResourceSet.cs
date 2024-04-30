@@ -1,27 +1,27 @@
 namespace Veldrid.MTL
 {
-    internal class MTLResourceSet : ResourceSet
+    internal class MtlResourceSet : ResourceSet
     {
-        public new BindableResource[] Resources { get; }
-        public new MTLResourceLayout Layout { get; }
+        public new IBindableResource[] Resources { get; }
+        public new MtlResourceLayout Layout { get; }
 
-        public override bool IsDisposed => _disposed;
+        public override bool IsDisposed => disposed;
 
         public override string Name { get; set; }
-        private bool _disposed;
+        private bool disposed;
 
-        public MTLResourceSet(ref ResourceSetDescription description, MTLGraphicsDevice gd)
+        public MtlResourceSet(ref ResourceSetDescription description, MtlGraphicsDevice gd)
             : base(ref description)
         {
             Resources = Util.ShallowClone(description.BoundResources);
-            Layout = Util.AssertSubtype<ResourceLayout, MTLResourceLayout>(description.Layout);
+            Layout = Util.AssertSubtype<ResourceLayout, MtlResourceLayout>(description.Layout);
         }
 
         #region Disposal
 
         public override void Dispose()
         {
-            _disposed = true;
+            disposed = true;
         }
 
         #endregion

@@ -7,9 +7,9 @@ namespace Veldrid.Vk
 {
     internal unsafe class FixedUtf8String : IDisposable
     {
-        public byte* StringPtr => (byte*)_handle.AddrOfPinnedObject().ToPointer();
-        private GCHandle _handle;
-        private readonly uint _numBytes;
+        public byte* StringPtr => (byte*)handle.AddrOfPinnedObject().ToPointer();
+        private GCHandle handle;
+        private readonly uint numBytes;
 
         public FixedUtf8String(string s)
         {
@@ -17,8 +17,8 @@ namespace Veldrid.Vk
 
             int byteCount = Encoding.UTF8.GetByteCount(s);
             byte[] text = new byte[byteCount + 1];
-            _handle = GCHandle.Alloc(text, GCHandleType.Pinned);
-            _numBytes = (uint)text.Length - 1; // Includes null terminator
+            handle = GCHandle.Alloc(text, GCHandleType.Pinned);
+            numBytes = (uint)text.Length - 1; // Includes null terminator
             int encodedCount = Encoding.UTF8.GetBytes(s, 0, s.Length, text, 0);
             Debug.Assert(encodedCount == byteCount);
         }
@@ -27,7 +27,7 @@ namespace Veldrid.Vk
 
         public void Dispose()
         {
-            _handle.Free();
+            handle.Free();
         }
 
         #endregion
@@ -49,17 +49,17 @@ namespace Veldrid.Vk
 
         public static implicit operator string(FixedUtf8String utf8String)
         {
-            return utf8String.GetString();
+            return utf8String.getString();
         }
 
         public override string ToString()
         {
-            return GetString();
+            return getString();
         }
 
-        private string GetString()
+        private string getString()
         {
-            return Encoding.UTF8.GetString(StringPtr, (int)_numBytes);
+            return Encoding.UTF8.GetString(StringPtr, (int)numBytes);
         }
     }
 }

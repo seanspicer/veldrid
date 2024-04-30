@@ -8,10 +8,10 @@ namespace Veldrid.D3D11
         public ManualResetEvent ResetEvent { get; }
 
         public override bool Signaled => ResetEvent.WaitOne(0);
-        public override bool IsDisposed => _disposed;
+        public override bool IsDisposed => disposed;
 
         public override string Name { get; set; }
-        private bool _disposed;
+        private bool disposed;
 
         public D3D11Fence(bool signaled)
         {
@@ -22,10 +22,10 @@ namespace Veldrid.D3D11
 
         public override void Dispose()
         {
-            if (!_disposed)
+            if (!disposed)
             {
                 ResetEvent.Dispose();
-                _disposed = true;
+                disposed = true;
             }
         }
 

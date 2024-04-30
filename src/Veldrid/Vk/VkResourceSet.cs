@@ -6,7 +6,7 @@ namespace Veldrid.Vk
 {
     internal unsafe class VkResourceSet : ResourceSet
     {
-        public VkDescriptorSet DescriptorSet => _descriptorAllocationToken.Set;
+        public VkDescriptorSet DescriptorSet => descriptorAllocationToken.Set;
         public List<VkTexture> SampledTextures { get; } = new List<VkTexture>();
 
         public List<VkTexture> StorageTextures { get; } = new List<VkTexture>();
@@ -14,35 +14,35 @@ namespace Veldrid.Vk
         public ResourceRefCount RefCount { get; }
         public List<ResourceRefCount> RefCounts { get; } = new List<ResourceRefCount>();
 
-        public override bool IsDisposed => _destroyed;
+        public override bool IsDisposed => destroyed;
 
         public override string Name
         {
-            get => _name;
+            get => name;
             set
             {
-                _name = value;
-                _gd.SetResourceName(this, value);
+                name = value;
+                gd.SetResourceName(this, value);
             }
         }
 
-        private readonly VkGraphicsDevice _gd;
-        private readonly DescriptorResourceCounts _descriptorCounts;
-        private readonly DescriptorAllocationToken _descriptorAllocationToken;
+        private readonly VkGraphicsDevice gd;
+        private readonly DescriptorResourceCounts descriptorCounts;
+        private readonly DescriptorAllocationToken descriptorAllocationToken;
 
-        private bool _destroyed;
-        private string _name;
+        private bool destroyed;
+        private string name;
 
         public VkResourceSet(VkGraphicsDevice gd, ref ResourceSetDescription description)
             : base(ref description)
         {
-            _gd = gd;
-            RefCount = new ResourceRefCount(DisposeCore);
+            this.gd = gd;
+            RefCount = new ResourceRefCount(disposeCore);
             var vkLayout = Util.AssertSubtype<ResourceLayout, VkResourceLayout>(description.Layout);
 
             var dsl = vkLayout.DescriptorSetLayout;
-            _descriptorCounts = vkLayout.DescriptorResourceCounts;
-            _descriptorAllocationToken = _gd.DescriptorPoolManager.Allocate(_descriptorCounts, dsl);
+            descriptorCounts = vkLayout.DescriptorResourceCounts;
+            descriptorAllocationToken = this.gd.DescriptorPoolManager.Allocate(descriptorCounts, dsl);
 
             var boundResources = description.BoundResources;
             uint descriptorWriteCount = (uint)boundResources.Length;
@@ -58,7 +58,7 @@ namespace Veldrid.Vk
                 descriptorWrites[i].descriptorCount = 1;
                 descriptorWrites[i].descriptorType = type;
                 descriptorWrites[i].dstBinding = (uint)i;
-                descriptorWrites[i].dstSet = _descriptorAllocationToken.Set;
+                descriptorWrites[i].dstSet = descriptorAllocationToken.Set;
 
                 if (type == VkDescriptorType.UniformBuffer || type == VkDescriptorType.UniformBufferDynamic
                                                            || type == VkDescriptorType.StorageBuffer || type == VkDescriptorType.StorageBufferDynamic)
@@ -73,7 +73,7 @@ namespace Veldrid.Vk
                 }
                 else if (type == VkDescriptorType.SampledImage)
                 {
-                    var texView = Util.GetTextureView(_gd, boundResources[i]);
+                    var texView = Util.GetTextureView(this.gd, boundResources[i]);
                     var vkTexView = Util.AssertSubtype<TextureView, VkTextureView>(texView);
                     imageInfos[i].imageView = vkTexView.ImageView;
                     imageInfos[i].imageLayout = VkImageLayout.ShaderReadOnlyOptimal;
@@ -83,7 +83,7 @@ namespace Veldrid.Vk
                 }
                 else if (type == VkDescriptorType.StorageImage)
                 {
-                    var texView = Util.GetTextureView(_gd, boundResources[i]);
+                    var texView = Util.GetTextureView(this.gd, boundResources[i]);
                     var vkTexView = Util.AssertSubtype<TextureView, VkTextureView>(texView);
                     imageInfos[i].imageView = vkTexView.ImageView;
                     imageInfos[i].imageLayout = VkImageLayout.General;
@@ -93,14 +93,14 @@ namespace Veldrid.Vk
                 }
                 else if (type == VkDescriptorType.Sampler)
                 {
-                    var sampler = Util.AssertSubtype<BindableResource, VkSampler>(boundResources[i]);
+                    var sampler = Util.AssertSubtype<IBindableResource, VkSampler>(boundResources[i]);
                     imageInfos[i].sampler = sampler.DeviceSampler;
                     descriptorWrites[i].pImageInfo = &imageInfos[i];
                     RefCounts.Add(sampler.RefCount);
                 }
             }
 
-            vkUpdateDescriptorSets(_gd.Device, descriptorWriteCount, descriptorWrites, 0, null);
+            vkUpdateDescriptorSets(this.gd.Device, descriptorWriteCount, descriptorWrites, 0, null);
         }
 
         #region Disposal
@@ -112,12 +112,12 @@ namespace Veldrid.Vk
 
         #endregion
 
-        private void DisposeCore()
+        private void disposeCore()
         {
-            if (!_destroyed)
+            if (!destroyed)
             {
-                _destroyed = true;
-                _gd.DescriptorPoolManager.Free(_descriptorAllocationToken, _descriptorCounts);
+                destroyed = true;
+                gd.DescriptorPoolManager.Free(descriptorAllocationToken, descriptorCounts);
             }
         }
     }

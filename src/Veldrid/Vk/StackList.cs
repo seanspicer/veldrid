@@ -10,10 +10,10 @@ namespace Veldrid.Vk
     /// <typeparam name="T">The type of element held in the list. Must be blittable.</typeparam>
     internal unsafe struct StackList<T> where T : struct
     {
-        public const int CapacityInBytes = 256;
-        private static readonly int s_sizeofT = Unsafe.SizeOf<T>();
+        public const int CAPACITY_IN_BYTES = 256;
+        private static readonly int s_sizeof_t = Unsafe.SizeOf<T>();
 
-        private fixed byte _storage[CapacityInBytes];
+        private fixed byte storage[CAPACITY_IN_BYTES];
 
         public uint Count { get; private set; }
 
@@ -22,9 +22,9 @@ namespace Veldrid.Vk
         public void Add(T item)
         {
             byte* basePtr = (byte*)Data;
-            int offset = (int)(Count * s_sizeofT);
+            int offset = (int)(Count * s_sizeof_t);
 #if DEBUG
-            Debug.Assert(offset + s_sizeofT <= CapacityInBytes);
+            Debug.Assert(offset + s_sizeof_t <= CAPACITY_IN_BYTES);
 #endif
             Unsafe.Write(basePtr + offset, item);
 
@@ -36,7 +36,7 @@ namespace Veldrid.Vk
             get
             {
                 byte* basePtr = (byte*)Unsafe.AsPointer(ref this);
-                int offset = (int)(index * s_sizeofT);
+                int offset = (int)(index * s_sizeof_t);
                 return ref Unsafe.AsRef<T>(basePtr + offset);
             }
         }
@@ -46,7 +46,7 @@ namespace Veldrid.Vk
             get
             {
                 byte* basePtr = (byte*)Unsafe.AsPointer(ref this);
-                int offset = index * s_sizeofT;
+                int offset = index * s_sizeof_t;
                 return ref Unsafe.AsRef<T>(basePtr + offset);
             }
         }
@@ -59,10 +59,10 @@ namespace Veldrid.Vk
     /// <typeparam name="TSize">A type parameter dictating the capacity of the list.</typeparam>
     internal unsafe struct StackList<T, TSize> where T : struct where TSize : struct
     {
-        private static readonly int s_sizeofT = Unsafe.SizeOf<T>();
+        private static readonly int s_sizeof_t = Unsafe.SizeOf<T>();
 
 #pragma warning disable 0169 // Unused field. This is used implicity because it controls the size of the structure on the stack.
-        private TSize _storage;
+        private TSize storage;
 #pragma warning restore 0169
 
         public uint Count { get; private set; }
@@ -71,10 +71,10 @@ namespace Veldrid.Vk
 
         public void Add(T item)
         {
-            ref var dest = ref Unsafe.Add(ref Unsafe.As<TSize, T>(ref _storage), (int)Count);
+            ref var dest = ref Unsafe.Add(ref Unsafe.As<TSize, T>(ref storage), (int)Count);
 #if DEBUG
-            int offset = (int)(Count * s_sizeofT);
-            Debug.Assert(offset + s_sizeofT <= Unsafe.SizeOf<TSize>());
+            int offset = (int)(Count * s_sizeof_t);
+            Debug.Assert(offset + s_sizeof_t <= Unsafe.SizeOf<TSize>());
 #endif
             dest = item;
 

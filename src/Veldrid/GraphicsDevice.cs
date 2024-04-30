@@ -93,10 +93,10 @@ namespace Veldrid
 
         /// <summary>
         ///     Gets a simple 4x anisotropic-filtered <see cref="Sampler" /> object owned by this instance.
-        ///     This object is created with <see cref="SamplerDescription.Aniso4x" />.
+        ///     This object is created with <see cref="SamplerDescription.ANISO4_X" />.
         ///     This property can only be used when <see cref="GraphicsDeviceFeatures.SamplerAnisotropy" /> is supported.
         /// </summary>
-        public Sampler Aniso4xSampler
+        public Sampler Aniso4XSampler
         {
             get
             {
@@ -106,8 +106,8 @@ namespace Veldrid
                         "GraphicsDevice.Aniso4xSampler cannot be used unless GraphicsDeviceFeatures.SamplerAnisotropy is supported.");
                 }
 
-                Debug.Assert(_aniso4xSampler != null);
-                return _aniso4xSampler;
+                Debug.Assert(aniso4XSampler != null);
+                return aniso4XSampler;
             }
         }
 
@@ -138,19 +138,19 @@ namespace Veldrid
 
         /// <summary>
         ///     Gets a simple point-filtered <see cref="Sampler" /> object owned by this instance.
-        ///     This object is created with <see cref="SamplerDescription.Point" />.
+        ///     This object is created with <see cref="SamplerDescription.POINT" />.
         /// </summary>
         public Sampler PointSampler { get; private set; }
 
         /// <summary>
         ///     Gets a simple linear-filtered <see cref="Sampler" /> object owned by this instance.
-        ///     This object is created with <see cref="SamplerDescription.Linear" />.
+        ///     This object is created with <see cref="SamplerDescription.LINEAR" />.
         /// </summary>
         public Sampler LinearSampler { get; private set; }
 
-        private readonly object _deferredDisposalLock = new object();
-        private readonly List<IDisposable> _disposables = new List<IDisposable>();
-        private Sampler _aniso4xSampler;
+        private readonly object deferredDisposalLock = new object();
+        private readonly List<IDisposable> disposables = new List<IDisposable>();
+        private Sampler aniso4XSampler;
 
         internal GraphicsDevice() { }
 
@@ -165,7 +165,7 @@ namespace Veldrid
             WaitForIdle();
             PointSampler.Dispose();
             LinearSampler.Dispose();
-            _aniso4xSampler?.Dispose();
+            aniso4XSampler?.Dispose();
             PlatformDispose();
         }
 
@@ -200,7 +200,7 @@ namespace Veldrid
 #endif
                 case GraphicsBackend.Metal:
 #if !EXCLUDE_METAL_BACKEND
-                    return MTLGraphicsDevice.IsSupported();
+                    return MtlGraphicsDevice.IsSupported();
 #else
                     return false;
 #endif
@@ -373,7 +373,7 @@ namespace Veldrid
         public void WaitForIdle()
         {
             WaitForIdleCore();
-            FlushDeferredDisposals();
+            flushDeferredDisposals();
         }
 
         /// <summary>
@@ -406,7 +406,7 @@ namespace Veldrid
         /// <param name="resource">The <see cref="DeviceBuffer" /> or <see cref="Texture" /> resource to map.</param>
         /// <param name="mode">The <see cref="MapMode" /> to use.</param>
         /// <returns>A <see cref="MappedResource" /> structure describing the mapped data region.</returns>
-        public MappedResource Map(MappableResource resource, MapMode mode)
+        public MappedResource Map(IMappableResource resource, MapMode mode)
         {
             return Map(resource, mode, 0);
         }
@@ -421,7 +421,7 @@ namespace Veldrid
         ///     For <see cref="DeviceBuffer" /> resources, this parameter must be 0.
         /// </param>
         /// <returns>A <see cref="MappedResource" /> structure describing the mapped data region.</returns>
-        public MappedResource Map(MappableResource resource, MapMode mode, uint subresource)
+        public MappedResource Map(IMappableResource resource, MapMode mode, uint subresource)
         {
 #if VALIDATE_USAGE
             if (resource is DeviceBuffer buffer)
@@ -462,7 +462,7 @@ namespace Veldrid
         /// <param name="mode">The <see cref="MapMode" /> to use.</param>
         /// <typeparam name="T">The blittable value type which mapped data is viewed as.</typeparam>
         /// <returns>A <see cref="MappedResource" /> structure describing the mapped data region.</returns>
-        public MappedResourceView<T> Map<T>(MappableResource resource, MapMode mode) where T : unmanaged
+        public MappedResourceView<T> Map<T>(IMappableResource resource, MapMode mode) where T : unmanaged
         {
             return Map<T>(resource, mode, 0);
         }
@@ -477,7 +477,7 @@ namespace Veldrid
         /// <param name="subresource">The subresource to map. Subresources are indexed first by mip slice, then by array layer.</param>
         /// <typeparam name="T">The blittable value type which mapped data is viewed as.</typeparam>
         /// <returns>A <see cref="MappedResource" /> structure describing the mapped data region.</returns>
-        public MappedResourceView<T> Map<T>(MappableResource resource, MapMode mode, uint subresource) where T : unmanaged
+        public MappedResourceView<T> Map<T>(IMappableResource resource, MapMode mode, uint subresource) where T : unmanaged
         {
             var mappedResource = Map(resource, mode, subresource);
             return new MappedResourceView<T>(mappedResource);
@@ -488,7 +488,7 @@ namespace Veldrid
         ///     For <see cref="Texture" /> resources, this unmaps the first subresource.
         /// </summary>
         /// <param name="resource">The resource to unmap.</param>
-        public void Unmap(MappableResource resource)
+        public void Unmap(IMappableResource resource)
         {
             Unmap(resource, 0);
         }
@@ -501,7 +501,7 @@ namespace Veldrid
         ///     The subresource to unmap. Subresources are indexed first by mip slice, then by array layer.
         ///     For <see cref="DeviceBuffer" /> resources, this parameter must be 0.
         /// </param>
-        public void Unmap(MappableResource resource, uint subresource)
+        public void Unmap(IMappableResource resource, uint subresource)
         {
             UnmapCore(resource, subresource);
         }
@@ -541,7 +541,7 @@ namespace Veldrid
             uint mipLevel, uint arrayLayer)
         {
 #if VALIDATE_USAGE
-            ValidateUpdateTextureParameters(texture, sizeInBytes, x, y, z, width, height, depth, mipLevel, arrayLayer);
+            validateUpdateTextureParameters(texture, sizeInBytes, x, y, z, width, height, depth, mipLevel, arrayLayer);
 #endif
             UpdateTextureCore(texture, source, sizeInBytes, x, y, z, width, height, depth, mipLevel, arrayLayer);
         }
@@ -609,7 +609,7 @@ namespace Veldrid
         {
             uint sizeInBytes = (uint)(sizeof(T) * source.Length);
 #if VALIDATE_USAGE
-            ValidateUpdateTextureParameters(texture, sizeInBytes, x, y, z, width, height, depth, mipLevel, arrayLayer);
+            validateUpdateTextureParameters(texture, sizeInBytes, x, y, z, width, height, depth, mipLevel, arrayLayer);
 #endif
 
             fixed (void* pin = &MemoryMarshal.GetReference(source))
@@ -850,7 +850,7 @@ namespace Veldrid
         /// <param name="disposable">An object to dispose when this instance becomes idle.</param>
         public void DisposeWhenIdle(IDisposable disposable)
         {
-            lock (_deferredDisposalLock) _disposables.Add(disposable);
+            lock (deferredDisposalLock) disposables.Add(disposable);
         }
 
         internal abstract uint GetUniformBufferMinOffsetAlignmentCore();
@@ -862,13 +862,13 @@ namespace Veldrid
         /// <param name="mode"></param>
         /// <param name="subresource"></param>
         /// <returns></returns>
-        protected abstract MappedResource MapCore(MappableResource resource, MapMode mode, uint subresource);
+        protected abstract MappedResource MapCore(IMappableResource resource, MapMode mode, uint subresource);
 
         /// <summary>
         /// </summary>
         /// <param name="resource"></param>
         /// <param name="subresource"></param>
-        protected abstract void UnmapCore(MappableResource resource, uint subresource);
+        protected abstract void UnmapCore(IMappableResource resource, uint subresource);
 
         /// <summary>
         ///     Performs API-specific disposal of resources controlled by this instance.
@@ -880,13 +880,13 @@ namespace Veldrid
         /// </summary>
         protected void PostDeviceCreated()
         {
-            PointSampler = ResourceFactory.CreateSampler(SamplerDescription.Point);
-            LinearSampler = ResourceFactory.CreateSampler(SamplerDescription.Linear);
-            if (Features.SamplerAnisotropy) _aniso4xSampler = ResourceFactory.CreateSampler(SamplerDescription.Aniso4x);
+            PointSampler = ResourceFactory.CreateSampler(SamplerDescription.POINT);
+            LinearSampler = ResourceFactory.CreateSampler(SamplerDescription.LINEAR);
+            if (Features.SamplerAnisotropy) aniso4XSampler = ResourceFactory.CreateSampler(SamplerDescription.ANISO4_X);
         }
 
         [Conditional("VALIDATE_USAGE")]
-        private static void ValidateUpdateTextureParameters(
+        private static void validateUpdateTextureParameters(
             Texture texture,
             uint sizeInBytes,
             uint x, uint y, uint z,
@@ -943,12 +943,12 @@ namespace Veldrid
             }
         }
 
-        private void FlushDeferredDisposals()
+        private void flushDeferredDisposals()
         {
-            lock (_deferredDisposalLock)
+            lock (deferredDisposalLock)
             {
-                foreach (var disposable in _disposables) disposable.Dispose();
-                _disposables.Clear();
+                foreach (var disposable in disposables) disposable.Dispose();
+                disposables.Clear();
             }
         }
 
@@ -1323,7 +1323,7 @@ namespace Veldrid
         /// <returns>A new <see cref="GraphicsDevice" /> using the Metal API.</returns>
         public static GraphicsDevice CreateMetal(GraphicsDeviceOptions options)
         {
-            return new MTLGraphicsDevice(options, null);
+            return new MtlGraphicsDevice(options, null);
         }
 
         /// <summary>
@@ -1334,7 +1334,7 @@ namespace Veldrid
         /// <returns>A new <see cref="GraphicsDevice" /> using the Metal API.</returns>
         public static GraphicsDevice CreateMetal(GraphicsDeviceOptions options, MetalDeviceOptions metalOptions)
         {
-            return new MTLGraphicsDevice(options, null, metalOptions);
+            return new MtlGraphicsDevice(options, null, metalOptions);
         }
 
         /// <summary>
@@ -1345,7 +1345,7 @@ namespace Veldrid
         /// <returns>A new <see cref="GraphicsDevice" /> using the Metal API.</returns>
         public static GraphicsDevice CreateMetal(GraphicsDeviceOptions options, SwapchainDescription swapchainDescription)
         {
-            return new MTLGraphicsDevice(options, swapchainDescription);
+            return new MtlGraphicsDevice(options, swapchainDescription);
         }
 
         /// <summary>
@@ -1357,7 +1357,7 @@ namespace Veldrid
         /// <returns>A new <see cref="GraphicsDevice" /> using the Metal API.</returns>
         public static GraphicsDevice CreateMetal(GraphicsDeviceOptions options, SwapchainDescription swapchainDescription, MetalDeviceOptions metalOptions)
         {
-            return new MTLGraphicsDevice(options, swapchainDescription, metalOptions);
+            return new MtlGraphicsDevice(options, swapchainDescription, metalOptions);
         }
 
         /// <summary>
@@ -1377,7 +1377,7 @@ namespace Veldrid
                 options.SyncToVerticalBlank,
                 options.SwapchainSrgbFormat);
 
-            return new MTLGraphicsDevice(options, swapchainDesc);
+            return new MtlGraphicsDevice(options, swapchainDesc);
         }
 
         /// <summary>
@@ -1398,7 +1398,7 @@ namespace Veldrid
                 options.SyncToVerticalBlank,
                 options.SwapchainSrgbFormat);
 
-            return new MTLGraphicsDevice(options, swapchainDesc, metalOptions);
+            return new MtlGraphicsDevice(options, swapchainDesc, metalOptions);
         }
 #endif
     }

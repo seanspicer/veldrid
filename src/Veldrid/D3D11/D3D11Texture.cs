@@ -24,20 +24,20 @@ namespace Veldrid.D3D11
 
         public override string Name
         {
-            get => _name;
+            get => name;
             set
             {
-                _name = value;
+                name = value;
                 DeviceTexture.DebugName = value;
             }
         }
 
-        private readonly ID3D11Device _device;
-        private string _name;
+        private readonly ID3D11Device device;
+        private string name;
 
         public D3D11Texture(ID3D11Device device, ref TextureDescription description)
         {
-            _device = device;
+            this.device = device;
             Width = description.Width;
             Height = description.Height;
             Depth = description.Depth;
@@ -151,7 +151,7 @@ namespace Veldrid.D3D11
 
         public D3D11Texture(ID3D11Texture2D existingTexture, TextureType type, PixelFormat format)
         {
-            _device = existingTexture.Device;
+            device = existingTexture.Device;
             DeviceTexture = existingTexture;
             Width = (uint)existingTexture.Description.Width;
             Height = (uint)existingTexture.Description.Height;
@@ -175,8 +175,8 @@ namespace Veldrid.D3D11
         private protected override TextureView CreateFullTextureView(GraphicsDevice gd)
         {
             var desc = new TextureViewDescription(this);
-            var d3d11GD = Util.AssertSubtype<GraphicsDevice, D3D11GraphicsDevice>(gd);
-            return new D3D11TextureView(d3d11GD, ref desc);
+            var d3d11Gd = Util.AssertSubtype<GraphicsDevice, D3D11GraphicsDevice>(gd);
+            return new D3D11TextureView(d3d11Gd, ref desc);
         }
 
         private protected override void DisposeCore()

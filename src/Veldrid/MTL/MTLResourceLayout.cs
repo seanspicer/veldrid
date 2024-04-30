@@ -1,9 +1,9 @@
 namespace Veldrid.MTL
 {
-    internal class MTLResourceLayout : ResourceLayout
+    internal class MtlResourceLayout : ResourceLayout
     {
-        private readonly ResourceBindingInfo[] _bindingInfosByVdIndex;
-        private bool _disposed;
+        private readonly ResourceBindingInfo[] bindingInfosByVdIndex;
+        private bool disposed;
         public uint BufferCount { get; }
         public uint TextureCount { get; }
         public uint SamplerCount { get; }
@@ -12,14 +12,14 @@ namespace Veldrid.MTL
 #endif
         public ResourceBindingInfo GetBindingInfo(int index)
         {
-            return _bindingInfosByVdIndex[index];
+            return bindingInfosByVdIndex[index];
         }
 
 #if !VALIDATE_USAGE
         public ResourceLayoutDescription Description { get; }
 #endif
 
-        public MTLResourceLayout(ref ResourceLayoutDescription description, MTLGraphicsDevice gd)
+        public MtlResourceLayout(ref ResourceLayoutDescription description, MtlGraphicsDevice gd)
             : base(ref description)
         {
 #if !VALIDATE_USAGE
@@ -35,13 +35,13 @@ namespace Veldrid.MTL
             }
 #endif
 
-            _bindingInfosByVdIndex = new ResourceBindingInfo[elements.Length];
+            bindingInfosByVdIndex = new ResourceBindingInfo[elements.Length];
 
             uint bufferIndex = 0;
             uint texIndex = 0;
             uint samplerIndex = 0;
 
-            for (int i = 0; i < _bindingInfosByVdIndex.Length; i++)
+            for (int i = 0; i < bindingInfosByVdIndex.Length; i++)
             {
                 uint slot;
 
@@ -74,7 +74,7 @@ namespace Veldrid.MTL
                     default: throw Illegal.Value<ResourceKind>();
                 }
 
-                _bindingInfosByVdIndex[i] = new ResourceBindingInfo(
+                bindingInfosByVdIndex[i] = new ResourceBindingInfo(
                     slot,
                     elements[i].Stages,
                     elements[i].Kind,
@@ -88,11 +88,11 @@ namespace Veldrid.MTL
 
         public override string Name { get; set; }
 
-        public override bool IsDisposed => _disposed;
+        public override bool IsDisposed => disposed;
 
         public override void Dispose()
         {
-            _disposed = true;
+            disposed = true;
         }
 
         internal struct ResourceBindingInfo

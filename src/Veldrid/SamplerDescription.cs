@@ -116,12 +116,12 @@ namespace Veldrid
         ///     MaximumLod = uint.MaxValue
         ///     MaximumAnisotropy = 0
         /// </summary>
-        public static readonly SamplerDescription Point = new SamplerDescription
+        public static readonly SamplerDescription POINT = new SamplerDescription
         {
             AddressModeU = SamplerAddressMode.Wrap,
             AddressModeV = SamplerAddressMode.Wrap,
             AddressModeW = SamplerAddressMode.Wrap,
-            Filter = SamplerFilter.MinPoint_MagPoint_MipPoint,
+            Filter = SamplerFilter.MinPointMagPointMipPoint,
             LodBias = 0,
             MinimumLod = 0,
             MaximumLod = uint.MaxValue,
@@ -140,12 +140,12 @@ namespace Veldrid
         ///     MaximumLod = uint.MaxValue
         ///     MaximumAnisotropy = 0
         /// </summary>
-        public static readonly SamplerDescription Linear = new SamplerDescription
+        public static readonly SamplerDescription LINEAR = new SamplerDescription
         {
             AddressModeU = SamplerAddressMode.Wrap,
             AddressModeV = SamplerAddressMode.Wrap,
             AddressModeW = SamplerAddressMode.Wrap,
-            Filter = SamplerFilter.MinLinear_MagLinear_MipLinear,
+            Filter = SamplerFilter.MinLinearMagLinearMipLinear,
             LodBias = 0,
             MinimumLod = 0,
             MaximumLod = uint.MaxValue,
@@ -164,7 +164,7 @@ namespace Veldrid
         ///     MaximumLod = uint.MaxValue
         ///     MaximumAnisotropy = 4
         /// </summary>
-        public static readonly SamplerDescription Aniso4x = new SamplerDescription
+        public static readonly SamplerDescription ANISO4_X = new SamplerDescription
         {
             AddressModeU = SamplerAddressMode.Wrap,
             AddressModeV = SamplerAddressMode.Wrap,

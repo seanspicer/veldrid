@@ -2,34 +2,34 @@ using Veldrid.MetalBindings;
 
 namespace Veldrid.MTL
 {
-    internal class MTLBuffer : DeviceBuffer
+    internal class MtlBuffer : DeviceBuffer
     {
         public override uint SizeInBytes { get; }
         public override BufferUsage Usage { get; }
 
         public uint ActualCapacity { get; }
 
-        public override bool IsDisposed => _disposed;
+        public override bool IsDisposed => disposed;
 
         public override string Name
         {
-            get => _name;
+            get => name;
             set
             {
-                var nameNSS = NSString.New(value);
-                DeviceBuffer.addDebugMarker(nameNSS, new NSRange(0, SizeInBytes));
-                ObjectiveCRuntime.release(nameNSS.NativePtr);
-                _name = value;
+                var nameNss = NSString.New(value);
+                DeviceBuffer.addDebugMarker(nameNss, new NSRange(0, SizeInBytes));
+                ObjectiveCRuntime.release(nameNss.NativePtr);
+                name = value;
             }
         }
 
         public MetalBindings.MTLBuffer DeviceBuffer { get; }
 
         public unsafe void* Pointer { get; private set; }
-        private string _name;
-        private bool _disposed;
+        private string name;
+        private bool disposed;
 
-        public MTLBuffer(ref BufferDescription bd, MTLGraphicsDevice gd)
+        public MtlBuffer(ref BufferDescription bd, MtlGraphicsDevice gd)
         {
             SizeInBytes = bd.SizeInBytes;
             uint roundFactor = (4 - SizeInBytes % 4) % 4;
@@ -54,9 +54,9 @@ namespace Veldrid.MTL
 
         public override void Dispose()
         {
-            if (!_disposed)
+            if (!disposed)
             {
-                _disposed = true;
+                disposed = true;
                 ObjectiveCRuntime.release(DeviceBuffer.NativePtr);
             }
         }

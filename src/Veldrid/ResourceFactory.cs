@@ -156,7 +156,7 @@ namespace Veldrid
 #if VALIDATE_USAGE
             if (description.Width == 0 || description.Height == 0 || description.Depth == 0) throw new VeldridException("Width, Height, and Depth must be non-zero.");
 
-            if ((description.Format == PixelFormat.D24_UNorm_S8_UInt || description.Format == PixelFormat.D32_Float_S8_UInt)
+            if ((description.Format == PixelFormat.D24UNormS8UInt || description.Format == PixelFormat.D32FloatS8UInt)
                 && (description.Usage & TextureUsage.DepthStencil) == 0)
                 throw new VeldridException("The givel PixelFormat can only be used in a Texture with DepthStencil usage.");
 

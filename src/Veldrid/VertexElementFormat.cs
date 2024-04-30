@@ -28,7 +28,7 @@
         /// <summary>
         ///     Two 8-bit unsigned normalized integers.
         /// </summary>
-        Byte2_Norm,
+        Byte2Norm,
 
         /// <summary>
         ///     Two 8-bit unisgned integers.
@@ -38,7 +38,7 @@
         /// <summary>
         ///     Four 8-bit unsigned normalized integers.
         /// </summary>
-        Byte4_Norm,
+        Byte4Norm,
 
         /// <summary>
         ///     Four 8-bit unsigned integers.
@@ -48,7 +48,7 @@
         /// <summary>
         ///     Two 8-bit signed normalized integers.
         /// </summary>
-        SByte2_Norm,
+        SByte2Norm,
 
         /// <summary>
         ///     Two 8-bit signed integers.
@@ -58,7 +58,7 @@
         /// <summary>
         ///     Four 8-bit signed normalized integers.
         /// </summary>
-        SByte4_Norm,
+        SByte4Norm,
 
         /// <summary>
         ///     Four 8-bit signed integers.
@@ -68,7 +68,7 @@
         /// <summary>
         ///     Two 16-bit unsigned normalized integers.
         /// </summary>
-        UShort2_Norm,
+        UShort2Norm,
 
         /// <summary>
         ///     Two 16-bit unsigned integers.
@@ -78,7 +78,7 @@
         /// <summary>
         ///     Four 16-bit unsigned normalized integers.
         /// </summary>
-        UShort4_Norm,
+        UShort4Norm,
 
         /// <summary>
         ///     Four 16-bit unsigned integers.
@@ -88,7 +88,7 @@
         /// <summary>
         ///     Two 16-bit signed normalized integers.
         /// </summary>
-        Short2_Norm,
+        Short2Norm,
 
         /// <summary>
         ///     Two 16-bit signed integers.
@@ -98,7 +98,7 @@
         /// <summary>
         ///     Four 16-bit signed normalized integers.
         /// </summary>
-        Short4_Norm,
+        Short4Norm,
 
         /// <summary>
         ///     Four 16-bit signed integers.

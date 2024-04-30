@@ -8,14 +8,14 @@ namespace Veldrid.D3D11
         public ID3D11RenderTargetView[] RenderTargetViews { get; }
         public ID3D11DepthStencilView DepthStencilView { get; }
 
-        public override bool IsDisposed => _disposed;
+        public override bool IsDisposed => disposed;
 
         public override string Name
         {
-            get => _name;
+            get => name;
             set
             {
-                _name = value;
+                name = value;
                 for (int i = 0; i < RenderTargetViews.Length; i++) RenderTargetViews[i].DebugName = value + "_RTV" + i;
 
                 if (DepthStencilView != null) DepthStencilView.DebugName = value + "_DSV";
@@ -24,8 +24,8 @@ namespace Veldrid.D3D11
 
         // Only non-null if this is the Framebuffer for a Swapchain.
         internal D3D11Swapchain Swapchain { get; set; }
-        private string _name;
-        private bool _disposed;
+        private string name;
+        private bool disposed;
 
         public D3D11Framebuffer(ID3D11Device device, ref FramebufferDescription description)
             : base(description.DepthTarget, description.ColorTargets)
@@ -124,12 +124,12 @@ namespace Veldrid.D3D11
 
         public override void Dispose()
         {
-            if (!_disposed)
+            if (!disposed)
             {
                 DepthStencilView?.Dispose();
                 foreach (var rtv in RenderTargetViews) rtv.Dispose();
 
-                _disposed = true;
+                disposed = true;
             }
         }
 

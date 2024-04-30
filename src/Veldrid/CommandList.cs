@@ -14,14 +14,14 @@ namespace Veldrid
     ///     NOTE: The use of <see cref="CommandList" /> is not thread-safe. Access to the <see cref="CommandList" /> must be
     ///     externally synchronized.
     ///     There are some limitations dictating proper usage and ordering of graphics commands. For example, a
-    ///     <see cref="Framebuffer" />, <see cref="Pipeline" />, vertex buffer, and index buffer must all be
+    ///     <see cref="Veldrid.Framebuffer" />, <see cref="Pipeline" />, vertex buffer, and index buffer must all be
     ///     bound before a call to <see cref="DrawIndexed(uint, uint, uint, int, uint)" /> will succeed.
     ///     These limitations are described in each function, where applicable.
     ///     <see cref="CommandList" /> instances cannot be executed multiple times per-recording. When executed by a
     ///     <see cref="GraphicsDevice" />, they must be reset and commands must be issued again.
     ///     See <see cref="CommandListDescription" />.
     /// </summary>
-    public abstract class CommandList : DeviceResource, IDisposable
+    public abstract class CommandList : IDeviceResource, IDisposable
     {
         /// <summary>
         ///     A bool indicating whether this instance has been disposed.
@@ -34,9 +34,9 @@ namespace Veldrid
         /// </summary>
         public abstract string Name { get; set; }
 
-        private readonly GraphicsDeviceFeatures _features;
-        private readonly uint _uniformBufferAlignment;
-        private readonly uint _structuredBufferAlignment;
+        private readonly GraphicsDeviceFeatures features;
+        private readonly uint uniformBufferAlignment;
+        private readonly uint structuredBufferAlignment;
 
         internal CommandList(
             ref CommandListDescription description,
@@ -44,9 +44,9 @@ namespace Veldrid
             uint uniformAlignment,
             uint structuredAlignment)
         {
-            _features = features;
-            _uniformBufferAlignment = uniformAlignment;
-            _structuredBufferAlignment = structuredAlignment;
+            this.features = features;
+            uniformBufferAlignment = uniformAlignment;
+            structuredBufferAlignment = structuredAlignment;
         }
 
         #region Disposal
@@ -76,7 +76,7 @@ namespace Veldrid
 
         /// <summary>
         ///     Sets the active <see cref="Pipeline" /> used for rendering.
-        ///     When drawing, the active <see cref="Pipeline" /> must be compatible with the bound <see cref="Framebuffer" />,
+        ///     When drawing, the active <see cref="Pipeline" /> must be compatible with the bound <see cref="Veldrid.Framebuffer" />,
         ///     <see cref="ResourceSet" />, and <see cref="DeviceBuffer" /> objects.
         ///     When a new Pipeline is set, the previously-bound ResourceSets on this CommandList become invalidated and must be
         ///     re-bound.
@@ -85,9 +85,9 @@ namespace Veldrid
         public void SetPipeline(Pipeline pipeline)
         {
             if (pipeline.IsComputePipeline)
-                _computePipeline = pipeline;
+                ComputePipeline = pipeline;
             else
-                _graphicsPipeline = pipeline;
+                GraphicsPipeline = pipeline;
 
             SetPipelineCore(pipeline);
         }
@@ -159,8 +159,8 @@ namespace Veldrid
                     "Buffer cannot be bound as an index buffer because it was not created with BufferUsage.IndexBuffer.");
             }
 
-            _indexBuffer = buffer;
-            _indexFormat = format;
+            indexBuffer = buffer;
+            indexFormat = format;
 #endif
             SetIndexBufferCore(buffer, format, offset);
         }
@@ -218,9 +218,9 @@ namespace Veldrid
         public void SetGraphicsResourceSet(uint slot, ResourceSet rs, uint dynamicOffsetsCount, ref uint dynamicOffsets)
         {
 #if VALIDATE_USAGE
-            if (_graphicsPipeline == null) throw new VeldridException($"A graphics Pipeline must be active before {nameof(SetGraphicsResourceSet)} can be called.");
+            if (GraphicsPipeline == null) throw new VeldridException($"A graphics Pipeline must be active before {nameof(SetGraphicsResourceSet)} can be called.");
 
-            int layoutsCount = _graphicsPipeline.ResourceLayouts.Length;
+            int layoutsCount = GraphicsPipeline.ResourceLayouts.Length;
 
             if (layoutsCount <= slot)
             {
@@ -228,7 +228,7 @@ namespace Veldrid
                     $"Failed to bind ResourceSet to slot {slot}. The active graphics Pipeline only contains {layoutsCount} ResourceLayouts.");
             }
 
-            var layout = _graphicsPipeline.ResourceLayouts[slot];
+            var layout = GraphicsPipeline.ResourceLayouts[slot];
             int pipelineLength = layout.Description.Elements.Length;
             var layoutDesc = rs.Layout.Description;
             int setLength = layoutDesc.Elements.Length;
@@ -263,8 +263,8 @@ namespace Veldrid
                 if ((layoutDesc.Elements[i].Options & ResourceLayoutElementOptions.DynamicBinding) != 0)
                 {
                     uint requiredAlignment = layoutDesc.Elements[i].Kind == ResourceKind.UniformBuffer
-                        ? _uniformBufferAlignment
-                        : _structuredBufferAlignment;
+                        ? uniformBufferAlignment
+                        : structuredBufferAlignment;
                     uint desiredOffset = Unsafe.Add(ref dynamicOffsets, (int)dynamicOffsetIndex);
                     dynamicOffsetIndex += 1;
                     var range = Util.GetBufferRange(rs.Resources[i], desiredOffset);
@@ -333,9 +333,9 @@ namespace Veldrid
         public void SetComputeResourceSet(uint slot, ResourceSet rs, uint dynamicOffsetsCount, ref uint dynamicOffsets)
         {
 #if VALIDATE_USAGE
-            if (_computePipeline == null) throw new VeldridException($"A compute Pipeline must be active before {nameof(SetComputeResourceSet)} can be called.");
+            if (ComputePipeline == null) throw new VeldridException($"A compute Pipeline must be active before {nameof(SetComputeResourceSet)} can be called.");
 
-            int layoutsCount = _computePipeline.ResourceLayouts.Length;
+            int layoutsCount = ComputePipeline.ResourceLayouts.Length;
 
             if (layoutsCount <= slot)
             {
@@ -343,7 +343,7 @@ namespace Veldrid
                     $"Failed to bind ResourceSet to slot {slot}. The active compute Pipeline only contains {layoutsCount} ResourceLayouts.");
             }
 
-            var layout = _computePipeline.ResourceLayouts[slot];
+            var layout = ComputePipeline.ResourceLayouts[slot];
             int pipelineLength = layout.Description.Elements.Length;
             int setLength = rs.Layout.Description.Elements.Length;
             if (pipelineLength != setLength)
@@ -366,16 +366,16 @@ namespace Veldrid
         }
 
         /// <summary>
-        ///     Sets the active <see cref="Framebuffer" /> which will be rendered to.
-        ///     When drawing, the active <see cref="Framebuffer" /> must be compatible with the active <see cref="Pipeline" />.
+        ///     Sets the active <see cref="Veldrid.Framebuffer" /> which will be rendered to.
+        ///     When drawing, the active <see cref="Veldrid.Framebuffer" /> must be compatible with the active <see cref="Pipeline" />.
         ///     A compatible <see cref="Pipeline" /> has the same number of output attachments with matching formats.
         /// </summary>
-        /// <param name="fb">The new <see cref="Framebuffer" />.</param>
+        /// <param name="fb">The new <see cref="Veldrid.Framebuffer" />.</param>
         public void SetFramebuffer(Framebuffer fb)
         {
-            if (_framebuffer != fb)
+            if (Framebuffer != fb)
             {
-                _framebuffer = fb;
+                Framebuffer = fb;
                 SetFramebufferCore(fb);
                 SetFullViewports();
                 SetFullScissorRects();
@@ -383,17 +383,17 @@ namespace Veldrid
         }
 
         /// <summary>
-        ///     Clears the color target at the given index of the active <see cref="Framebuffer" />.
-        ///     The index given must be less than the number of color attachments in the active <see cref="Framebuffer" />.
+        ///     Clears the color target at the given index of the active <see cref="Veldrid.Framebuffer" />.
+        ///     The index given must be less than the number of color attachments in the active <see cref="Veldrid.Framebuffer" />.
         /// </summary>
         /// <param name="index">The color target index.</param>
         /// <param name="clearColor">The value to clear the target to.</param>
         public void ClearColorTarget(uint index, RgbaFloat clearColor)
         {
 #if VALIDATE_USAGE
-            if (_framebuffer == null) throw new VeldridException("Cannot use ClearColorTarget. There is no Framebuffer bound.");
+            if (Framebuffer == null) throw new VeldridException("Cannot use ClearColorTarget. There is no Framebuffer bound.");
 
-            if (_framebuffer.ColorTargets.Count <= index)
+            if (Framebuffer.ColorTargets.Count <= index)
             {
                 throw new VeldridException(
                     "ClearColorTarget index must be less than the current Framebuffer's color target count.");
@@ -403,8 +403,8 @@ namespace Veldrid
         }
 
         /// <summary>
-        ///     Clears the depth-stencil target of the active <see cref="Framebuffer" />.
-        ///     The active <see cref="Framebuffer" /> must have a depth attachment.
+        ///     Clears the depth-stencil target of the active <see cref="Veldrid.Framebuffer" />.
+        ///     The active <see cref="Veldrid.Framebuffer" /> must have a depth attachment.
         ///     With this overload, the stencil buffer is cleared to 0.
         /// </summary>
         /// <param name="depth">The value to clear the depth buffer to.</param>
@@ -414,17 +414,17 @@ namespace Veldrid
         }
 
         /// <summary>
-        ///     Clears the depth-stencil target of the active <see cref="Framebuffer" />.
-        ///     The active <see cref="Framebuffer" /> must have a depth attachment.
+        ///     Clears the depth-stencil target of the active <see cref="Veldrid.Framebuffer" />.
+        ///     The active <see cref="Veldrid.Framebuffer" /> must have a depth attachment.
         /// </summary>
         /// <param name="depth">The value to clear the depth buffer to.</param>
         /// <param name="stencil">The value to clear the stencil buffer to.</param>
         public void ClearDepthStencil(float depth, byte stencil)
         {
 #if VALIDATE_USAGE
-            if (_framebuffer == null) throw new VeldridException("Cannot use ClearDepthStencil. There is no Framebuffer bound.");
+            if (Framebuffer == null) throw new VeldridException("Cannot use ClearDepthStencil. There is no Framebuffer bound.");
 
-            if (_framebuffer.DepthTarget == null)
+            if (Framebuffer.DepthTarget == null)
             {
                 throw new VeldridException(
                     "The current Framebuffer has no depth target, so ClearDepthStencil cannot be used.");
@@ -435,27 +435,27 @@ namespace Veldrid
         }
 
         /// <summary>
-        ///     Sets all active viewports to cover the entire active <see cref="Framebuffer" />.
+        ///     Sets all active viewports to cover the entire active <see cref="Veldrid.Framebuffer" />.
         /// </summary>
         public void SetFullViewports()
         {
-            SetViewport(0, new Viewport(0, 0, _framebuffer.Width, _framebuffer.Height, 0, 1));
+            SetViewport(0, new Viewport(0, 0, Framebuffer.Width, Framebuffer.Height, 0, 1));
 
-            for (uint index = 1; index < _framebuffer.ColorTargets.Count; index++) SetViewport(index, new Viewport(0, 0, _framebuffer.Width, _framebuffer.Height, 0, 1));
+            for (uint index = 1; index < Framebuffer.ColorTargets.Count; index++) SetViewport(index, new Viewport(0, 0, Framebuffer.Width, Framebuffer.Height, 0, 1));
         }
 
         /// <summary>
-        ///     Sets the active viewport at the given index to cover the entire active <see cref="Framebuffer" />.
+        ///     Sets the active viewport at the given index to cover the entire active <see cref="Veldrid.Framebuffer" />.
         /// </summary>
         /// <param name="index">The color target index.</param>
         public void SetFullViewport(uint index)
         {
-            SetViewport(index, new Viewport(0, 0, _framebuffer.Width, _framebuffer.Height, 0, 1));
+            SetViewport(index, new Viewport(0, 0, Framebuffer.Width, Framebuffer.Height, 0, 1));
         }
 
         /// <summary>
         ///     Sets the active <see cref="Viewport" /> at the given index.
-        ///     The index given must be less than the number of color attachments in the active <see cref="Framebuffer" />.
+        ///     The index given must be less than the number of color attachments in the active <see cref="Veldrid.Framebuffer" />.
         /// </summary>
         /// <param name="index">The color target index.</param>
         /// <param name="viewport">The new <see cref="Viewport" />.</param>
@@ -466,34 +466,34 @@ namespace Veldrid
 
         /// <summary>
         ///     Sets the active <see cref="Viewport" /> at the given index.
-        ///     The index given must be less than the number of color attachments in the active <see cref="Framebuffer" />.
+        ///     The index given must be less than the number of color attachments in the active <see cref="Veldrid.Framebuffer" />.
         /// </summary>
         /// <param name="index">The color target index.</param>
         /// <param name="viewport">The new <see cref="Viewport" />.</param>
         public abstract void SetViewport(uint index, ref Viewport viewport);
 
         /// <summary>
-        ///     Sets all active scissor rectangles to cover the active <see cref="Framebuffer" />.
+        ///     Sets all active scissor rectangles to cover the active <see cref="Veldrid.Framebuffer" />.
         /// </summary>
         public void SetFullScissorRects()
         {
-            SetScissorRect(0, 0, 0, _framebuffer.Width, _framebuffer.Height);
+            SetScissorRect(0, 0, 0, Framebuffer.Width, Framebuffer.Height);
 
-            for (uint index = 1; index < _framebuffer.ColorTargets.Count; index++) SetScissorRect(index, 0, 0, _framebuffer.Width, _framebuffer.Height);
+            for (uint index = 1; index < Framebuffer.ColorTargets.Count; index++) SetScissorRect(index, 0, 0, Framebuffer.Width, Framebuffer.Height);
         }
 
         /// <summary>
-        ///     Sets the active scissor rectangle at the given index to cover the active <see cref="Framebuffer" />.
+        ///     Sets the active scissor rectangle at the given index to cover the active <see cref="Veldrid.Framebuffer" />.
         /// </summary>
         /// <param name="index">The color target index.</param>
         public void SetFullScissorRect(uint index)
         {
-            SetScissorRect(index, 0, 0, _framebuffer.Width, _framebuffer.Height);
+            SetScissorRect(index, 0, 0, Framebuffer.Width, Framebuffer.Height);
         }
 
         /// <summary>
         ///     Sets the active scissor rectangle at the given index.
-        ///     The index given must be less than the number of color attachments in the active <see cref="Framebuffer" />.
+        ///     The index given must be less than the number of color attachments in the active <see cref="Veldrid.Framebuffer" />.
         /// </summary>
         /// <param name="index">The color target index.</param>
         /// <param name="x">The X value of the scissor rectangle.</param>
@@ -520,7 +520,7 @@ namespace Veldrid
         /// <param name="instanceStart">The starting instance value.</param>
         public void Draw(uint vertexCount, uint instanceCount, uint vertexStart, uint instanceStart)
         {
-            PreDrawValidation();
+            preDrawValidation();
             DrawCore(vertexCount, instanceCount, vertexStart, instanceStart);
         }
 
@@ -543,13 +543,13 @@ namespace Veldrid
         /// <param name="instanceStart">The starting instance value.</param>
         public void DrawIndexed(uint indexCount, uint instanceCount, uint indexStart, int vertexOffset, uint instanceStart)
         {
-            ValidateIndexBuffer(indexCount);
-            PreDrawValidation();
+            validateIndexBuffer(indexCount);
+            preDrawValidation();
 
 #if VALIDATE_USAGE
-            if (!_features.DrawBaseVertex && vertexOffset != 0) throw new VeldridException("Drawing with a non-zero base vertex is not supported on this device.");
+            if (!features.DrawBaseVertex && vertexOffset != 0) throw new VeldridException("Drawing with a non-zero base vertex is not supported on this device.");
 
-            if (!_features.DrawBaseInstance && instanceStart != 0) throw new VeldridException("Drawing with a non-zero base instance is not supported on this device.");
+            if (!features.DrawBaseInstance && instanceStart != 0) throw new VeldridException("Drawing with a non-zero base instance is not supported on this device.");
 #endif
 
             DrawIndexedCore(indexCount, instanceCount, indexStart, vertexOffset, instanceStart);
@@ -575,11 +575,11 @@ namespace Veldrid
         /// </param>
         public unsafe void DrawIndirect(DeviceBuffer indirectBuffer, uint offset, uint drawCount, uint stride)
         {
-            ValidateDrawIndirectSupport();
-            ValidateIndirectBuffer(indirectBuffer);
-            ValidateIndirectOffset(offset);
-            ValidateIndirectStride(stride, sizeof(IndirectDrawArguments));
-            PreDrawValidation();
+            validateDrawIndirectSupport();
+            validateIndirectBuffer(indirectBuffer);
+            validateIndirectOffset(offset);
+            validateIndirectStride(stride, sizeof(IndirectDrawArguments));
+            preDrawValidation();
 
             DrawIndirectCore(indirectBuffer, offset, drawCount, stride);
         }
@@ -605,11 +605,11 @@ namespace Veldrid
         /// </param>
         public unsafe void DrawIndexedIndirect(DeviceBuffer indirectBuffer, uint offset, uint drawCount, uint stride)
         {
-            ValidateDrawIndirectSupport();
-            ValidateIndirectBuffer(indirectBuffer);
-            ValidateIndirectOffset(offset);
-            ValidateIndirectStride(stride, sizeof(IndirectDrawIndexedArguments));
-            PreDrawValidation();
+            validateDrawIndirectSupport();
+            validateIndirectBuffer(indirectBuffer);
+            validateIndirectOffset(offset);
+            validateIndirectStride(stride, sizeof(IndirectDrawIndexedArguments));
+            preDrawValidation();
 
             DrawIndexedIndirectCore(indirectBuffer, offset, drawCount, stride);
         }
@@ -637,8 +637,8 @@ namespace Veldrid
         /// </param>
         public void DispatchIndirect(DeviceBuffer indirectBuffer, uint offset)
         {
-            ValidateIndirectBuffer(indirectBuffer);
-            ValidateIndirectOffset(offset);
+            validateIndirectBuffer(indirectBuffer);
+            validateIndirectOffset(offset);
             DispatchIndirectCore(indirectBuffer, offset);
         }
 
@@ -1036,11 +1036,11 @@ namespace Veldrid
 
         internal void ClearCachedState()
         {
-            _framebuffer = null;
-            _graphicsPipeline = null;
-            _computePipeline = null;
+            Framebuffer = null;
+            GraphicsPipeline = null;
+            ComputePipeline = null;
 #if VALIDATE_USAGE
-            _indexBuffer = null;
+            indexBuffer = null;
 #endif
         }
 
@@ -1063,7 +1063,7 @@ namespace Veldrid
         protected abstract void SetComputeResourceSetCore(uint slot, ResourceSet set, uint dynamicOffsetsCount, ref uint dynamicOffsets);
 
         /// <summary>
-        ///     Performs API-specific handling of the <see cref="Framebuffer" /> resource.
+        ///     Performs API-specific handling of the <see cref="Veldrid.Framebuffer" /> resource.
         /// </summary>
         /// <param name="fb"></param>
         protected abstract void SetFramebufferCore(Framebuffer fb);
@@ -1146,13 +1146,13 @@ namespace Veldrid
             uint layerCount);
 
         [Conditional("VALIDATE_USAGE")]
-        private static void ValidateIndirectOffset(uint offset)
+        private static void validateIndirectOffset(uint offset)
         {
             if (offset % 4 != 0) throw new VeldridException($"{nameof(offset)} must be a multiple of 4.");
         }
 
         [Conditional("VALIDATE_USAGE")]
-        private static void ValidateIndirectBuffer(DeviceBuffer indirectBuffer)
+        private static void validateIndirectBuffer(DeviceBuffer indirectBuffer)
         {
             if ((indirectBuffer.Usage & BufferUsage.IndirectBuffer) != BufferUsage.IndirectBuffer)
             {
@@ -1162,7 +1162,7 @@ namespace Veldrid
         }
 
         [Conditional("VALIDATE_USAGE")]
-        private static void ValidateIndirectStride(uint stride, int argumentSize)
+        private static void validateIndirectStride(uint stride, int argumentSize)
         {
             if (stride < argumentSize || stride % 4 != 0)
             {
@@ -1172,49 +1172,49 @@ namespace Veldrid
         }
 
         [Conditional("VALIDATE_USAGE")]
-        private void ValidateDrawIndirectSupport()
+        private void validateDrawIndirectSupport()
         {
-            if (!_features.DrawIndirect) throw new VeldridException("Indirect drawing is not supported by this device.");
+            if (!features.DrawIndirect) throw new VeldridException("Indirect drawing is not supported by this device.");
         }
 
         [Conditional("VALIDATE_USAGE")]
-        private void ValidateIndexBuffer(uint indexCount)
+        private void validateIndexBuffer(uint indexCount)
         {
 #if VALIDATE_USAGE
-            if (_indexBuffer == null) throw new VeldridException($"An index buffer must be bound before {nameof(CommandList)}.{nameof(DrawIndexed)} can be called.");
+            if (indexBuffer == null) throw new VeldridException($"An index buffer must be bound before {nameof(CommandList)}.{nameof(DrawIndexed)} can be called.");
 
-            uint indexFormatSize = _indexFormat == IndexFormat.UInt16 ? 2u : 4u;
+            uint indexFormatSize = indexFormat == IndexFormat.UInt16 ? 2u : 4u;
             uint bytesNeeded = indexCount * indexFormatSize;
 
-            if (_indexBuffer.SizeInBytes < bytesNeeded)
+            if (indexBuffer.SizeInBytes < bytesNeeded)
             {
                 throw new VeldridException(
-                    $"The active index buffer does not contain enough data to satisfy the given draw command. {bytesNeeded} bytes are needed, but the buffer only contains {_indexBuffer.SizeInBytes}.");
+                    $"The active index buffer does not contain enough data to satisfy the given draw command. {bytesNeeded} bytes are needed, but the buffer only contains {indexBuffer.SizeInBytes}.");
             }
 #endif
         }
 
         [Conditional("VALIDATE_USAGE")]
-        private void PreDrawValidation()
+        private void preDrawValidation()
         {
 #if VALIDATE_USAGE
 
-            if (_graphicsPipeline == null) throw new VeldridException($"A graphics {nameof(Pipeline)} must be set in order to issue draw commands.");
+            if (GraphicsPipeline == null) throw new VeldridException($"A graphics {nameof(Pipeline)} must be set in order to issue draw commands.");
 
-            if (_framebuffer == null) throw new VeldridException($"A {nameof(Framebuffer)} must be set in order to issue draw commands.");
+            if (Framebuffer == null) throw new VeldridException($"A {nameof(Veldrid.Framebuffer)} must be set in order to issue draw commands.");
 
-            if (!_graphicsPipeline.GraphicsOutputDescription.Equals(_framebuffer.OutputDescription))
-                throw new VeldridException($"The {nameof(OutputDescription)} of the current graphics {nameof(Pipeline)} is not compatible with the current {nameof(Framebuffer)}.");
+            if (!GraphicsPipeline.GraphicsOutputDescription.Equals(Framebuffer.OutputDescription))
+                throw new VeldridException($"The {nameof(OutputDescription)} of the current graphics {nameof(Pipeline)} is not compatible with the current {nameof(Veldrid.Framebuffer)}.");
 #endif
         }
 
-        private protected Framebuffer _framebuffer;
-        private protected Pipeline _graphicsPipeline;
-        private protected Pipeline _computePipeline;
+        private protected Framebuffer Framebuffer;
+        private protected Pipeline GraphicsPipeline;
+        private protected Pipeline ComputePipeline;
 
 #if VALIDATE_USAGE
-        private DeviceBuffer _indexBuffer;
-        private IndexFormat _indexFormat;
+        private DeviceBuffer indexBuffer;
+        private IndexFormat indexFormat;
 #endif
 
         private protected abstract void SetPipelineCore(Pipeline pipeline);

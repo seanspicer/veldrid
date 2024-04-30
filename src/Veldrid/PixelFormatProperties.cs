@@ -34,7 +34,7 @@
         /// </summary>
         public readonly uint MaxArrayLayers;
 
-        private readonly uint _sampleCounts;
+        private readonly uint sampleCounts;
 
         /// <summary>
         ///     Gets a value indicating whether or not the given <see cref="TextureSampleCount" /> is supported.
@@ -44,7 +44,7 @@
         public bool IsSampleCountSupported(TextureSampleCount count)
         {
             int bit = (int)count;
-            return (_sampleCounts & (1 << bit)) != 0;
+            return (sampleCounts & (1 << bit)) != 0;
         }
 
         internal PixelFormatProperties(
@@ -60,7 +60,7 @@
             MaxDepth = maxDepth;
             MaxMipLevels = maxMipLevels;
             MaxArrayLayers = maxArrayLayers;
-            _sampleCounts = sampleCounts;
+            this.sampleCounts = sampleCounts;
         }
     }
 }

@@ -3,33 +3,33 @@ using Veldrid.MetalBindings;
 
 namespace Veldrid.MTL
 {
-    internal class MTLSampler : Sampler
+    internal class MtlSampler : Sampler
     {
         public MTLSamplerState DeviceSampler { get; }
 
-        public override bool IsDisposed => _disposed;
+        public override bool IsDisposed => disposed;
 
         public override string Name { get; set; }
-        private bool _disposed;
+        private bool disposed;
 
-        public MTLSampler(ref SamplerDescription description, MTLGraphicsDevice gd)
+        public MtlSampler(ref SamplerDescription description, MtlGraphicsDevice gd)
         {
-            MTLFormats.GetMinMagMipFilter(
+            MtlFormats.GetMinMagMipFilter(
                 description.Filter,
                 out var min,
                 out var mag,
                 out var mip);
 
             var mtlDesc = MTLSamplerDescriptor.New();
-            mtlDesc.sAddressMode = MTLFormats.VdToMTLAddressMode(description.AddressModeU);
-            mtlDesc.tAddressMode = MTLFormats.VdToMTLAddressMode(description.AddressModeV);
-            mtlDesc.rAddressMode = MTLFormats.VdToMTLAddressMode(description.AddressModeW);
+            mtlDesc.sAddressMode = MtlFormats.VdToMtlAddressMode(description.AddressModeU);
+            mtlDesc.tAddressMode = MtlFormats.VdToMtlAddressMode(description.AddressModeV);
+            mtlDesc.rAddressMode = MtlFormats.VdToMtlAddressMode(description.AddressModeW);
             mtlDesc.minFilter = min;
             mtlDesc.magFilter = mag;
             mtlDesc.mipFilter = mip;
-            if (gd.MetalFeatures.IsMacOS) mtlDesc.borderColor = MTLFormats.VdToMTLBorderColor(description.BorderColor);
+            if (gd.MetalFeatures.IsMacOS) mtlDesc.borderColor = MtlFormats.VdToMtlBorderColor(description.BorderColor);
 
-            if (description.ComparisonKind != null) mtlDesc.compareFunction = MTLFormats.VdToMTLCompareFunction(description.ComparisonKind.Value);
+            if (description.ComparisonKind != null) mtlDesc.compareFunction = MtlFormats.VdToMtlCompareFunction(description.ComparisonKind.Value);
             mtlDesc.lodMinClamp = description.MinimumLod;
             mtlDesc.lodMaxClamp = description.MaximumLod;
             mtlDesc.maxAnisotropy = Math.Max(1, description.MaximumAnisotropy);
@@ -41,9 +41,9 @@ namespace Veldrid.MTL
 
         public override void Dispose()
         {
-            if (!_disposed)
+            if (!disposed)
             {
-                _disposed = true;
+                disposed = true;
                 ObjectiveCRuntime.release(DeviceSampler.NativePtr);
             }
         }

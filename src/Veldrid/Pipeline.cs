@@ -7,7 +7,7 @@ namespace Veldrid
     ///     <see cref="CommandList.SetPipeline(Pipeline)" /> to prepare a <see cref="CommandList" /> for draw commands.
     ///     See <see cref="GraphicsPipelineDescription" />.
     /// </summary>
-    public abstract class Pipeline : DeviceResource, IDisposable
+    public abstract class Pipeline : IDeviceResource, IDisposable
     {
         /// <summary>
         ///     Gets a value indicating whether this instance represents a compute Pipeline.

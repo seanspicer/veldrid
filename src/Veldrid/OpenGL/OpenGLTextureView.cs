@@ -5,9 +5,9 @@ using static Veldrid.OpenGLBinding.OpenGLNative;
 
 namespace Veldrid.OpenGL
 {
-    internal class OpenGLTextureView : TextureView, OpenGLDeferredResource
+    internal class OpenGLTextureView : TextureView, IOpenGLDeferredResource
     {
-        public override bool IsDisposed => _disposeRequested;
+        public override bool IsDisposed => disposeRequested;
 
         public new OpenGLTexture Target { get; }
 
@@ -17,51 +17,51 @@ namespace Veldrid.OpenGL
             {
                 Debug.Assert(Created);
 
-                if (_textureView == 0)
+                if (textureView == 0)
                 {
                     Debug.Assert(Target.Created);
                     return Target.Texture;
                 }
 
-                return _textureView;
+                return textureView;
             }
         }
 
         public override string Name
         {
-            get => _name;
+            get => name;
             set
             {
-                _name = value;
-                _nameChanged = true;
+                name = value;
+                nameChanged = true;
             }
         }
 
         public TextureTarget TextureTarget { get; private set; }
 
         public bool Created { get; private set; }
-        private readonly OpenGLGraphicsDevice _gd;
-        private readonly bool _needsTextureView;
-        private uint _textureView;
-        private bool _disposeRequested;
-        private bool _disposed;
+        private readonly OpenGLGraphicsDevice gd;
+        private readonly bool needsTextureView;
+        private uint textureView;
+        private bool disposeRequested;
+        private bool disposed;
 
-        private string _name;
-        private bool _nameChanged;
+        private string name;
+        private bool nameChanged;
 
         public OpenGLTextureView(OpenGLGraphicsDevice gd, ref TextureViewDescription description)
             : base(ref description)
         {
-            _gd = gd;
+            this.gd = gd;
             Target = Util.AssertSubtype<Texture, OpenGLTexture>(description.Target);
 
             if (BaseMipLevel != 0 || MipLevels != Target.MipLevels
                                   || BaseArrayLayer != 0 || ArrayLayers != Target.ArrayLayers
                                   || Format != Target.Format)
             {
-                if (_gd.BackendType == GraphicsBackend.OpenGL)
+                if (this.gd.BackendType == GraphicsBackend.OpenGL)
                 {
-                    if (!_gd.Extensions.ARB_TextureView)
+                    if (!this.gd.Extensions.ArbTextureView)
                     {
                         throw new VeldridException(
                             "TextureView objects covering a subset of a Texture's dimensions or using a different PixelFormat " +
@@ -70,7 +70,7 @@ namespace Veldrid.OpenGL
                 }
                 else
                 {
-                    if (!_gd.Extensions.ARB_TextureView)
+                    if (!this.gd.Extensions.ArbTextureView)
                     {
                         throw new VeldridException(
                             "TextureView objects covering a subset of a Texture's dimensions or using a different PixelFormat are " +
@@ -78,7 +78,7 @@ namespace Veldrid.OpenGL
                     }
                 }
 
-                _needsTextureView = true;
+                needsTextureView = true;
             }
         }
 
@@ -86,10 +86,10 @@ namespace Veldrid.OpenGL
 
         public override void Dispose()
         {
-            if (!_disposeRequested)
+            if (!disposeRequested)
             {
-                _disposeRequested = true;
-                _gd.EnqueueDisposal(this);
+                disposeRequested = true;
+                gd.EnqueueDisposal(this);
             }
         }
 
@@ -99,135 +99,135 @@ namespace Veldrid.OpenGL
         {
             switch (Target.Format)
             {
-                case PixelFormat.R8_UNorm:
+                case PixelFormat.R8UNorm:
                     return SizedInternalFormat.R8;
 
-                case PixelFormat.R8_SNorm:
+                case PixelFormat.R8SNorm:
                     return (SizedInternalFormat)PixelInternalFormat.R8Snorm;
 
-                case PixelFormat.R8_UInt:
+                case PixelFormat.R8UInt:
                     return SizedInternalFormat.R8ui;
 
-                case PixelFormat.R8_SInt:
+                case PixelFormat.R8SInt:
                     return SizedInternalFormat.R8i;
 
-                case PixelFormat.R16_UNorm:
+                case PixelFormat.R16UNorm:
                     return SizedInternalFormat.R16;
 
-                case PixelFormat.R16_SNorm:
+                case PixelFormat.R16SNorm:
                     return (SizedInternalFormat)PixelInternalFormat.R16Snorm;
 
-                case PixelFormat.R16_UInt:
+                case PixelFormat.R16UInt:
                     return SizedInternalFormat.R16ui;
 
-                case PixelFormat.R16_SInt:
+                case PixelFormat.R16SInt:
                     return SizedInternalFormat.R16i;
 
-                case PixelFormat.R16_Float:
+                case PixelFormat.R16Float:
                     return SizedInternalFormat.R16f;
 
-                case PixelFormat.R32_UInt:
+                case PixelFormat.R32UInt:
                     return SizedInternalFormat.R32ui;
 
-                case PixelFormat.R32_SInt:
+                case PixelFormat.R32SInt:
                     return SizedInternalFormat.R32i;
 
-                case PixelFormat.R32_Float:
+                case PixelFormat.R32Float:
                     return SizedInternalFormat.R32f;
 
-                case PixelFormat.R8_G8_UNorm:
+                case PixelFormat.R8G8UNorm:
                     return SizedInternalFormat.R8;
 
-                case PixelFormat.R8_G8_SNorm:
+                case PixelFormat.R8G8SNorm:
                     return (SizedInternalFormat)PixelInternalFormat.Rg8Snorm;
 
-                case PixelFormat.R8_G8_UInt:
+                case PixelFormat.R8G8UInt:
                     return SizedInternalFormat.Rg8ui;
 
-                case PixelFormat.R8_G8_SInt:
+                case PixelFormat.R8G8SInt:
                     return SizedInternalFormat.Rg8i;
 
-                case PixelFormat.R16_G16_UNorm:
+                case PixelFormat.R16G16UNorm:
                     return SizedInternalFormat.R16;
 
-                case PixelFormat.R16_G16_SNorm:
+                case PixelFormat.R16G16SNorm:
                     return (SizedInternalFormat)PixelInternalFormat.Rg16Snorm;
 
-                case PixelFormat.R16_G16_UInt:
+                case PixelFormat.R16G16UInt:
                     return SizedInternalFormat.Rg16ui;
 
-                case PixelFormat.R16_G16_SInt:
+                case PixelFormat.R16G16SInt:
                     return SizedInternalFormat.Rg16i;
 
-                case PixelFormat.R16_G16_Float:
+                case PixelFormat.R16G16Float:
                     return SizedInternalFormat.Rg16f;
 
-                case PixelFormat.R32_G32_UInt:
+                case PixelFormat.R32G32UInt:
                     return SizedInternalFormat.Rg32ui;
 
-                case PixelFormat.R32_G32_SInt:
+                case PixelFormat.R32G32SInt:
                     return SizedInternalFormat.Rg32i;
 
-                case PixelFormat.R32_G32_Float:
+                case PixelFormat.R32G32Float:
                     return SizedInternalFormat.Rg32f;
 
-                case PixelFormat.R8_G8_B8_A8_UNorm:
-                case PixelFormat.B8_G8_R8_A8_UNorm:
+                case PixelFormat.R8G8B8A8UNorm:
+                case PixelFormat.B8G8R8A8UNorm:
                     return SizedInternalFormat.Rgba8;
 
-                case PixelFormat.R8_G8_B8_A8_SNorm:
+                case PixelFormat.R8G8B8A8SNorm:
                     return (SizedInternalFormat)PixelInternalFormat.Rgba8Snorm;
 
-                case PixelFormat.R8_G8_B8_A8_UInt:
+                case PixelFormat.R8G8B8A8UInt:
                     return SizedInternalFormat.Rgba8ui;
 
-                case PixelFormat.R8_G8_B8_A8_SInt:
+                case PixelFormat.R8G8B8A8SInt:
                     return SizedInternalFormat.Rgba16i;
 
-                case PixelFormat.R16_G16_B16_A16_UNorm:
+                case PixelFormat.R16G16B16A16UNorm:
                     return SizedInternalFormat.Rgba16;
 
-                case PixelFormat.R16_G16_B16_A16_SNorm:
+                case PixelFormat.R16G16B16A16SNorm:
                     return (SizedInternalFormat)PixelInternalFormat.Rgba16Snorm;
 
-                case PixelFormat.R16_G16_B16_A16_UInt:
+                case PixelFormat.R16G16B16A16UInt:
                     return SizedInternalFormat.Rgba16ui;
 
-                case PixelFormat.R16_G16_B16_A16_SInt:
+                case PixelFormat.R16G16B16A16SInt:
                     return SizedInternalFormat.Rgba16i;
 
-                case PixelFormat.R16_G16_B16_A16_Float:
+                case PixelFormat.R16G16B16A16Float:
                     return SizedInternalFormat.Rgba16f;
 
-                case PixelFormat.R32_G32_B32_A32_UInt:
+                case PixelFormat.R32G32B32A32UInt:
                     return SizedInternalFormat.Rgba32ui;
 
-                case PixelFormat.R32_G32_B32_A32_SInt:
+                case PixelFormat.R32G32B32A32SInt:
                     return SizedInternalFormat.Rgba32i;
 
-                case PixelFormat.R32_G32_B32_A32_Float:
+                case PixelFormat.R32G32B32A32Float:
                     return SizedInternalFormat.Rgba32f;
 
-                case PixelFormat.R10_G10_B10_A2_UNorm:
+                case PixelFormat.R10G10B10A2UNorm:
                     return (SizedInternalFormat)PixelInternalFormat.Rgb10A2;
 
-                case PixelFormat.R10_G10_B10_A2_UInt:
+                case PixelFormat.R10G10B10A2UInt:
                     return (SizedInternalFormat)PixelInternalFormat.Rgb10A2ui;
 
-                case PixelFormat.R11_G11_B10_Float:
+                case PixelFormat.R11G11B10Float:
                     return (SizedInternalFormat)PixelInternalFormat.R11fG11fB10f;
 
-                case PixelFormat.D24_UNorm_S8_UInt:
-                case PixelFormat.D32_Float_S8_UInt:
-                case PixelFormat.BC1_Rgb_UNorm:
-                case PixelFormat.BC1_Rgba_UNorm:
-                case PixelFormat.BC2_UNorm:
-                case PixelFormat.BC3_UNorm:
-                case PixelFormat.BC4_UNorm:
-                case PixelFormat.BC4_SNorm:
-                case PixelFormat.BC5_UNorm:
-                case PixelFormat.BC5_SNorm:
-                case PixelFormat.BC7_UNorm:
+                case PixelFormat.D24UNormS8UInt:
+                case PixelFormat.D32FloatS8UInt:
+                case PixelFormat.Bc1RgbUNorm:
+                case PixelFormat.Bc1RgbaUNorm:
+                case PixelFormat.Bc2UNorm:
+                case PixelFormat.Bc3UNorm:
+                case PixelFormat.Bc4UNorm:
+                case PixelFormat.Bc4SNorm:
+                case PixelFormat.Bc5UNorm:
+                case PixelFormat.Bc5SNorm:
+                case PixelFormat.Bc7UNorm:
                 default:
                     throw Illegal.Value<PixelFormat>();
             }
@@ -239,39 +239,39 @@ namespace Veldrid.OpenGL
 
             if (!Created)
             {
-                CreateGLResources();
+                createGLResources();
                 Created = true;
             }
 
-            if (_nameChanged && _needsTextureView)
+            if (nameChanged && needsTextureView)
             {
-                if (_gd.Extensions.KHR_Debug) SetObjectLabel(ObjectLabelIdentifier.Texture, _textureView, _name);
+                if (gd.Extensions.KhrDebug) SetObjectLabel(ObjectLabelIdentifier.Texture, textureView, name);
             }
         }
 
         public void DestroyGLResources()
         {
-            if (!_disposed)
+            if (!disposed)
             {
-                _disposed = true;
+                disposed = true;
 
-                if (_textureView != 0)
+                if (textureView != 0)
                 {
-                    glDeleteTextures(1, ref _textureView);
+                    glDeleteTextures(1, ref textureView);
                     CheckLastError();
                 }
             }
         }
 
-        private void CreateGLResources()
+        private void createGLResources()
         {
-            if (!_needsTextureView)
+            if (!needsTextureView)
             {
                 TextureTarget = Target.TextureTarget;
                 return;
             }
 
-            glGenTextures(1, out _textureView);
+            glGenTextures(1, out textureView);
             CheckLastError();
 
             var originalTarget = Target.TextureTarget;
@@ -327,7 +327,7 @@ namespace Veldrid.OpenGL
                 (Target.Usage & TextureUsage.DepthStencil) == TextureUsage.DepthStencil);
             Debug.Assert(Target.Created);
             glTextureView(
-                _textureView,
+                textureView,
                 TextureTarget,
                 Target.Texture,
                 internalFormat,

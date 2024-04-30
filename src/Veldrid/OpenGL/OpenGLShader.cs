@@ -5,31 +5,31 @@ using static Veldrid.OpenGL.OpenGLUtil;
 
 namespace Veldrid.OpenGL
 {
-    internal unsafe class OpenGLShader : Shader, OpenGLDeferredResource
+    internal unsafe class OpenGLShader : Shader, IOpenGLDeferredResource
     {
-        public override bool IsDisposed => _disposeRequested;
+        public override bool IsDisposed => disposeRequested;
 
         public uint Shader { get; private set; }
 
         public override string Name
         {
-            get => _name;
+            get => name;
             set
             {
-                _name = value;
-                _nameChanged = true;
+                name = value;
+                nameChanged = true;
             }
         }
 
         public bool Created { get; private set; }
-        private readonly OpenGLGraphicsDevice _gd;
-        private readonly ShaderType _shaderType;
-        private readonly StagingBlock _stagingBlock;
+        private readonly OpenGLGraphicsDevice gd;
+        private readonly ShaderType shaderType;
+        private readonly StagingBlock stagingBlock;
 
-        private bool _disposeRequested;
-        private bool _disposed;
-        private string _name;
-        private bool _nameChanged;
+        private bool disposeRequested;
+        private bool disposed;
+        private string name;
+        private bool nameChanged;
 
         public OpenGLShader(OpenGLGraphicsDevice gd, ShaderStages stage, StagingBlock stagingBlock, string entryPoint)
             : base(stage, entryPoint)
@@ -37,24 +37,24 @@ namespace Veldrid.OpenGL
 #if VALIDATE_USAGE
             if (stage == ShaderStages.Compute && !gd.Extensions.ComputeShaders)
             {
-                if (_gd.BackendType == GraphicsBackend.OpenGLES)
+                if (this.gd.BackendType == GraphicsBackend.OpenGLES)
                     throw new VeldridException("Compute shaders require OpenGL ES 3.1.");
                 throw new VeldridException("Compute shaders require OpenGL 4.3 or ARB_compute_shader.");
             }
 #endif
-            _gd = gd;
-            _shaderType = OpenGLFormats.VdToGLShaderType(stage);
-            _stagingBlock = stagingBlock;
+            this.gd = gd;
+            shaderType = OpenGLFormats.VdToGLShaderType(stage);
+            this.stagingBlock = stagingBlock;
         }
 
         #region Disposal
 
         public override void Dispose()
         {
-            if (!_disposeRequested)
+            if (!disposeRequested)
             {
-                _disposeRequested = true;
-                _gd.EnqueueDisposal(this);
+                disposeRequested = true;
+                gd.EnqueueDisposal(this);
             }
         }
 
@@ -62,20 +62,20 @@ namespace Veldrid.OpenGL
 
         public void EnsureResourcesCreated()
         {
-            if (!Created) CreateGLResources();
+            if (!Created) createGLResources();
 
-            if (_nameChanged)
+            if (nameChanged)
             {
-                _nameChanged = false;
-                if (_gd.Extensions.KHR_Debug) SetObjectLabel(ObjectLabelIdentifier.Shader, Shader, _name);
+                nameChanged = false;
+                if (gd.Extensions.KhrDebug) SetObjectLabel(ObjectLabelIdentifier.Shader, Shader, name);
             }
         }
 
         public void DestroyGLResources()
         {
-            if (!_disposed)
+            if (!disposed)
             {
-                _disposed = true;
+                disposed = true;
 
                 if (Created)
                 {
@@ -83,17 +83,17 @@ namespace Veldrid.OpenGL
                     CheckLastError();
                 }
                 else
-                    _gd.StagingMemoryPool.Free(_stagingBlock);
+                    gd.StagingMemoryPool.Free(stagingBlock);
             }
         }
 
-        private void CreateGLResources()
+        private void createGLResources()
         {
-            Shader = glCreateShader(_shaderType);
+            Shader = glCreateShader(shaderType);
             CheckLastError();
 
-            byte* textPtr = (byte*)_stagingBlock.Data;
-            int length = (int)_stagingBlock.SizeInBytes;
+            byte* textPtr = (byte*)stagingBlock.Data;
+            int length = (int)stagingBlock.SizeInBytes;
             byte** textsPtr = &textPtr;
 
             glShaderSource(Shader, 1, textsPtr, &length);
@@ -121,10 +121,10 @@ namespace Veldrid.OpenGL
                     ? Encoding.UTF8.GetString(infoLog, (int)returnedInfoLength)
                     : "<null>";
 
-                throw new VeldridException($"Unable to compile shader code for shader [{_name}] of type {_shaderType}: {message}");
+                throw new VeldridException($"Unable to compile shader code for shader [{name}] of type {shaderType}: {message}");
             }
 
-            _gd.StagingMemoryPool.Free(_stagingBlock);
+            gd.StagingMemoryPool.Free(stagingBlock);
             Created = true;
         }
     }

@@ -2,44 +2,44 @@ using Veldrid.MetalBindings;
 
 namespace Veldrid.MTL
 {
-    internal class MTLTextureView : TextureView
+    internal class MtlTextureView : TextureView
     {
         public MetalBindings.MTLTexture TargetDeviceTexture { get; }
 
-        public override bool IsDisposed => _disposed;
+        public override bool IsDisposed => disposed;
 
         public override string Name { get; set; }
-        private readonly bool _hasTextureView;
-        private bool _disposed;
+        private readonly bool hasTextureView;
+        private bool disposed;
 
-        public MTLTextureView(ref TextureViewDescription description, MTLGraphicsDevice gd)
+        public MtlTextureView(ref TextureViewDescription description, MtlGraphicsDevice gd)
             : base(ref description)
         {
-            var targetMTLTexture = Util.AssertSubtype<Texture, MTLTexture>(description.Target);
+            var targetMtlTexture = Util.AssertSubtype<Texture, MtlTexture>(description.Target);
 
             if (BaseMipLevel != 0 || MipLevels != Target.MipLevels
                                   || BaseArrayLayer != 0 || ArrayLayers != Target.ArrayLayers
                                   || Format != Target.Format)
             {
-                _hasTextureView = true;
+                hasTextureView = true;
                 uint effectiveArrayLayers = Target.Usage.HasFlag(TextureUsage.Cubemap) ? ArrayLayers * 6 : ArrayLayers;
-                TargetDeviceTexture = targetMTLTexture.DeviceTexture.newTextureView(
-                    MTLFormats.VdToMTLPixelFormat(Format, (description.Target.Usage & TextureUsage.DepthStencil) != 0),
-                    targetMTLTexture.MTLTextureType,
+                TargetDeviceTexture = targetMtlTexture.DeviceTexture.newTextureView(
+                    MtlFormats.VdToMtlPixelFormat(Format, (description.Target.Usage & TextureUsage.DepthStencil) != 0),
+                    targetMtlTexture.MtlTextureType,
                     new NSRange(BaseMipLevel, MipLevels),
                     new NSRange(BaseArrayLayer, effectiveArrayLayers));
             }
             else
-                TargetDeviceTexture = targetMTLTexture.DeviceTexture;
+                TargetDeviceTexture = targetMtlTexture.DeviceTexture;
         }
 
         #region Disposal
 
         public override void Dispose()
         {
-            if (_hasTextureView && !_disposed)
+            if (hasTextureView && !disposed)
             {
-                _disposed = true;
+                disposed = true;
                 ObjectiveCRuntime.release(TargetDeviceTexture.NativePtr);
             }
         }

@@ -6,34 +6,34 @@ namespace Veldrid.Vk
 {
     internal unsafe class VkResourceLayout : ResourceLayout
     {
-        public VkDescriptorSetLayout DescriptorSetLayout => _dsl;
+        public VkDescriptorSetLayout DescriptorSetLayout => dsl;
         public VkDescriptorType[] DescriptorTypes { get; }
 
         public DescriptorResourceCounts DescriptorResourceCounts { get; }
         public new int DynamicBufferCount { get; }
 
-        public override bool IsDisposed => _disposed;
+        public override bool IsDisposed => disposed;
 
         public override string Name
         {
-            get => _name;
+            get => name;
             set
             {
-                _name = value;
-                _gd.SetResourceName(this, value);
+                name = value;
+                gd.SetResourceName(this, value);
             }
         }
 
-        private readonly VkGraphicsDevice _gd;
-        private readonly VkDescriptorSetLayout _dsl;
-        private bool _disposed;
-        private string _name;
+        private readonly VkGraphicsDevice gd;
+        private readonly VkDescriptorSetLayout dsl;
+        private bool disposed;
+        private string name;
 
         public VkResourceLayout(VkGraphicsDevice gd, ref ResourceLayoutDescription description)
             : base(ref description)
         {
-            _gd = gd;
-            var dslCI = VkDescriptorSetLayoutCreateInfo.New();
+            this.gd = gd;
+            var dslCi = VkDescriptorSetLayoutCreateInfo.New();
             var elements = description.Elements;
             DescriptorTypes = new VkDescriptorType[elements.Length];
             var bindings = stackalloc VkDescriptorSetLayoutBinding[elements.Length];
@@ -98,10 +98,10 @@ namespace Veldrid.Vk
                 storageBufferDynamicCount,
                 storageImageCount);
 
-            dslCI.bindingCount = (uint)elements.Length;
-            dslCI.pBindings = bindings;
+            dslCi.bindingCount = (uint)elements.Length;
+            dslCi.pBindings = bindings;
 
-            var result = vkCreateDescriptorSetLayout(_gd.Device, ref dslCI, null, out _dsl);
+            var result = vkCreateDescriptorSetLayout(this.gd.Device, ref dslCi, null, out dsl);
             CheckResult(result);
         }
 
@@ -109,10 +109,10 @@ namespace Veldrid.Vk
 
         public override void Dispose()
         {
-            if (!_disposed)
+            if (!disposed)
             {
-                _disposed = true;
-                vkDestroyDescriptorSetLayout(_gd.Device, _dsl, null);
+                disposed = true;
+                vkDestroyDescriptorSetLayout(gd.Device, dsl, null);
             }
         }
 

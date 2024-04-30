@@ -16,43 +16,43 @@ namespace Veldrid
         /// <summary>
         ///     Gets the underlying VkInstance used by the GraphicsDevice.
         /// </summary>
-        public IntPtr Instance => _gd.Instance.Handle;
+        public IntPtr Instance => gd.Instance.Handle;
 
         /// <summary>
         ///     Gets the underlying VkDevice used by the GraphicsDevice.
         /// </summary>
-        public IntPtr Device => _gd.Device.Handle;
+        public IntPtr Device => gd.Device.Handle;
 
         /// <summary>
         ///     Gets the underlying VkPhysicalDevice used by the GraphicsDevice.
         /// </summary>
-        public IntPtr PhysicalDevice => _gd.PhysicalDevice.Handle;
+        public IntPtr PhysicalDevice => gd.PhysicalDevice.Handle;
 
         /// <summary>
         ///     Gets the VkQueue which is used by the GraphicsDevice to submit graphics work.
         /// </summary>
-        public IntPtr GraphicsQueue => _gd.GraphicsQueue.Handle;
+        public IntPtr GraphicsQueue => gd.GraphicsQueue.Handle;
 
         /// <summary>
         ///     Gets the queue family index of the graphics VkQueue.
         /// </summary>
-        public uint GraphicsQueueFamilyIndex => _gd.GraphicsQueueIndex;
+        public uint GraphicsQueueFamilyIndex => gd.GraphicsQueueIndex;
 
         /// <summary>
         ///     Gets the driver name of the device. May be null.
         /// </summary>
-        public string DriverName => _gd.DriverName;
+        public string DriverName => gd.DriverName;
 
         /// <summary>
         ///     Gets the driver information of the device. May be null.
         /// </summary>
-        public string DriverInfo => _gd.DriverInfo;
+        public string DriverInfo => gd.DriverInfo;
 
-        public ReadOnlyCollection<string> AvailableInstanceLayers => _instanceLayers.Value;
+        public ReadOnlyCollection<string> AvailableInstanceLayers => instanceLayers.Value;
 
         public ReadOnlyCollection<string> AvailableInstanceExtensions { get; }
 
-        public ReadOnlyCollection<ExtensionProperties> AvailableDeviceExtensions => _deviceExtensions.Value;
+        public ReadOnlyCollection<ExtensionProperties> AvailableDeviceExtensions => deviceExtensions.Value;
 
         public readonly struct ExtensionProperties
         {
@@ -71,16 +71,16 @@ namespace Veldrid
             }
         }
 
-        private readonly VkGraphicsDevice _gd;
-        private readonly Lazy<ReadOnlyCollection<string>> _instanceLayers;
-        private readonly Lazy<ReadOnlyCollection<ExtensionProperties>> _deviceExtensions;
+        private readonly VkGraphicsDevice gd;
+        private readonly Lazy<ReadOnlyCollection<string>> instanceLayers;
+        private readonly Lazy<ReadOnlyCollection<ExtensionProperties>> deviceExtensions;
 
         internal BackendInfoVulkan(VkGraphicsDevice gd)
         {
-            _gd = gd;
-            _instanceLayers = new Lazy<ReadOnlyCollection<string>>(() => new ReadOnlyCollection<string>(VulkanUtil.EnumerateInstanceLayers()));
+            this.gd = gd;
+            instanceLayers = new Lazy<ReadOnlyCollection<string>>(() => new ReadOnlyCollection<string>(VulkanUtil.EnumerateInstanceLayers()));
             AvailableInstanceExtensions = new ReadOnlyCollection<string>(VulkanUtil.GetInstanceExtensions());
-            _deviceExtensions = new Lazy<ReadOnlyCollection<ExtensionProperties>>(EnumerateDeviceExtensions);
+            deviceExtensions = new Lazy<ReadOnlyCollection<ExtensionProperties>>(enumerateDeviceExtensions);
         }
 
         /// <summary>
@@ -126,12 +126,12 @@ namespace Veldrid
         /// <param name="layout">The new VkImageLayout value.</param>
         public void TransitionImageLayout(Texture texture, uint layout)
         {
-            _gd.TransitionImageLayout(Util.AssertSubtype<Texture, VkTexture>(texture), (VkImageLayout)layout);
+            gd.TransitionImageLayout(Util.AssertSubtype<Texture, VkTexture>(texture), (VkImageLayout)layout);
         }
 
-        private unsafe ReadOnlyCollection<ExtensionProperties> EnumerateDeviceExtensions()
+        private unsafe ReadOnlyCollection<ExtensionProperties> enumerateDeviceExtensions()
         {
-            var vkProps = _gd.GetDeviceExtensionProperties();
+            var vkProps = gd.GetDeviceExtensionProperties();
             var veldridProps = new ExtensionProperties[vkProps.Length];
 
             for (int i = 0; i < vkProps.Length; i++)

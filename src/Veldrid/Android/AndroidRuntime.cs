@@ -8,15 +8,15 @@ namespace Veldrid.Android
     /// </summary>
     internal static class AndroidRuntime
     {
-        private const string LibName = "android.so";
+        private const string lib_name = "android.so";
 
-        [DllImport(LibName)]
+        [DllImport(lib_name)]
         public static extern IntPtr ANativeWindow_fromSurface(IntPtr jniEnv, IntPtr surface);
 
-        [DllImport(LibName)]
+        [DllImport(lib_name)]
         public static extern int ANativeWindow_setBuffersGeometry(IntPtr aNativeWindow, int width, int height, int format);
 
-        [DllImport(LibName)]
+        [DllImport(lib_name)]
         public static extern void ANativeWindow_release(IntPtr aNativeWindow);
     }
 }

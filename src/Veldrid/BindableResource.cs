@@ -6,7 +6,7 @@
     ///     <see cref="TextureView" />
     ///     and <see cref="Sampler" />.
     /// </summary>
-    public interface BindableResource
+    public interface IBindableResource
     {
     }
 }

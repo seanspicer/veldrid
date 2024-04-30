@@ -70,7 +70,7 @@ namespace Veldrid
             }
         }
 
-        public static DeviceBufferRange GetBufferRange(BindableResource resource, uint additionalOffset)
+        public static DeviceBufferRange GetBufferRange(IBindableResource resource, uint additionalOffset)
         {
             if (resource is DeviceBufferRange range)
                 return new DeviceBufferRange(range.Buffer, range.Offset + additionalOffset, range.SizeInBytes);
@@ -78,7 +78,7 @@ namespace Veldrid
             return new DeviceBufferRange(buffer, additionalOffset, buffer.SizeInBytes);
         }
 
-        public static bool GetDeviceBuffer(BindableResource resource, out DeviceBuffer buffer)
+        public static bool GetDeviceBuffer(IBindableResource resource, out DeviceBuffer buffer)
         {
             if (resource is DeviceBuffer db)
             {
@@ -236,7 +236,7 @@ namespace Veldrid
             return (T[])array.Clone();
         }
 
-        internal static TextureView GetTextureView(GraphicsDevice gd, BindableResource resource)
+        internal static TextureView GetTextureView(GraphicsDevice gd, IBindableResource resource)
         {
             if (resource is TextureView view)
                 return view;

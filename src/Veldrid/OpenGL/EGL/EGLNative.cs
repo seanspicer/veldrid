@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 
 namespace Veldrid.OpenGL.EGL
 {
-    internal static unsafe class EGLNative
+    internal static unsafe class EglNative
     {
         public const int EGL_DRAW = 0x3059;
         public const int EGL_READ = 0x305A;
@@ -21,62 +21,62 @@ namespace Veldrid.OpenGL.EGL
         public const int EGL_NONE = 0x3038;
         public const int EGL_NATIVE_VISUAL_ID = 0x302E;
         public const int EGL_CONTEXT_CLIENT_VERSION = 0x3098;
-        private const string LibName = "libEGL.so";
+        private const string lib_name = "libEGL.so";
 
-        [DllImport(LibName)]
-        public static extern EGLError eglGetError();
+        [DllImport(lib_name)]
+        public static extern EglError eglGetError();
 
-        [DllImport(LibName)]
+        [DllImport(lib_name)]
         public static extern IntPtr eglGetCurrentContext();
 
-        [DllImport(LibName)]
+        [DllImport(lib_name)]
         public static extern int eglDestroyContext(IntPtr display, IntPtr context);
 
-        [DllImport(LibName)]
+        [DllImport(lib_name)]
         public static extern int eglMakeCurrent(IntPtr display, IntPtr draw, IntPtr read, IntPtr context);
 
-        [DllImport(LibName)]
-        public static extern int eglChooseConfig(IntPtr display, int* attrib_list, IntPtr* configs, int config_size, int* num_config);
+        [DllImport(lib_name)]
+        public static extern int eglChooseConfig(IntPtr display, int* attribList, IntPtr* configs, int configSize, int* numConfig);
 
-        [DllImport(LibName)]
+        [DllImport(lib_name)]
         public static extern IntPtr eglGetProcAddress(string name);
 
-        [DllImport(LibName)]
+        [DllImport(lib_name)]
         public static extern IntPtr eglGetCurrentDisplay();
 
-        [DllImport(LibName)]
-        public static extern IntPtr eglGetDisplay(int native_display);
+        [DllImport(lib_name)]
+        public static extern IntPtr eglGetDisplay(int nativeDisplay);
 
-        [DllImport(LibName)]
+        [DllImport(lib_name)]
         public static extern IntPtr eglGetCurrentSurface(int readdraw);
 
-        [DllImport(LibName)]
+        [DllImport(lib_name)]
         public static extern int eglInitialize(IntPtr display, int* major, int* minor);
 
-        [DllImport(LibName)]
+        [DllImport(lib_name)]
         public static extern IntPtr eglCreateWindowSurface(
             IntPtr display,
             IntPtr config,
-            IntPtr native_window,
-            int* attrib_list);
+            IntPtr nativeWindow,
+            int* attribList);
 
-        [DllImport(LibName)]
+        [DllImport(lib_name)]
         public static extern IntPtr eglCreateContext(IntPtr display,
                                                      IntPtr config,
-                                                     IntPtr share_context,
-                                                     int* attrib_list);
+                                                     IntPtr shareContext,
+                                                     int* attribList);
 
-        [DllImport(LibName)]
+        [DllImport(lib_name)]
         public static extern int eglSwapBuffers(IntPtr display, IntPtr surface);
 
-        [DllImport(LibName)]
+        [DllImport(lib_name)]
         public static extern int eglSwapInterval(IntPtr display, int value);
 
-        [DllImport(LibName)]
+        [DllImport(lib_name)]
         public static extern int eglGetConfigAttrib(IntPtr display, IntPtr config, int attribute, int* value);
     }
 
-    internal enum EGLError
+    internal enum EglError
     {
         Success = 0x3000,
         NotInitialized = 0x3001,

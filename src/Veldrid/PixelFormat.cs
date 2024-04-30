@@ -14,321 +14,321 @@
         /// <summary>
         ///     RGBA component order. Each component is an 8-bit unsigned normalized integer.
         /// </summary>
-        R8_G8_B8_A8_UNorm,
+        R8G8B8A8UNorm,
 
         /// <summary>
         ///     BGRA component order. Each component is an 8-bit unsigned normalized integer.
         /// </summary>
-        B8_G8_R8_A8_UNorm,
+        B8G8R8A8UNorm,
 
         /// <summary>
         ///     Single-channel, 8-bit unsigned normalized integer.
         /// </summary>
-        R8_UNorm,
+        R8UNorm,
 
         /// <summary>
         ///     Single-channel, 16-bit unsigned normalized integer. Can be used as a depth format.
         /// </summary>
-        R16_UNorm,
+        R16UNorm,
 
         /// <summary>
         ///     RGBA component order. Each component is a 32-bit signed floating-point value.
         /// </summary>
-        R32_G32_B32_A32_Float,
+        R32G32B32A32Float,
 
         /// <summary>
         ///     Single-channel, 32-bit signed floating-point value. Can be used as a depth format.
         /// </summary>
-        R32_Float,
+        R32Float,
 
         /// <summary>
         ///     BC3 block compressed format.
         /// </summary>
-        BC3_UNorm,
+        Bc3UNorm,
 
         /// <summary>
         ///     A depth-stencil format where the depth is stored in a 24-bit unsigned normalized integer, and the stencil is stored
         ///     in an 8-bit unsigned integer.
         /// </summary>
-        D24_UNorm_S8_UInt,
+        D24UNormS8UInt,
 
         /// <summary>
         ///     A depth-stencil format where the depth is stored in a 32-bit signed floating-point value, and the stencil is stored
         ///     in an 8-bit unsigned integer.
         /// </summary>
-        D32_Float_S8_UInt,
+        D32FloatS8UInt,
 
         /// <summary>
         ///     RGBA component order. Each component is a 32-bit unsigned integer.
         /// </summary>
-        R32_G32_B32_A32_UInt,
+        R32G32B32A32UInt,
 
         /// <summary>
         ///     RG component order. Each component is an 8-bit signed normalized integer.
         /// </summary>
-        R8_G8_SNorm,
+        R8G8SNorm,
 
         /// <summary>
         ///     BC1 block compressed format with no alpha.
         /// </summary>
-        BC1_Rgb_UNorm,
+        Bc1RgbUNorm,
 
         /// <summary>
         ///     BC1 block compressed format with a single-bit alpha channel.
         /// </summary>
-        BC1_Rgba_UNorm,
+        Bc1RgbaUNorm,
 
         /// <summary>
         ///     BC2 block compressed format.
         /// </summary>
-        BC2_UNorm,
+        Bc2UNorm,
 
         /// <summary>
         ///     A 32-bit packed format. The 10-bit R component occupies bits 0..9, the 10-bit G component occupies bits 10..19,
         ///     the 10-bit A component occupies 20..29, and the 2-bit A component occupies bits 30..31. Each value is an unsigned,
         ///     normalized integer.
         /// </summary>
-        R10_G10_B10_A2_UNorm,
+        R10G10B10A2UNorm,
 
         /// <summary>
         ///     A 32-bit packed format. The 10-bit R component occupies bits 0..9, the 10-bit G component occupies bits 10..19,
         ///     the 10-bit A component occupies 20..29, and the 2-bit A component occupies bits 30..31. Each value is an unsigned
         ///     integer.
         /// </summary>
-        R10_G10_B10_A2_UInt,
+        R10G10B10A2UInt,
 
         /// <summary>
         ///     A 32-bit packed format. The 11-bit R componnent occupies bits 0..10, the 11-bit G component occupies bits 11..21,
         ///     and the 10-bit B component occupies bits 22..31. Each value is an unsigned floating point value.
         /// </summary>
-        R11_G11_B10_Float,
+        R11G11B10Float,
 
         /// <summary>
         ///     Single-channel, 8-bit signed normalized integer.
         /// </summary>
-        R8_SNorm,
+        R8SNorm,
 
         /// <summary>
         ///     Single-channel, 8-bit unsigned integer.
         /// </summary>
-        R8_UInt,
+        R8UInt,
 
         /// <summary>
         ///     Single-channel, 8-bit signed integer.
         /// </summary>
-        R8_SInt,
+        R8SInt,
 
         /// <summary>
         ///     Single-channel, 16-bit signed normalized integer.
         /// </summary>
-        R16_SNorm,
+        R16SNorm,
 
         /// <summary>
         ///     Single-channel, 16-bit unsigned integer.
         /// </summary>
-        R16_UInt,
+        R16UInt,
 
         /// <summary>
         ///     Single-channel, 16-bit signed integer.
         /// </summary>
-        R16_SInt,
+        R16SInt,
 
         /// <summary>
         ///     Single-channel, 16-bit signed floating-point value.
         /// </summary>
-        R16_Float,
+        R16Float,
 
         /// <summary>
         ///     Single-channel, 32-bit unsigned integer
         /// </summary>
-        R32_UInt,
+        R32UInt,
 
         /// <summary>
         ///     Single-channel, 32-bit signed integer
         /// </summary>
-        R32_SInt,
+        R32SInt,
 
         /// <summary>
         ///     RG component order. Each component is an 8-bit unsigned normalized integer.
         /// </summary>
-        R8_G8_UNorm,
+        R8G8UNorm,
 
         /// <summary>
         ///     RG component order. Each component is an 8-bit unsigned integer.
         /// </summary>
-        R8_G8_UInt,
+        R8G8UInt,
 
         /// <summary>
         ///     RG component order. Each component is an 8-bit signed integer.
         /// </summary>
-        R8_G8_SInt,
+        R8G8SInt,
 
         /// <summary>
         ///     RG component order. Each component is a 16-bit unsigned normalized integer.
         /// </summary>
-        R16_G16_UNorm,
+        R16G16UNorm,
 
         /// <summary>
         ///     RG component order. Each component is a 16-bit signed normalized integer.
         /// </summary>
-        R16_G16_SNorm,
+        R16G16SNorm,
 
         /// <summary>
         ///     RG component order. Each component is a 16-bit unsigned integer.
         /// </summary>
-        R16_G16_UInt,
+        R16G16UInt,
 
         /// <summary>
         ///     RG component order. Each component is a 16-bit signed integer.
         /// </summary>
-        R16_G16_SInt,
+        R16G16SInt,
 
         /// <summary>
         ///     RG component order. Each component is a 16-bit signed floating-point value.
         /// </summary>
-        R16_G16_Float,
+        R16G16Float,
 
         /// <summary>
         ///     RG component order. Each component is a 32-bit unsigned integer.
         /// </summary>
-        R32_G32_UInt,
+        R32G32UInt,
 
         /// <summary>
         ///     RG component order. Each component is a 32-bit signed integer.
         /// </summary>
-        R32_G32_SInt,
+        R32G32SInt,
 
         /// <summary>
         ///     RG component order. Each component is a 32-bit signed floating-point value.
         /// </summary>
-        R32_G32_Float,
+        R32G32Float,
 
         /// <summary>
         ///     RGBA component order. Each component is an 8-bit signed normalized integer.
         /// </summary>
-        R8_G8_B8_A8_SNorm,
+        R8G8B8A8SNorm,
 
         /// <summary>
         ///     RGBA component order. Each component is an 8-bit unsigned integer.
         /// </summary>
-        R8_G8_B8_A8_UInt,
+        R8G8B8A8UInt,
 
         /// <summary>
         ///     RGBA component order. Each component is an 8-bit signed integer.
         /// </summary>
-        R8_G8_B8_A8_SInt,
+        R8G8B8A8SInt,
 
         /// <summary>
         ///     RGBA component order. Each component is a 16-bit unsigned normalized integer.
         /// </summary>
-        R16_G16_B16_A16_UNorm,
+        R16G16B16A16UNorm,
 
         /// <summary>
         ///     RGBA component order. Each component is a 16-bit signed normalized integer.
         /// </summary>
-        R16_G16_B16_A16_SNorm,
+        R16G16B16A16SNorm,
 
         /// <summary>
         ///     RGBA component order. Each component is a 16-bit unsigned integer.
         /// </summary>
-        R16_G16_B16_A16_UInt,
+        R16G16B16A16UInt,
 
         /// <summary>
         ///     RGBA component order. Each component is a 16-bit signed integer.
         /// </summary>
-        R16_G16_B16_A16_SInt,
+        R16G16B16A16SInt,
 
         /// <summary>
         ///     RGBA component order. Each component is a 16-bit floating-point value.
         /// </summary>
-        R16_G16_B16_A16_Float,
+        R16G16B16A16Float,
 
         /// <summary>
         ///     RGBA component order. Each component is a 32-bit signed integer.
         /// </summary>
-        R32_G32_B32_A32_SInt,
+        R32G32B32A32SInt,
 
         /// <summary>
         ///     A 64-bit, 4x4 block-compressed format storing unsigned normalized RGB data.
         /// </summary>
-        ETC2_R8_G8_B8_UNorm,
+        Etc2R8G8B8UNorm,
 
         /// <summary>
         ///     A 64-bit, 4x4 block-compressed format storing unsigned normalized RGB data, as well as 1 bit of alpha data.
         /// </summary>
-        ETC2_R8_G8_B8_A1_UNorm,
+        Etc2R8G8B8A1UNorm,
 
         /// <summary>
         ///     A 128-bit, 4x4 block-compressed format storing 64 bits of unsigned normalized RGB data, as well as 64 bits of alpha
         ///     data.
         /// </summary>
-        ETC2_R8_G8_B8_A8_UNorm,
+        Etc2R8G8B8A8UNorm,
 
         /// <summary>
         ///     BC4 block compressed format, unsigned normalized values.
         /// </summary>
-        BC4_UNorm,
+        Bc4UNorm,
 
         /// <summary>
         ///     BC4 block compressed format, signed normalized values.
         /// </summary>
-        BC4_SNorm,
+        Bc4SNorm,
 
         /// <summary>
         ///     BC5 block compressed format, unsigned normalized values.
         /// </summary>
-        BC5_UNorm,
+        Bc5UNorm,
 
         /// <summary>
         ///     BC5 block compressed format, signed normalized values.
         /// </summary>
-        BC5_SNorm,
+        Bc5SNorm,
 
         /// <summary>
         ///     BC7 block compressed format.
         /// </summary>
-        BC7_UNorm,
+        Bc7UNorm,
 
         /// <summary>
         ///     RGBA component order. Each component is an 8-bit unsigned normalized integer.
         ///     This is an sRGB format.
         /// </summary>
-        R8_G8_B8_A8_UNorm_SRgb,
+        R8G8B8A8UNormSRgb,
 
         /// <summary>
         ///     BGRA component order. Each component is an 8-bit unsigned normalized integer.
         ///     This is an sRGB format.
         /// </summary>
-        B8_G8_R8_A8_UNorm_SRgb,
+        B8G8R8A8UNormSRgb,
 
         /// <summary>
         ///     BC1 block compressed format with no alpha.
         ///     This is an sRGB format.
         /// </summary>
-        BC1_Rgb_UNorm_SRgb,
+        Bc1RgbUNormSRgb,
 
         /// <summary>
         ///     BC1 block compressed format with a single-bit alpha channel.
         ///     This is an sRGB format.
         /// </summary>
-        BC1_Rgba_UNorm_SRgb,
+        Bc1RgbaUNormSRgb,
 
         /// <summary>
         ///     BC2 block compressed format.
         ///     This is an sRGB format.
         /// </summary>
-        BC2_UNorm_SRgb,
+        Bc2UNormSRgb,
 
         /// <summary>
         ///     BC3 block compressed format.
         ///     This is an sRGB format.
         /// </summary>
-        BC3_UNorm_SRgb,
+        Bc3UNormSRgb,
 
         /// <summary>
         ///     BC7 block compressed format.
         ///     This is an sRGB format.
         /// </summary>
-        BC7_UNorm_SRgb
+        Bc7UNormSRgb
     }
 }

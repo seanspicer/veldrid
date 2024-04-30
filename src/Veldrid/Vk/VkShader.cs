@@ -7,37 +7,37 @@ namespace Veldrid.Vk
 {
     internal unsafe class VkShader : Shader
     {
-        public VkShaderModule ShaderModule => _shaderModule;
+        public VkShaderModule ShaderModule => shaderModule;
 
-        public override bool IsDisposed => _disposed;
+        public override bool IsDisposed => disposed;
 
         public override string Name
         {
-            get => _name;
+            get => name;
             set
             {
-                _name = value;
-                _gd.SetResourceName(this, value);
+                name = value;
+                gd.SetResourceName(this, value);
             }
         }
 
-        private readonly VkGraphicsDevice _gd;
-        private readonly VkShaderModule _shaderModule;
-        private bool _disposed;
-        private string _name;
+        private readonly VkGraphicsDevice gd;
+        private readonly VkShaderModule shaderModule;
+        private bool disposed;
+        private string name;
 
         public VkShader(VkGraphicsDevice gd, ref ShaderDescription description)
             : base(description.Stage, description.EntryPoint)
         {
-            _gd = gd;
+            this.gd = gd;
 
-            var shaderModuleCI = VkShaderModuleCreateInfo.New();
+            var shaderModuleCi = VkShaderModuleCreateInfo.New();
 
             fixed (byte* codePtr = description.ShaderBytes)
             {
-                shaderModuleCI.codeSize = (UIntPtr)description.ShaderBytes.Length;
-                shaderModuleCI.pCode = (uint*)codePtr;
-                var result = vkCreateShaderModule(gd.Device, ref shaderModuleCI, null, out _shaderModule);
+                shaderModuleCi.codeSize = (UIntPtr)description.ShaderBytes.Length;
+                shaderModuleCi.pCode = (uint*)codePtr;
+                var result = vkCreateShaderModule(gd.Device, ref shaderModuleCi, null, out shaderModule);
                 CheckResult(result);
             }
         }
@@ -46,10 +46,10 @@ namespace Veldrid.Vk
 
         public override void Dispose()
         {
-            if (!_disposed)
+            if (!disposed)
             {
-                _disposed = true;
-                vkDestroyShaderModule(_gd.Device, ShaderModule, null);
+                disposed = true;
+                vkDestroyShaderModule(gd.Device, ShaderModule, null);
             }
         }
 

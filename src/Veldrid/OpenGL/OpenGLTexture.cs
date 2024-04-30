@@ -6,9 +6,9 @@ using static Veldrid.OpenGL.OpenGLUtil;
 
 namespace Veldrid.OpenGL
 {
-    internal unsafe class OpenGLTexture : Texture, OpenGLDeferredResource
+    internal unsafe class OpenGLTexture : Texture, IOpenGLDeferredResource
     {
-        public uint Texture => _texture;
+        public uint Texture => texture;
 
         public override uint Width { get; }
 
@@ -28,7 +28,7 @@ namespace Veldrid.OpenGL
 
         public override TextureSampleCount SampleCount { get; }
 
-        public override bool IsDisposed => _disposeRequested;
+        public override bool IsDisposed => disposeRequested;
 
         public GLPixelFormat GLPixelFormat { get; }
         public GLPixelType GLPixelType { get; }
@@ -36,31 +36,31 @@ namespace Veldrid.OpenGL
 
         public override string Name
         {
-            get => _name;
+            get => name;
             set
             {
-                _name = value;
-                _nameChanged = true;
+                name = value;
+                nameChanged = true;
             }
         }
 
         public TextureTarget TextureTarget { get; internal set; }
 
         public bool Created { get; private set; }
-        private readonly OpenGLGraphicsDevice _gd;
-        private uint _texture;
-        private readonly uint[] _framebuffers;
-        private readonly uint[] _pbos;
-        private readonly uint[] _pboSizes;
-        private bool _disposeRequested;
-        private bool _disposed;
+        private readonly OpenGLGraphicsDevice gd;
+        private uint texture;
+        private readonly uint[] framebuffers;
+        private readonly uint[] pbos;
+        private readonly uint[] pboSizes;
+        private bool disposeRequested;
+        private bool disposed;
 
-        private string _name;
-        private bool _nameChanged;
+        private string name;
+        private bool nameChanged;
 
         public OpenGLTexture(OpenGLGraphicsDevice gd, ref TextureDescription description)
         {
-            _gd = gd;
+            this.gd = gd;
 
             Width = description.Width;
             Height = description.Height;
@@ -72,9 +72,9 @@ namespace Veldrid.OpenGL
             Type = description.Type;
             SampleCount = description.SampleCount;
 
-            _framebuffers = new uint[MipLevels * ArrayLayers];
-            _pbos = new uint[MipLevels * ArrayLayers];
-            _pboSizes = new uint[MipLevels * ArrayLayers];
+            framebuffers = new uint[MipLevels * ArrayLayers];
+            pbos = new uint[MipLevels * ArrayLayers];
+            pboSizes = new uint[MipLevels * ArrayLayers];
 
             GLPixelFormat = OpenGLFormats.VdToGLPixelFormat(Format);
             GLPixelType = OpenGLFormats.VdToGLPixelType(Format);
@@ -85,9 +85,9 @@ namespace Veldrid.OpenGL
                 GLPixelFormat = FormatHelpers.IsStencilFormat(Format)
                     ? GLPixelFormat.DepthStencil
                     : GLPixelFormat.DepthComponent;
-                if (Format == PixelFormat.R16_UNorm)
+                if (Format == PixelFormat.R16UNorm)
                     GLInternalFormat = PixelInternalFormat.DepthComponent16;
-                else if (Format == PixelFormat.R32_Float) GLInternalFormat = PixelInternalFormat.DepthComponent32f;
+                else if (Format == PixelFormat.R32Float) GLInternalFormat = PixelInternalFormat.DepthComponent32f;
             }
 
             if ((Usage & TextureUsage.Cubemap) == TextureUsage.Cubemap)
@@ -110,8 +110,8 @@ namespace Veldrid.OpenGL
 
         public OpenGLTexture(OpenGLGraphicsDevice gd, uint nativeTexture, ref TextureDescription description)
         {
-            _gd = gd;
-            _texture = nativeTexture;
+            this.gd = gd;
+            texture = nativeTexture;
             Width = description.Width;
             Height = description.Height;
             Depth = description.Depth;
@@ -122,9 +122,9 @@ namespace Veldrid.OpenGL
             Type = description.Type;
             SampleCount = description.SampleCount;
 
-            _framebuffers = new uint[MipLevels * ArrayLayers];
-            _pbos = new uint[MipLevels * ArrayLayers];
-            _pboSizes = new uint[MipLevels * ArrayLayers];
+            framebuffers = new uint[MipLevels * ArrayLayers];
+            pbos = new uint[MipLevels * ArrayLayers];
+            pboSizes = new uint[MipLevels * ArrayLayers];
 
             GLPixelFormat = OpenGLFormats.VdToGLPixelFormat(Format);
             GLPixelType = OpenGLFormats.VdToGLPixelType(Format);
@@ -135,9 +135,9 @@ namespace Veldrid.OpenGL
                 GLPixelFormat = FormatHelpers.IsStencilFormat(Format)
                     ? GLPixelFormat.DepthStencil
                     : GLPixelFormat.DepthComponent;
-                if (Format == PixelFormat.R16_UNorm)
+                if (Format == PixelFormat.R16UNorm)
                     GLInternalFormat = PixelInternalFormat.DepthComponent16;
-                else if (Format == PixelFormat.R32_Float) GLInternalFormat = PixelInternalFormat.DepthComponent32f;
+                else if (Format == PixelFormat.R32Float) GLInternalFormat = PixelInternalFormat.DepthComponent32f;
             }
 
             if ((Usage & TextureUsage.Cubemap) == TextureUsage.Cubemap)
@@ -162,12 +162,12 @@ namespace Veldrid.OpenGL
 
         public void EnsureResourcesCreated()
         {
-            if (!Created) CreateGLResources();
+            if (!Created) createGLResources();
 
-            if (_nameChanged)
+            if (nameChanged)
             {
-                _nameChanged = false;
-                if (_gd.Extensions.KHR_Debug) SetObjectLabel(ObjectLabelIdentifier.Texture, _texture, _name);
+                nameChanged = false;
+                if (gd.Extensions.KhrDebug) SetObjectLabel(ObjectLabelIdentifier.Texture, texture, name);
             }
         }
 
@@ -178,19 +178,19 @@ namespace Veldrid.OpenGL
 
             uint subresource = CalculateSubresource(mipLevel, arrayLayer);
 
-            if (_framebuffers[subresource] == 0)
+            if (framebuffers[subresource] == 0)
             {
                 var framebufferTarget = SampleCount == TextureSampleCount.Count1
                     ? FramebufferTarget.DrawFramebuffer
                     : FramebufferTarget.ReadFramebuffer;
 
-                glGenFramebuffers(1, out _framebuffers[subresource]);
+                glGenFramebuffers(1, out framebuffers[subresource]);
                 CheckLastError();
 
-                glBindFramebuffer(framebufferTarget, _framebuffers[subresource]);
+                glBindFramebuffer(framebufferTarget, framebuffers[subresource]);
                 CheckLastError();
 
-                _gd.TextureSamplerManager.SetTextureTransient(TextureTarget, Texture);
+                gd.TextureSamplerManager.SetTextureTransient(TextureTarget, Texture);
 
                 if (TextureTarget == TextureTarget.Texture2D || TextureTarget == TextureTarget.Texture2DMultisample)
                 {
@@ -219,19 +219,19 @@ namespace Veldrid.OpenGL
                 if (errorCode != FramebufferErrorCode.FramebufferComplete) throw new VeldridException("Failed to create texture copy FBO: " + errorCode);
             }
 
-            return _framebuffers[subresource];
+            return framebuffers[subresource];
         }
 
         public uint GetPixelBuffer(uint subresource)
         {
             Debug.Assert(Created);
 
-            if (_pbos[subresource] == 0)
+            if (pbos[subresource] == 0)
             {
-                glGenBuffers(1, out _pbos[subresource]);
+                glGenBuffers(1, out pbos[subresource]);
                 CheckLastError();
 
-                glBindBuffer(BufferTarget.CopyWriteBuffer, _pbos[subresource]);
+                glBindBuffer(BufferTarget.CopyWriteBuffer, pbos[subresource]);
                 CheckLastError();
 
                 uint dataSize = Width * Height * FormatSizeHelpers.GetSizeInBytes(Format);
@@ -241,57 +241,57 @@ namespace Veldrid.OpenGL
                     null,
                     BufferUsageHint.StaticCopy);
                 CheckLastError();
-                _pboSizes[subresource] = dataSize;
+                pboSizes[subresource] = dataSize;
             }
 
-            return _pbos[subresource];
+            return pbos[subresource];
         }
 
         public uint GetPixelBufferSize(uint subresource)
         {
             Debug.Assert(Created);
-            Debug.Assert(_pbos[subresource] != 0);
-            return _pboSizes[subresource];
+            Debug.Assert(pbos[subresource] != 0);
+            return pboSizes[subresource];
         }
 
         public void DestroyGLResources()
         {
-            if (!_disposed)
+            if (!disposed)
             {
-                _disposed = true;
+                disposed = true;
 
-                glDeleteTextures(1, ref _texture);
+                glDeleteTextures(1, ref texture);
                 CheckLastError();
 
-                for (int i = 0; i < _framebuffers.Length; i++)
+                for (int i = 0; i < framebuffers.Length; i++)
                 {
-                    if (_framebuffers[i] != 0) glDeleteFramebuffers(1, ref _framebuffers[i]);
+                    if (framebuffers[i] != 0) glDeleteFramebuffers(1, ref framebuffers[i]);
                 }
 
-                for (int i = 0; i < _pbos.Length; i++)
+                for (int i = 0; i < pbos.Length; i++)
                 {
-                    if (_pbos[i] != 0) glDeleteBuffers(1, ref _pbos[i]);
+                    if (pbos[i] != 0) glDeleteBuffers(1, ref pbos[i]);
                 }
             }
         }
 
-        private void CreateGLResources()
+        private void createGLResources()
         {
-            bool dsa = _gd.Extensions.ARB_DirectStateAccess;
+            bool dsa = gd.Extensions.ArbDirectStateAccess;
 
             if (dsa)
             {
                 uint texture;
                 glCreateTextures(TextureTarget, 1, &texture);
                 CheckLastError();
-                _texture = texture;
+                this.texture = texture;
             }
             else
             {
-                glGenTextures(1, out _texture);
+                glGenTextures(1, out texture);
                 CheckLastError();
 
-                _gd.TextureSamplerManager.SetTextureTransient(TextureTarget, _texture);
+                gd.TextureSamplerManager.SetTextureTransient(TextureTarget, texture);
                 CheckLastError();
             }
 
@@ -302,13 +302,13 @@ namespace Veldrid.OpenGL
                 if (dsa)
                 {
                     glTextureStorage1D(
-                        _texture,
+                        texture,
                         MipLevels,
                         OpenGLFormats.VdToGLSizedInternalFormat(Format, isDepthTex),
                         Width);
                     CheckLastError();
                 }
-                else if (_gd.Extensions.TextureStorage)
+                else if (gd.Extensions.TextureStorage)
                 {
                     glTexStorage1D(
                         TextureTarget.Texture1D,
@@ -346,14 +346,14 @@ namespace Veldrid.OpenGL
                 if (dsa)
                 {
                     glTextureStorage2D(
-                        _texture,
+                        texture,
                         MipLevels,
                         OpenGLFormats.VdToGLSizedInternalFormat(Format, isDepthTex),
                         Width,
                         heightOrArrayLayers);
                     CheckLastError();
                 }
-                else if (_gd.Extensions.TextureStorage)
+                else if (gd.Extensions.TextureStorage)
                 {
                     glTexStorage2D(
                         TextureTarget,
@@ -393,7 +393,7 @@ namespace Veldrid.OpenGL
                 if (dsa)
                 {
                     glTextureStorage3D(
-                        _texture,
+                        texture,
                         MipLevels,
                         OpenGLFormats.VdToGLSizedInternalFormat(Format, isDepthTex),
                         Width,
@@ -401,7 +401,7 @@ namespace Veldrid.OpenGL
                         ArrayLayers);
                     CheckLastError();
                 }
-                else if (_gd.Extensions.TextureStorage)
+                else if (gd.Extensions.TextureStorage)
                 {
                     glTexStorage3D(
                         TextureTarget.Texture2DArray,
@@ -442,7 +442,7 @@ namespace Veldrid.OpenGL
                 if (dsa)
                 {
                     glTextureStorage2DMultisample(
-                        _texture,
+                        texture,
                         FormatHelpers.GetSampleCountUInt32(SampleCount),
                         OpenGLFormats.VdToGLSizedInternalFormat(Format, isDepthTex),
                         Width,
@@ -452,7 +452,7 @@ namespace Veldrid.OpenGL
                 }
                 else
                 {
-                    if (_gd.Extensions.TextureStorageMultisample)
+                    if (gd.Extensions.TextureStorageMultisample)
                     {
                         glTexStorage2DMultisample(
                             TextureTarget.Texture2DMultisample,
@@ -482,7 +482,7 @@ namespace Veldrid.OpenGL
                 if (dsa)
                 {
                     glTextureStorage3DMultisample(
-                        _texture,
+                        texture,
                         FormatHelpers.GetSampleCountUInt32(SampleCount),
                         OpenGLFormats.VdToGLSizedInternalFormat(Format, isDepthTex),
                         Width,
@@ -493,7 +493,7 @@ namespace Veldrid.OpenGL
                 }
                 else
                 {
-                    if (_gd.Extensions.TextureStorageMultisample)
+                    if (gd.Extensions.TextureStorageMultisample)
                     {
                         glTexStorage3DMultisample(
                             TextureTarget.Texture2DMultisampleArray,
@@ -523,14 +523,14 @@ namespace Veldrid.OpenGL
                 if (dsa)
                 {
                     glTextureStorage2D(
-                        _texture,
+                        texture,
                         MipLevels,
                         OpenGLFormats.VdToGLSizedInternalFormat(Format, isDepthTex),
                         Width,
                         Height);
                     CheckLastError();
                 }
-                else if (_gd.Extensions.TextureStorage)
+                else if (gd.Extensions.TextureStorage)
                 {
                     glTexStorage2D(
                         TextureTarget.TextureCubeMap,
@@ -573,7 +573,7 @@ namespace Veldrid.OpenGL
                 if (dsa)
                 {
                     glTextureStorage3D(
-                        _texture,
+                        texture,
                         MipLevels,
                         OpenGLFormats.VdToGLSizedInternalFormat(Format, isDepthTex),
                         Width,
@@ -581,7 +581,7 @@ namespace Veldrid.OpenGL
                         ArrayLayers * 6);
                     CheckLastError();
                 }
-                else if (_gd.Extensions.TextureStorage)
+                else if (gd.Extensions.TextureStorage)
                 {
                     glTexStorage3D(
                         TextureTarget.TextureCubeMapArray,
@@ -626,7 +626,7 @@ namespace Veldrid.OpenGL
                 if (dsa)
                 {
                     glTextureStorage3D(
-                        _texture,
+                        texture,
                         MipLevels,
                         OpenGLFormats.VdToGLSizedInternalFormat(Format, isDepthTex),
                         Width,
@@ -634,7 +634,7 @@ namespace Veldrid.OpenGL
                         Depth);
                     CheckLastError();
                 }
-                else if (_gd.Extensions.TextureStorage)
+                else if (gd.Extensions.TextureStorage)
                 {
                     glTexStorage3D(
                         TextureTarget.Texture3D,
@@ -684,10 +684,10 @@ namespace Veldrid.OpenGL
 
         private protected override void DisposeCore()
         {
-            if (!_disposeRequested)
+            if (!disposeRequested)
             {
-                _disposeRequested = true;
-                _gd.EnqueueDisposal(this);
+                disposeRequested = true;
+                gd.EnqueueDisposal(this);
             }
         }
     }

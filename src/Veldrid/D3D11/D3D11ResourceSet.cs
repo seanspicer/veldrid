@@ -2,14 +2,14 @@
 {
     internal class D3D11ResourceSet : ResourceSet
     {
-        public new BindableResource[] Resources { get; }
+        public new IBindableResource[] Resources { get; }
         public new D3D11ResourceLayout Layout { get; }
 
-        public override bool IsDisposed => _disposed;
+        public override bool IsDisposed => disposed;
 
         public override string Name { get; set; }
 
-        private bool _disposed;
+        private bool disposed;
 
         public D3D11ResourceSet(ref ResourceSetDescription description)
             : base(ref description)
@@ -22,7 +22,7 @@
 
         public override void Dispose()
         {
-            _disposed = true;
+            disposed = true;
         }
 
         #endregion

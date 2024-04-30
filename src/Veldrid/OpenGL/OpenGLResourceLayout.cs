@@ -4,10 +4,10 @@
     {
         public ResourceLayoutElementDescription[] Elements { get; }
 
-        public override bool IsDisposed => _disposed;
+        public override bool IsDisposed => disposed;
 
         public override string Name { get; set; }
-        private bool _disposed;
+        private bool disposed;
 
         public OpenGLResourceLayout(ref ResourceLayoutDescription description)
             : base(ref description)
@@ -19,7 +19,7 @@
 
         public override void Dispose()
         {
-            _disposed = true;
+            disposed = true;
         }
 
         #endregion

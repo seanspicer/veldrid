@@ -11,8 +11,8 @@ namespace Veldrid.Vk
         public abstract uint RenderableHeight { get; }
 
         public abstract Vulkan.VkFramebuffer CurrentFramebuffer { get; }
-        public abstract VkRenderPass RenderPassNoClear_Init { get; }
-        public abstract VkRenderPass RenderPassNoClear_Load { get; }
+        public abstract VkRenderPass RenderPassNoClearInit { get; }
+        public abstract VkRenderPass RenderPassNoClearLoad { get; }
         public abstract VkRenderPass RenderPassClear { get; }
         public abstract uint AttachmentCount { get; }
 

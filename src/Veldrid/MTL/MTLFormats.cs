@@ -2,189 +2,189 @@ using Veldrid.MetalBindings;
 
 namespace Veldrid.MTL
 {
-    internal static class MTLFormats
+    internal static class MtlFormats
     {
-        internal static MTLPixelFormat VdToMTLPixelFormat(PixelFormat format, bool depthFormat)
+        internal static MTLPixelFormat VdToMtlPixelFormat(PixelFormat format, bool depthFormat)
         {
             switch (format)
             {
-                case PixelFormat.R8_UNorm:
+                case PixelFormat.R8UNorm:
                     return MTLPixelFormat.R8Unorm;
 
-                case PixelFormat.R8_SNorm:
+                case PixelFormat.R8SNorm:
                     return MTLPixelFormat.R8Snorm;
 
-                case PixelFormat.R8_UInt:
+                case PixelFormat.R8UInt:
                     return MTLPixelFormat.R8Uint;
 
-                case PixelFormat.R8_SInt:
+                case PixelFormat.R8SInt:
                     return MTLPixelFormat.R8Sint;
 
-                case PixelFormat.R16_UNorm:
+                case PixelFormat.R16UNorm:
                     return depthFormat ? MTLPixelFormat.Depth16Unorm : MTLPixelFormat.R16Unorm;
 
-                case PixelFormat.R16_SNorm:
+                case PixelFormat.R16SNorm:
                     return MTLPixelFormat.R16Snorm;
 
-                case PixelFormat.R16_UInt:
+                case PixelFormat.R16UInt:
                     return MTLPixelFormat.R16Uint;
 
-                case PixelFormat.R16_SInt:
+                case PixelFormat.R16SInt:
                     return MTLPixelFormat.R16Sint;
 
-                case PixelFormat.R16_Float:
+                case PixelFormat.R16Float:
                     return MTLPixelFormat.R16Float;
 
-                case PixelFormat.R32_UInt:
+                case PixelFormat.R32UInt:
                     return MTLPixelFormat.R32Uint;
 
-                case PixelFormat.R32_SInt:
+                case PixelFormat.R32SInt:
                     return MTLPixelFormat.R32Sint;
 
-                case PixelFormat.R32_Float:
+                case PixelFormat.R32Float:
                     return depthFormat ? MTLPixelFormat.Depth32Float : MTLPixelFormat.R32Float;
 
-                case PixelFormat.R8_G8_UNorm:
+                case PixelFormat.R8G8UNorm:
                     return MTLPixelFormat.RG8Unorm;
 
-                case PixelFormat.R8_G8_SNorm:
+                case PixelFormat.R8G8SNorm:
                     return MTLPixelFormat.RG8Snorm;
 
-                case PixelFormat.R8_G8_UInt:
+                case PixelFormat.R8G8UInt:
                     return MTLPixelFormat.RG8Uint;
 
-                case PixelFormat.R8_G8_SInt:
+                case PixelFormat.R8G8SInt:
                     return MTLPixelFormat.RG8Sint;
 
-                case PixelFormat.R16_G16_UNorm:
+                case PixelFormat.R16G16UNorm:
                     return MTLPixelFormat.RG16Unorm;
 
-                case PixelFormat.R16_G16_SNorm:
+                case PixelFormat.R16G16SNorm:
                     return MTLPixelFormat.RG16Snorm;
 
-                case PixelFormat.R16_G16_UInt:
+                case PixelFormat.R16G16UInt:
                     return MTLPixelFormat.RG16Uint;
 
-                case PixelFormat.R16_G16_SInt:
+                case PixelFormat.R16G16SInt:
                     return MTLPixelFormat.RG16Sint;
 
-                case PixelFormat.R16_G16_Float:
+                case PixelFormat.R16G16Float:
                     return MTLPixelFormat.RG16Float;
 
-                case PixelFormat.R32_G32_UInt:
+                case PixelFormat.R32G32UInt:
                     return MTLPixelFormat.RG32Uint;
 
-                case PixelFormat.R32_G32_SInt:
+                case PixelFormat.R32G32SInt:
                     return MTLPixelFormat.RG32Sint;
 
-                case PixelFormat.R32_G32_Float:
+                case PixelFormat.R32G32Float:
                     return MTLPixelFormat.RG32Float;
 
-                case PixelFormat.R8_G8_B8_A8_UNorm:
+                case PixelFormat.R8G8B8A8UNorm:
                     return MTLPixelFormat.RGBA8Unorm;
 
-                case PixelFormat.R8_G8_B8_A8_UNorm_SRgb:
+                case PixelFormat.R8G8B8A8UNormSRgb:
                     return MTLPixelFormat.RGBA8Unorm_sRGB;
 
-                case PixelFormat.B8_G8_R8_A8_UNorm:
+                case PixelFormat.B8G8R8A8UNorm:
                     return MTLPixelFormat.BGRA8Unorm;
 
-                case PixelFormat.B8_G8_R8_A8_UNorm_SRgb:
+                case PixelFormat.B8G8R8A8UNormSRgb:
                     return MTLPixelFormat.BGRA8Unorm_sRGB;
 
-                case PixelFormat.R8_G8_B8_A8_SNorm:
+                case PixelFormat.R8G8B8A8SNorm:
                     return MTLPixelFormat.RGBA8Snorm;
 
-                case PixelFormat.R8_G8_B8_A8_UInt:
+                case PixelFormat.R8G8B8A8UInt:
                     return MTLPixelFormat.RGBA8Uint;
 
-                case PixelFormat.R8_G8_B8_A8_SInt:
+                case PixelFormat.R8G8B8A8SInt:
                     return MTLPixelFormat.RGBA8Sint;
 
-                case PixelFormat.R16_G16_B16_A16_UNorm:
+                case PixelFormat.R16G16B16A16UNorm:
                     return MTLPixelFormat.RGBA16Unorm;
 
-                case PixelFormat.R16_G16_B16_A16_SNorm:
+                case PixelFormat.R16G16B16A16SNorm:
                     return MTLPixelFormat.RGBA16Snorm;
 
-                case PixelFormat.R16_G16_B16_A16_UInt:
+                case PixelFormat.R16G16B16A16UInt:
                     return MTLPixelFormat.RGBA16Uint;
 
-                case PixelFormat.R16_G16_B16_A16_SInt:
+                case PixelFormat.R16G16B16A16SInt:
                     return MTLPixelFormat.RGBA16Sint;
 
-                case PixelFormat.R16_G16_B16_A16_Float:
+                case PixelFormat.R16G16B16A16Float:
                     return MTLPixelFormat.RGBA16Float;
 
-                case PixelFormat.R32_G32_B32_A32_UInt:
+                case PixelFormat.R32G32B32A32UInt:
                     return MTLPixelFormat.RGBA32Uint;
 
-                case PixelFormat.R32_G32_B32_A32_SInt:
+                case PixelFormat.R32G32B32A32SInt:
                     return MTLPixelFormat.RGBA32Sint;
 
-                case PixelFormat.R32_G32_B32_A32_Float:
+                case PixelFormat.R32G32B32A32Float:
                     return MTLPixelFormat.RGBA32Float;
 
-                case PixelFormat.BC1_Rgb_UNorm:
-                case PixelFormat.BC1_Rgba_UNorm:
+                case PixelFormat.Bc1RgbUNorm:
+                case PixelFormat.Bc1RgbaUNorm:
                     return MTLPixelFormat.BC1_RGBA;
 
-                case PixelFormat.BC1_Rgb_UNorm_SRgb:
-                case PixelFormat.BC1_Rgba_UNorm_SRgb:
+                case PixelFormat.Bc1RgbUNormSRgb:
+                case PixelFormat.Bc1RgbaUNormSRgb:
                     return MTLPixelFormat.BC1_RGBA_sRGB;
 
-                case PixelFormat.BC2_UNorm:
+                case PixelFormat.Bc2UNorm:
                     return MTLPixelFormat.BC2_RGBA;
 
-                case PixelFormat.BC2_UNorm_SRgb:
+                case PixelFormat.Bc2UNormSRgb:
                     return MTLPixelFormat.BC2_RGBA_sRGB;
 
-                case PixelFormat.BC3_UNorm:
+                case PixelFormat.Bc3UNorm:
                     return MTLPixelFormat.BC3_RGBA;
 
-                case PixelFormat.BC3_UNorm_SRgb:
+                case PixelFormat.Bc3UNormSRgb:
                     return MTLPixelFormat.BC3_RGBA_sRGB;
 
-                case PixelFormat.BC4_UNorm:
+                case PixelFormat.Bc4UNorm:
                     return MTLPixelFormat.BC4_RUnorm;
 
-                case PixelFormat.BC4_SNorm:
+                case PixelFormat.Bc4SNorm:
                     return MTLPixelFormat.BC4_RSnorm;
 
-                case PixelFormat.BC5_UNorm:
+                case PixelFormat.Bc5UNorm:
                     return MTLPixelFormat.BC5_RGUnorm;
 
-                case PixelFormat.BC5_SNorm:
+                case PixelFormat.Bc5SNorm:
                     return MTLPixelFormat.BC5_RGSnorm;
 
-                case PixelFormat.BC7_UNorm:
+                case PixelFormat.Bc7UNorm:
                     return MTLPixelFormat.BC7_RGBAUnorm;
 
-                case PixelFormat.BC7_UNorm_SRgb:
+                case PixelFormat.Bc7UNormSRgb:
                     return MTLPixelFormat.BC7_RGBAUnorm_sRGB;
 
-                case PixelFormat.ETC2_R8_G8_B8_UNorm:
+                case PixelFormat.Etc2R8G8B8UNorm:
                     return MTLPixelFormat.ETC2_RGB8;
 
-                case PixelFormat.ETC2_R8_G8_B8_A1_UNorm:
+                case PixelFormat.Etc2R8G8B8A1UNorm:
                     return MTLPixelFormat.ETC2_RGB8A1;
 
-                case PixelFormat.ETC2_R8_G8_B8_A8_UNorm:
+                case PixelFormat.Etc2R8G8B8A8UNorm:
                     return MTLPixelFormat.EAC_RGBA8;
 
-                case PixelFormat.D24_UNorm_S8_UInt:
+                case PixelFormat.D24UNormS8UInt:
                     return MTLPixelFormat.Depth24Unorm_Stencil8;
 
-                case PixelFormat.D32_Float_S8_UInt:
+                case PixelFormat.D32FloatS8UInt:
                     return MTLPixelFormat.Depth32Float_Stencil8;
 
-                case PixelFormat.R10_G10_B10_A2_UNorm:
+                case PixelFormat.R10G10B10A2UNorm:
                     return MTLPixelFormat.RGB10A2Unorm;
 
-                case PixelFormat.R10_G10_B10_A2_UInt:
+                case PixelFormat.R10G10B10A2UInt:
                     return MTLPixelFormat.RGB10A2Uint;
 
-                case PixelFormat.R11_G11_B10_Float:
+                case PixelFormat.R11G11B10Float:
                     return MTLPixelFormat.RG11B10Float;
 
                 default:
@@ -192,37 +192,37 @@ namespace Veldrid.MTL
             }
         }
 
-        internal static bool IsFormatSupported(PixelFormat format, TextureUsage usage, MTLFeatureSupport metalFeatures)
+        internal static bool IsFormatSupported(PixelFormat format, TextureUsage usage, MtlFeatureSupport metalFeatures)
         {
             switch (format)
             {
-                case PixelFormat.BC1_Rgb_UNorm:
-                case PixelFormat.BC1_Rgb_UNorm_SRgb:
-                case PixelFormat.BC1_Rgba_UNorm:
-                case PixelFormat.BC1_Rgba_UNorm_SRgb:
-                case PixelFormat.BC2_UNorm:
-                case PixelFormat.BC2_UNorm_SRgb:
-                case PixelFormat.BC3_UNorm:
-                case PixelFormat.BC3_UNorm_SRgb:
-                case PixelFormat.BC4_UNorm:
-                case PixelFormat.BC4_SNorm:
-                case PixelFormat.BC5_UNorm:
-                case PixelFormat.BC5_SNorm:
-                case PixelFormat.BC7_UNorm:
-                case PixelFormat.BC7_UNorm_SRgb:
+                case PixelFormat.Bc1RgbUNorm:
+                case PixelFormat.Bc1RgbUNormSRgb:
+                case PixelFormat.Bc1RgbaUNorm:
+                case PixelFormat.Bc1RgbaUNormSRgb:
+                case PixelFormat.Bc2UNorm:
+                case PixelFormat.Bc2UNormSRgb:
+                case PixelFormat.Bc3UNorm:
+                case PixelFormat.Bc3UNormSRgb:
+                case PixelFormat.Bc4UNorm:
+                case PixelFormat.Bc4SNorm:
+                case PixelFormat.Bc5UNorm:
+                case PixelFormat.Bc5SNorm:
+                case PixelFormat.Bc7UNorm:
+                case PixelFormat.Bc7UNormSRgb:
                     return metalFeatures.IsSupported(MTLFeatureSet.macOS_GPUFamily1_v1)
                            || metalFeatures.IsSupported(MTLFeatureSet.macOS_GPUFamily1_v2)
                            || metalFeatures.IsSupported(MTLFeatureSet.macOS_GPUFamily1_v3);
 
-                case PixelFormat.ETC2_R8_G8_B8_UNorm:
-                case PixelFormat.ETC2_R8_G8_B8_A1_UNorm:
-                case PixelFormat.ETC2_R8_G8_B8_A8_UNorm:
+                case PixelFormat.Etc2R8G8B8UNorm:
+                case PixelFormat.Etc2R8G8B8A1UNorm:
+                case PixelFormat.Etc2R8G8B8A8UNorm:
                     return metalFeatures.IsSupported(MTLFeatureSet.iOS_GPUFamily1_v1)
                            || metalFeatures.IsSupported(MTLFeatureSet.iOS_GPUFamily2_v1)
                            || metalFeatures.IsSupported(MTLFeatureSet.iOS_GPUFamily3_v1)
                            || metalFeatures.IsSupported(MTLFeatureSet.iOS_GPUFamily4_v1);
 
-                case PixelFormat.R16_UNorm:
+                case PixelFormat.R16UNorm:
                     return (usage & TextureUsage.DepthStencil) == 0
                            || metalFeatures.IsSupported(MTLFeatureSet.macOS_GPUFamily1_v2)
                            || metalFeatures.IsSupported(MTLFeatureSet.macOS_GPUFamily1_v3);
@@ -232,7 +232,7 @@ namespace Veldrid.MTL
             }
         }
 
-        internal static MTLTriangleFillMode VdToMTLFillMode(PolygonFillMode fillMode)
+        internal static MTLTriangleFillMode VdToMtlFillMode(PolygonFillMode fillMode)
         {
             switch (fillMode)
             {
@@ -247,7 +247,7 @@ namespace Veldrid.MTL
             }
         }
 
-        internal static MTLWinding VdVoMTLFrontFace(FrontFace frontFace)
+        internal static MTLWinding VdVoMtlFrontFace(FrontFace frontFace)
         {
             return frontFace == FrontFace.CounterClockwise ? MTLWinding.CounterClockwise : MTLWinding.Clockwise;
         }
@@ -265,49 +265,49 @@ namespace Veldrid.MTL
                     mip = MTLSamplerMipFilter.Linear;
                     break;
 
-                case SamplerFilter.MinLinear_MagLinear_MipLinear:
+                case SamplerFilter.MinLinearMagLinearMipLinear:
                     min = MTLSamplerMinMagFilter.Linear;
                     mag = MTLSamplerMinMagFilter.Linear;
                     mip = MTLSamplerMipFilter.Linear;
                     break;
 
-                case SamplerFilter.MinLinear_MagLinear_MipPoint:
+                case SamplerFilter.MinLinearMagLinearMipPoint:
                     min = MTLSamplerMinMagFilter.Linear;
                     mag = MTLSamplerMinMagFilter.Linear;
                     mip = MTLSamplerMipFilter.Nearest;
                     break;
 
-                case SamplerFilter.MinLinear_MagPoint_MipLinear:
+                case SamplerFilter.MinLinearMagPointMipLinear:
                     min = MTLSamplerMinMagFilter.Linear;
                     mag = MTLSamplerMinMagFilter.Nearest;
                     mip = MTLSamplerMipFilter.Linear;
                     break;
 
-                case SamplerFilter.MinLinear_MagPoint_MipPoint:
+                case SamplerFilter.MinLinearMagPointMipPoint:
                     min = MTLSamplerMinMagFilter.Linear;
                     mag = MTLSamplerMinMagFilter.Nearest;
                     mip = MTLSamplerMipFilter.Nearest;
                     break;
 
-                case SamplerFilter.MinPoint_MagLinear_MipLinear:
+                case SamplerFilter.MinPointMagLinearMipLinear:
                     min = MTLSamplerMinMagFilter.Nearest;
                     mag = MTLSamplerMinMagFilter.Linear;
                     mip = MTLSamplerMipFilter.Linear;
                     break;
 
-                case SamplerFilter.MinPoint_MagLinear_MipPoint:
+                case SamplerFilter.MinPointMagLinearMipPoint:
                     min = MTLSamplerMinMagFilter.Nearest;
                     mag = MTLSamplerMinMagFilter.Linear;
                     mip = MTLSamplerMipFilter.Nearest;
                     break;
 
-                case SamplerFilter.MinPoint_MagPoint_MipLinear:
+                case SamplerFilter.MinPointMagPointMipLinear:
                     min = MTLSamplerMinMagFilter.Nearest;
                     mag = MTLSamplerMinMagFilter.Nearest;
                     mip = MTLSamplerMipFilter.Nearest;
                     break;
 
-                case SamplerFilter.MinPoint_MagPoint_MipPoint:
+                case SamplerFilter.MinPointMagPointMipPoint:
                     min = MTLSamplerMinMagFilter.Nearest;
                     mag = MTLSamplerMinMagFilter.Nearest;
                     mip = MTLSamplerMipFilter.Nearest;
@@ -318,7 +318,7 @@ namespace Veldrid.MTL
             }
         }
 
-        internal static MTLTextureType VdToMTLTextureType(
+        internal static MTLTextureType VdToMtlTextureType(
             TextureType type,
             uint arrayLayers,
             bool multiSampled,
@@ -344,7 +344,7 @@ namespace Veldrid.MTL
             }
         }
 
-        internal static MTLBlendFactor VdToMTLBlendFactor(BlendFactor vdFactor)
+        internal static MTLBlendFactor VdToMtlBlendFactor(BlendFactor vdFactor)
         {
             switch (vdFactor)
             {
@@ -389,7 +389,7 @@ namespace Veldrid.MTL
             }
         }
 
-        internal static MTLBlendOperation VdToMTLBlendOp(BlendFunction vdFunction)
+        internal static MTLBlendOperation VdToMtlBlendOp(BlendFunction vdFunction)
         {
             switch (vdFunction)
             {
@@ -413,7 +413,7 @@ namespace Veldrid.MTL
             }
         }
 
-        internal static MTLColorWriteMask VdToMTLColorWriteMask(ColorWriteMask vdMask)
+        internal static MTLColorWriteMask VdToMtlColorWriteMask(ColorWriteMask vdMask)
         {
             var mask = MTLColorWriteMask.None;
 
@@ -429,7 +429,7 @@ namespace Veldrid.MTL
             return mask;
         }
 
-        internal static MTLDataType VdVoMTLShaderConstantType(ShaderConstantType type)
+        internal static MTLDataType VdVoMtlShaderConstantType(ShaderConstantType type)
         {
             switch (type)
             {
@@ -461,7 +461,7 @@ namespace Veldrid.MTL
             }
         }
 
-        internal static MTLCompareFunction VdToMTLCompareFunction(ComparisonKind comparisonKind)
+        internal static MTLCompareFunction VdToMtlCompareFunction(ComparisonKind comparisonKind)
         {
             switch (comparisonKind)
             {
@@ -494,7 +494,7 @@ namespace Veldrid.MTL
             }
         }
 
-        internal static MTLCullMode VdToMTLCullMode(FaceCullMode cullMode)
+        internal static MTLCullMode VdToMtlCullMode(FaceCullMode cullMode)
         {
             switch (cullMode)
             {
@@ -512,7 +512,7 @@ namespace Veldrid.MTL
             }
         }
 
-        internal static MTLSamplerBorderColor VdToMTLBorderColor(SamplerBorderColor borderColor)
+        internal static MTLSamplerBorderColor VdToMtlBorderColor(SamplerBorderColor borderColor)
         {
             switch (borderColor)
             {
@@ -530,7 +530,7 @@ namespace Veldrid.MTL
             }
         }
 
-        internal static MTLSamplerAddressMode VdToMTLAddressMode(SamplerAddressMode mode)
+        internal static MTLSamplerAddressMode VdToMtlAddressMode(SamplerAddressMode mode)
         {
             switch (mode)
             {
@@ -551,7 +551,7 @@ namespace Veldrid.MTL
             }
         }
 
-        internal static MTLPrimitiveType VdToMTLPrimitiveTopology(PrimitiveTopology primitiveTopology)
+        internal static MTLPrimitiveType VdToMtlPrimitiveTopology(PrimitiveTopology primitiveTopology)
         {
             switch (primitiveTopology)
             {
@@ -575,7 +575,7 @@ namespace Veldrid.MTL
             }
         }
 
-        internal static MTLTextureUsage VdToMTLTextureUsage(TextureUsage usage)
+        internal static MTLTextureUsage VdToMtlTextureUsage(TextureUsage usage)
         {
             var ret = MTLTextureUsage.Unknown;
 
@@ -590,53 +590,53 @@ namespace Veldrid.MTL
             return ret;
         }
 
-        internal static MTLVertexFormat VdToMTLVertexFormat(VertexElementFormat format)
+        internal static MTLVertexFormat VdToMtlVertexFormat(VertexElementFormat format)
         {
             switch (format)
             {
-                case VertexElementFormat.Byte2_Norm:
+                case VertexElementFormat.Byte2Norm:
                     return MTLVertexFormat.uchar2Normalized;
 
                 case VertexElementFormat.Byte2:
                     return MTLVertexFormat.uchar2;
 
-                case VertexElementFormat.Byte4_Norm:
+                case VertexElementFormat.Byte4Norm:
                     return MTLVertexFormat.uchar4Normalized;
 
                 case VertexElementFormat.Byte4:
                     return MTLVertexFormat.uchar4;
 
-                case VertexElementFormat.SByte2_Norm:
+                case VertexElementFormat.SByte2Norm:
                     return MTLVertexFormat.char2Normalized;
 
                 case VertexElementFormat.SByte2:
                     return MTLVertexFormat.char2;
 
-                case VertexElementFormat.SByte4_Norm:
+                case VertexElementFormat.SByte4Norm:
                     return MTLVertexFormat.char4Normalized;
 
                 case VertexElementFormat.SByte4:
                     return MTLVertexFormat.char4;
 
-                case VertexElementFormat.UShort2_Norm:
+                case VertexElementFormat.UShort2Norm:
                     return MTLVertexFormat.ushort2Normalized;
 
                 case VertexElementFormat.UShort2:
                     return MTLVertexFormat.ushort2;
 
-                case VertexElementFormat.Short2_Norm:
+                case VertexElementFormat.Short2Norm:
                     return MTLVertexFormat.short2Normalized;
 
                 case VertexElementFormat.Short2:
                     return MTLVertexFormat.short2;
 
-                case VertexElementFormat.UShort4_Norm:
+                case VertexElementFormat.UShort4Norm:
                     return MTLVertexFormat.ushort4Normalized;
 
                 case VertexElementFormat.UShort4:
                     return MTLVertexFormat.ushort4;
 
-                case VertexElementFormat.Short4_Norm:
+                case VertexElementFormat.Short4Norm:
                     return MTLVertexFormat.short4Normalized;
 
                 case VertexElementFormat.Short4:
@@ -692,12 +692,12 @@ namespace Veldrid.MTL
             }
         }
 
-        internal static MTLIndexType VdToMTLIndexFormat(IndexFormat format)
+        internal static MTLIndexType VdToMtlIndexFormat(IndexFormat format)
         {
             return format == IndexFormat.UInt16 ? MTLIndexType.UInt16 : MTLIndexType.UInt32;
         }
 
-        internal static MTLStencilOperation VdToMTLStencilOperation(StencilOperation op)
+        internal static MTLStencilOperation VdToMtlStencilOperation(StencilOperation op)
         {
             switch (op)
             {

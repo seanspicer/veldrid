@@ -8,22 +8,22 @@ namespace Veldrid.D3D11
         public ID3D11ShaderResourceView ShaderResourceView { get; }
         public ID3D11UnorderedAccessView UnorderedAccessView { get; }
 
-        public override bool IsDisposed => _disposed;
+        public override bool IsDisposed => disposed;
 
         public override string Name
         {
-            get => _name;
+            get => name;
             set
             {
-                _name = value;
+                name = value;
                 if (ShaderResourceView != null) ShaderResourceView.DebugName = value + "_SRV";
 
                 if (UnorderedAccessView != null) UnorderedAccessView.DebugName = value + "_UAV";
             }
         }
 
-        private string _name;
-        private bool _disposed;
+        private string name;
+        private bool disposed;
 
         public D3D11TextureView(D3D11GraphicsDevice gd, ref TextureViewDescription description)
             : base(ref description)
@@ -98,11 +98,11 @@ namespace Veldrid.D3D11
 
         public override void Dispose()
         {
-            if (!_disposed)
+            if (!disposed)
             {
                 ShaderResourceView?.Dispose();
                 UnorderedAccessView?.Dispose();
-                _disposed = true;
+                disposed = true;
             }
         }
 

@@ -10,19 +10,19 @@ using NativeLibrary = NativeLibraryLoader.NativeLibrary;
 
 namespace Veldrid.MTL
 {
-    internal unsafe class MTLGraphicsDevice : GraphicsDevice
+    internal unsafe class MtlGraphicsDevice : GraphicsDevice
     {
-        public MTLDevice Device => _device;
-        public MTLCommandQueue CommandQueue => _commandQueue;
-        public MTLFeatureSupport MetalFeatures { get; }
+        public MTLDevice Device => device;
+        public MTLCommandQueue CommandQueue => commandQueue;
+        public MtlFeatureSupport MetalFeatures { get; }
         public ResourceBindingModel ResourceBindingModel { get; }
         public bool PreferMemorylessDepthTargets { get; }
 
-        public override string DeviceName => _deviceName;
+        public override string DeviceName => deviceName;
 
         public override string VendorName => "Apple";
 
-        public override GraphicsApiVersion ApiVersion => _apiVersion;
+        public override GraphicsApiVersion ApiVersion => apiVersion;
 
         public override GraphicsBackend BackendType => GraphicsBackend.Metal;
 
@@ -34,62 +34,62 @@ namespace Veldrid.MTL
 
         public override ResourceFactory ResourceFactory { get; }
 
-        public override Swapchain MainSwapchain => _mainSwapchain;
+        public override Swapchain MainSwapchain => mainSwapchain;
 
         public override GraphicsDeviceFeatures Features { get; }
-        private static readonly Lazy<bool> s_isSupported = new Lazy<bool>(GetIsSupported);
+        private static readonly Lazy<bool> s_is_supported = new Lazy<bool>(getIsSupported);
 
-        private static readonly Dictionary<IntPtr, MTLGraphicsDevice> s_aotRegisteredBlocks
-            = new Dictionary<IntPtr, MTLGraphicsDevice>();
+        private static readonly Dictionary<IntPtr, MtlGraphicsDevice> s_aot_registered_blocks
+            = new Dictionary<IntPtr, MtlGraphicsDevice>();
 
-        private readonly MTLDevice _device;
-        private readonly string _deviceName;
-        private readonly GraphicsApiVersion _apiVersion;
-        private readonly MTLCommandQueue _commandQueue;
-        private readonly MTLSwapchain _mainSwapchain;
-        private readonly bool[] _supportedSampleCounts;
+        private readonly MTLDevice device;
+        private readonly string deviceName;
+        private readonly GraphicsApiVersion apiVersion;
+        private readonly MTLCommandQueue commandQueue;
+        private readonly MtlSwapchain mainSwapchain;
+        private readonly bool[] supportedSampleCounts;
 
-        private readonly object _submittedCommandsLock = new object();
-        private readonly Dictionary<MTLCommandBuffer, MTLCommandList> _submittedCLs = new Dictionary<MTLCommandBuffer, MTLCommandList>();
+        private readonly object submittedCommandsLock = new object();
+        private readonly Dictionary<MTLCommandBuffer, MtlCommandList> submittedCLs = new Dictionary<MTLCommandBuffer, MtlCommandList>();
 
-        private readonly object _resetEventsLock = new object();
-        private readonly List<ManualResetEvent[]> _resetEvents = new List<ManualResetEvent[]>();
+        private readonly object resetEventsLock = new object();
+        private readonly List<ManualResetEvent[]> resetEvents = new List<ManualResetEvent[]>();
 
-        private const string UnalignedBufferCopyPipelineMacOSName = "MTL_UnalignedBufferCopy_macOS";
-        private const string UnalignedBufferCopyPipelineiOSName = "MTL_UnalignedBufferCopy_iOS";
-        private readonly object _unalignedBufferCopyPipelineLock = new object();
-        private readonly NativeLibrary _libSystem;
-        private readonly IntPtr _concreteGlobalBlock;
-        private readonly IntPtr _completionHandlerFuncPtr;
-        private readonly IntPtr _completionBlockDescriptor;
-        private readonly IntPtr _completionBlockLiteral;
+        private const string unaligned_buffer_copy_pipeline_mac_os_name = "MTL_UnalignedBufferCopy_macOS";
+        private const string unaligned_buffer_copy_pipelinei_os_name = "MTL_UnalignedBufferCopy_iOS";
+        private readonly object unalignedBufferCopyPipelineLock = new object();
+        private readonly NativeLibrary libSystem;
+        private readonly IntPtr concreteGlobalBlock;
+        private readonly IntPtr completionHandlerFuncPtr;
+        private readonly IntPtr completionBlockDescriptor;
+        private readonly IntPtr completionBlockLiteral;
 
-        private readonly IMTLDisplayLink _displayLink;
-        private readonly AutoResetEvent _nextFrameReadyEvent;
-        private readonly EventWaitHandle _frameEndedEvent = new EventWaitHandle(true, EventResetMode.ManualReset);
-        private readonly BackendInfoMetal _metalInfo;
-        private MTLCommandBuffer _latestSubmittedCB;
-        private MTLShader _unalignedBufferCopyShader;
-        private MTLComputePipelineState _unalignedBufferCopyPipeline;
-        private readonly MTLCommandBufferHandler _completionHandler;
+        private readonly IMtlDisplayLink displayLink;
+        private readonly AutoResetEvent nextFrameReadyEvent;
+        private readonly EventWaitHandle frameEndedEvent = new EventWaitHandle(true, EventResetMode.ManualReset);
+        private readonly BackendInfoMetal metalInfo;
+        private MTLCommandBuffer latestSubmittedCb;
+        private MtlShader unalignedBufferCopyShader;
+        private MTLComputePipelineState unalignedBufferCopyPipeline;
+        private readonly MTLCommandBufferHandler completionHandler;
 
-        public MTLGraphicsDevice(GraphicsDeviceOptions options, SwapchainDescription? swapchainDesc)
+        public MtlGraphicsDevice(GraphicsDeviceOptions options, SwapchainDescription? swapchainDesc)
             : this(options, swapchainDesc, new MetalDeviceOptions())
         {
         }
 
-        public MTLGraphicsDevice(
+        public MtlGraphicsDevice(
             GraphicsDeviceOptions options,
             SwapchainDescription? swapchainDesc,
             MetalDeviceOptions metalOptions)
         {
-            _device = MTLDevice.MTLCreateSystemDefaultDevice();
-            _deviceName = _device.name;
-            MetalFeatures = new MTLFeatureSupport(_device);
+            device = MTLDevice.MTLCreateSystemDefaultDevice();
+            deviceName = device.name;
+            MetalFeatures = new MtlFeatureSupport(device);
 
             int major = (int)MetalFeatures.MaxFeatureSet / 10000;
             int minor = (int)MetalFeatures.MaxFeatureSet % 10000;
-            _apiVersion = new GraphicsApiVersion(major, minor, 0, 0);
+            apiVersion = new GraphicsApiVersion(major, minor, 0, 0);
 
             Features = new GraphicsDeviceFeatures(
                 true,
@@ -116,80 +116,80 @@ namespace Veldrid.MTL
 
             if (MetalFeatures.IsMacOS)
             {
-                _libSystem = new NativeLibrary("libSystem.dylib");
-                _concreteGlobalBlock = _libSystem.LoadFunction("_NSConcreteGlobalBlock");
-                _completionHandler = OnCommandBufferCompleted;
-                _displayLink = new MTLCVDisplayLink();
+                libSystem = new NativeLibrary("libSystem.dylib");
+                concreteGlobalBlock = libSystem.LoadFunction("_NSConcreteGlobalBlock");
+                completionHandler = OnCommandBufferCompleted;
+                displayLink = new MtlcvDisplayLink();
             }
             else
             {
-                _concreteGlobalBlock = IntPtr.Zero;
-                _completionHandler = OnCommandBufferCompleted_Static;
+                concreteGlobalBlock = IntPtr.Zero;
+                completionHandler = OnCommandBufferCompleted_Static;
             }
 
-            if (_displayLink != null)
+            if (displayLink != null)
             {
-                _nextFrameReadyEvent = new AutoResetEvent(true);
-                _displayLink.Callback += OnDisplayLinkCallback;
+                nextFrameReadyEvent = new AutoResetEvent(true);
+                displayLink.Callback += OnDisplayLinkCallback;
             }
 
-            _completionHandlerFuncPtr = Marshal.GetFunctionPointerForDelegate(_completionHandler);
-            _completionBlockDescriptor = Marshal.AllocHGlobal(Unsafe.SizeOf<BlockDescriptor>());
-            var descriptorPtr = (BlockDescriptor*)_completionBlockDescriptor;
+            completionHandlerFuncPtr = Marshal.GetFunctionPointerForDelegate(completionHandler);
+            completionBlockDescriptor = Marshal.AllocHGlobal(Unsafe.SizeOf<BlockDescriptor>());
+            var descriptorPtr = (BlockDescriptor*)completionBlockDescriptor;
             descriptorPtr->reserved = 0;
             descriptorPtr->Block_size = (ulong)Unsafe.SizeOf<BlockDescriptor>();
 
-            _completionBlockLiteral = Marshal.AllocHGlobal(Unsafe.SizeOf<BlockLiteral>());
-            var blockPtr = (BlockLiteral*)_completionBlockLiteral;
-            blockPtr->isa = _concreteGlobalBlock;
+            completionBlockLiteral = Marshal.AllocHGlobal(Unsafe.SizeOf<BlockLiteral>());
+            var blockPtr = (BlockLiteral*)completionBlockLiteral;
+            blockPtr->isa = concreteGlobalBlock;
             blockPtr->flags = (1 << 28) | (1 << 29);
-            blockPtr->invoke = _completionHandlerFuncPtr;
+            blockPtr->invoke = completionHandlerFuncPtr;
             blockPtr->descriptor = descriptorPtr;
 
             if (!MetalFeatures.IsMacOS)
-                lock (s_aotRegisteredBlocks)
-                    s_aotRegisteredBlocks.Add(_completionBlockLiteral, this);
+                lock (s_aot_registered_blocks)
+                    s_aot_registered_blocks.Add(completionBlockLiteral, this);
 
-            ResourceFactory = new MTLResourceFactory(this);
-            _commandQueue = _device.newCommandQueue();
+            ResourceFactory = new MtlResourceFactory(this);
+            commandQueue = device.newCommandQueue();
 
             var allSampleCounts = (TextureSampleCount[])Enum.GetValues(typeof(TextureSampleCount));
-            _supportedSampleCounts = new bool[allSampleCounts.Length];
+            supportedSampleCounts = new bool[allSampleCounts.Length];
 
             for (int i = 0; i < allSampleCounts.Length; i++)
             {
                 var count = allSampleCounts[i];
                 uint uintValue = FormatHelpers.GetSampleCountUInt32(count);
-                if (_device.supportsTextureSampleCount(uintValue)) _supportedSampleCounts[i] = true;
+                if (device.supportsTextureSampleCount(uintValue)) supportedSampleCounts[i] = true;
             }
 
             if (swapchainDesc != null)
             {
                 var desc = swapchainDesc.Value;
-                _mainSwapchain = new MTLSwapchain(this, ref desc);
+                mainSwapchain = new MtlSwapchain(this, ref desc);
             }
 
-            _metalInfo = new BackendInfoMetal(this);
+            metalInfo = new BackendInfoMetal(this);
 
             PostDeviceCreated();
         }
 
         public override void UpdateActiveDisplay(int x, int y, int w, int h)
         {
-            if (_displayLink != null) _displayLink.UpdateActiveDisplay(x, y, w, h);
+            if (displayLink != null) displayLink.UpdateActiveDisplay(x, y, w, h);
         }
 
         public override double GetActualRefreshPeriod()
         {
-            if (_displayLink != null) return _displayLink.GetActualOutputVideoRefreshPeriod();
+            if (displayLink != null) return displayLink.GetActualOutputVideoRefreshPeriod();
 
             return -1.0f;
         }
 
         public override TextureSampleCount GetSampleCountLimit(PixelFormat format, bool depthFormat)
         {
-            for (int i = _supportedSampleCounts.Length - 1; i >= 0; i--)
-                if (_supportedSampleCounts[i])
+            for (int i = supportedSampleCounts.Length - 1; i >= 0; i--)
+                if (supportedSampleCounts[i])
                     return (TextureSampleCount)i;
 
             return TextureSampleCount.Count1;
@@ -197,13 +197,13 @@ namespace Veldrid.MTL
 
         public override bool GetMetalInfo(out BackendInfoMetal info)
         {
-            info = _metalInfo;
+            info = metalInfo;
             return true;
         }
 
         public override bool WaitForFence(Fence fence, ulong nanosecondTimeout)
         {
-            return Util.AssertSubtype<Fence, MTLFence>(fence).Wait(nanosecondTimeout);
+            return Util.AssertSubtype<Fence, MtlFence>(fence).Wait(nanosecondTimeout);
         }
 
         public override bool WaitForFences(Fence[] fences, bool waitAll, ulong nanosecondTimeout)
@@ -214,8 +214,8 @@ namespace Veldrid.MTL
             else
                 msTimeout = (int)Math.Min(nanosecondTimeout / 1_000_000, int.MaxValue);
 
-            var events = GetResetEventArray(fences.Length);
-            for (int i = 0; i < fences.Length; i++) events[i] = Util.AssertSubtype<Fence, MTLFence>(fences[i]).ResetEvent;
+            var events = getResetEventArray(fences.Length);
+            for (int i = 0; i < fences.Length; i++) events[i] = Util.AssertSubtype<Fence, MtlFence>(fences[i]).ResetEvent;
             bool result;
 
             if (waitAll)
@@ -226,26 +226,26 @@ namespace Veldrid.MTL
                 result = index != WaitHandle.WaitTimeout;
             }
 
-            ReturnResetEventArray(events);
+            returnResetEventArray(events);
 
             return result;
         }
 
         public override void ResetFence(Fence fence)
         {
-            Util.AssertSubtype<Fence, MTLFence>(fence).Reset();
+            Util.AssertSubtype<Fence, MtlFence>(fence).Reset();
         }
 
         internal static bool IsSupported()
         {
-            return s_isSupported.Value;
+            return s_is_supported.Value;
         }
 
         internal MTLComputePipelineState GetUnalignedBufferCopyPipeline()
         {
-            lock (_unalignedBufferCopyPipelineLock)
+            lock (unalignedBufferCopyPipelineLock)
             {
-                if (_unalignedBufferCopyPipeline.IsNull)
+                if (unalignedBufferCopyPipeline.IsNull)
                 {
                     var descriptor = MTLUtil.AllocInit<MTLComputePipelineDescriptor>(
                         nameof(MTLComputePipelineDescriptor));
@@ -254,10 +254,10 @@ namespace Veldrid.MTL
                     var buffer1 = descriptor.buffers[1];
                     buffer0.mutability = MTLMutability.Mutable;
 
-                    Debug.Assert(_unalignedBufferCopyShader == null);
-                    string name = MetalFeatures.IsMacOS ? UnalignedBufferCopyPipelineMacOSName : UnalignedBufferCopyPipelineiOSName;
+                    Debug.Assert(unalignedBufferCopyShader == null);
+                    string name = MetalFeatures.IsMacOS ? unaligned_buffer_copy_pipeline_mac_os_name : unaligned_buffer_copy_pipelinei_os_name;
 
-                    using (var resourceStream = typeof(MTLGraphicsDevice).Assembly.GetManifestResourceStream(name))
+                    using (var resourceStream = typeof(MtlGraphicsDevice).Assembly.GetManifestResourceStream(name))
                     {
                         byte[] data = new byte[resourceStream.Length];
 
@@ -265,16 +265,16 @@ namespace Veldrid.MTL
                         {
                             resourceStream.CopyTo(ms);
                             var shaderDesc = new ShaderDescription(ShaderStages.Compute, data, "copy_bytes");
-                            _unalignedBufferCopyShader = new MTLShader(ref shaderDesc, this);
+                            unalignedBufferCopyShader = new MtlShader(ref shaderDesc, this);
                         }
                     }
 
-                    descriptor.computeFunction = _unalignedBufferCopyShader.Function;
-                    _unalignedBufferCopyPipeline = _device.newComputePipelineStateWithDescriptor(descriptor);
+                    descriptor.computeFunction = unalignedBufferCopyShader.Function;
+                    unalignedBufferCopyPipeline = device.newComputePipelineStateWithDescriptor(descriptor);
                     ObjectiveCRuntime.release(descriptor.NativePtr);
                 }
 
-                return _unalignedBufferCopyPipeline;
+                return unalignedBufferCopyPipeline;
             }
         }
 
@@ -288,38 +288,38 @@ namespace Veldrid.MTL
             return 16u;
         }
 
-        protected override MappedResource MapCore(MappableResource resource, MapMode mode, uint subresource)
+        protected override MappedResource MapCore(IMappableResource resource, MapMode mode, uint subresource)
         {
-            if (resource is MTLBuffer buffer)
-                return MapBuffer(buffer, mode);
-            var texture = Util.AssertSubtype<MappableResource, MTLTexture>(resource);
-            return MapTexture(texture, mode, subresource);
+            if (resource is MtlBuffer buffer)
+                return mapBuffer(buffer, mode);
+            var texture = Util.AssertSubtype<IMappableResource, MtlTexture>(resource);
+            return mapTexture(texture, mode, subresource);
         }
 
         protected override void PlatformDispose()
         {
             WaitForIdle();
 
-            if (!_unalignedBufferCopyPipeline.IsNull)
+            if (!unalignedBufferCopyPipeline.IsNull)
             {
-                _unalignedBufferCopyShader.Dispose();
-                ObjectiveCRuntime.release(_unalignedBufferCopyPipeline.NativePtr);
+                unalignedBufferCopyShader.Dispose();
+                ObjectiveCRuntime.release(unalignedBufferCopyPipeline.NativePtr);
             }
 
-            _mainSwapchain?.Dispose();
-            ObjectiveCRuntime.release(_commandQueue.NativePtr);
-            ObjectiveCRuntime.release(_device.NativePtr);
+            mainSwapchain?.Dispose();
+            ObjectiveCRuntime.release(commandQueue.NativePtr);
+            ObjectiveCRuntime.release(device.NativePtr);
 
-            lock (s_aotRegisteredBlocks) s_aotRegisteredBlocks.Remove(_completionBlockLiteral);
+            lock (s_aot_registered_blocks) s_aot_registered_blocks.Remove(completionBlockLiteral);
 
-            _libSystem?.Dispose();
-            Marshal.FreeHGlobal(_completionBlockDescriptor);
-            Marshal.FreeHGlobal(_completionBlockLiteral);
+            libSystem?.Dispose();
+            Marshal.FreeHGlobal(completionBlockDescriptor);
+            Marshal.FreeHGlobal(completionBlockLiteral);
 
-            _displayLink?.Dispose();
+            displayLink?.Dispose();
         }
 
-        protected override void UnmapCore(MappableResource resource, uint subresource)
+        protected override void UnmapCore(IMappableResource resource, uint subresource)
         {
         }
 
@@ -327,12 +327,12 @@ namespace Veldrid.MTL
         [MonoPInvokeCallback(typeof(MTLCommandBufferHandler))]
         private static void OnCommandBufferCompleted_Static(IntPtr block, MTLCommandBuffer cb)
         {
-            lock (s_aotRegisteredBlocks)
-                if (s_aotRegisteredBlocks.TryGetValue(block, out var gd))
+            lock (s_aot_registered_blocks)
+                if (s_aot_registered_blocks.TryGetValue(block, out var gd))
                     gd.OnCommandBufferCompleted(block, cb);
         }
 
-        private static bool GetIsSupported()
+        private static bool getIsSupported()
         {
             bool result = false;
 
@@ -368,13 +368,13 @@ namespace Veldrid.MTL
 
         private void OnCommandBufferCompleted(IntPtr block, MTLCommandBuffer cb)
         {
-            lock (_submittedCommandsLock)
+            lock (submittedCommandsLock)
             {
-                var cl = _submittedCLs[cb];
-                _submittedCLs.Remove(cb);
+                var cl = submittedCLs[cb];
+                submittedCLs.Remove(cb);
                 cl.OnCompleted(cb);
 
-                if (_latestSubmittedCB.NativePtr == cb.NativePtr) _latestSubmittedCB = default;
+                if (latestSubmittedCb.NativePtr == cb.NativePtr) latestSubmittedCb = default;
             }
 
             ObjectiveCRuntime.release(cb.NativePtr);
@@ -382,11 +382,11 @@ namespace Veldrid.MTL
 
         private void OnDisplayLinkCallback()
         {
-            _nextFrameReadyEvent.Set();
-            _frameEndedEvent.WaitOne();
+            nextFrameReadyEvent.Set();
+            frameEndedEvent.WaitOne();
         }
 
-        private MappedResource MapBuffer(MTLBuffer buffer, MapMode mode)
+        private MappedResource mapBuffer(MtlBuffer buffer, MapMode mode)
         {
             return new MappedResource(
                 buffer,
@@ -398,7 +398,7 @@ namespace Veldrid.MTL
                 buffer.SizeInBytes);
         }
 
-        private MappedResource MapTexture(MTLTexture texture, MapMode mode, uint subresource)
+        private MappedResource mapTexture(MtlTexture texture, MapMode mode, uint subresource)
         {
             Debug.Assert(!texture.StagingBuffer.IsNull);
             var data = texture.StagingBufferPointer;
@@ -411,17 +411,17 @@ namespace Veldrid.MTL
             return new MappedResource(texture, mode, (IntPtr)offsetPtr, subresourceSize, subresource, rowPitch, depthPitch);
         }
 
-        private ManualResetEvent[] GetResetEventArray(int length)
+        private ManualResetEvent[] getResetEventArray(int length)
         {
-            lock (_resetEventsLock)
+            lock (resetEventsLock)
             {
-                for (int i = _resetEvents.Count - 1; i > 0; i--)
+                for (int i = resetEvents.Count - 1; i > 0; i--)
                 {
-                    var array = _resetEvents[i];
+                    var array = resetEvents[i];
 
                     if (array.Length == length)
                     {
-                        _resetEvents.RemoveAt(i);
+                        resetEvents.RemoveAt(i);
                         return array;
                     }
                 }
@@ -431,36 +431,36 @@ namespace Veldrid.MTL
             return newArray;
         }
 
-        private void ReturnResetEventArray(ManualResetEvent[] array)
+        private void returnResetEventArray(ManualResetEvent[] array)
         {
-            lock (_resetEventsLock) _resetEvents.Add(array);
+            lock (resetEventsLock) resetEvents.Add(array);
         }
 
         private protected override void SubmitCommandsCore(CommandList commandList, Fence fence)
         {
-            var mtlCL = Util.AssertSubtype<CommandList, MTLCommandList>(commandList);
+            var mtlCl = Util.AssertSubtype<CommandList, MtlCommandList>(commandList);
 
-            mtlCL.CommandBuffer.addCompletedHandler(_completionBlockLiteral);
+            mtlCl.CommandBuffer.addCompletedHandler(completionBlockLiteral);
 
-            lock (_submittedCommandsLock)
+            lock (submittedCommandsLock)
             {
-                if (fence != null) mtlCL.SetCompletionFence(mtlCL.CommandBuffer, Util.AssertSubtype<Fence, MTLFence>(fence));
+                if (fence != null) mtlCl.SetCompletionFence(mtlCl.CommandBuffer, Util.AssertSubtype<Fence, MtlFence>(fence));
 
-                _submittedCLs.Add(mtlCL.CommandBuffer, mtlCL);
-                _latestSubmittedCB = mtlCL.Commit();
+                submittedCLs.Add(mtlCl.CommandBuffer, mtlCl);
+                latestSubmittedCb = mtlCl.Commit();
             }
         }
 
         private protected override void WaitForNextFrameReadyCore()
         {
-            _frameEndedEvent.Reset();
-            _nextFrameReadyEvent?.WaitOne(TimeSpan.FromSeconds(1)); // Should never time out.
+            frameEndedEvent.Reset();
+            nextFrameReadyEvent?.WaitOne(TimeSpan.FromSeconds(1)); // Should never time out.
 
             // in iOS, if one frame takes longer than the next V-Sync request, the next frame will be processed immediately rather than being delayed to a subsequent V-Sync request,
             // therefore we will request the next drawable here as a method of waiting until we're ready to draw the next frame.
             if (!MetalFeatures.IsMacOS)
             {
-                var mtlSwapchainFramebuffer = Util.AssertSubtype<Framebuffer, MTLSwapchainFramebuffer>(_mainSwapchain.Framebuffer);
+                var mtlSwapchainFramebuffer = Util.AssertSubtype<Framebuffer, MtlSwapchainFramebuffer>(mainSwapchain.Framebuffer);
                 mtlSwapchainFramebuffer.EnsureDrawableAvailable();
             }
         }
@@ -471,7 +471,7 @@ namespace Veldrid.MTL
             TextureUsage usage,
             out PixelFormatProperties properties)
         {
-            if (!MTLFormats.IsFormatSupported(format, usage, MetalFeatures))
+            if (!MtlFormats.IsFormatSupported(format, usage, MetalFeatures))
             {
                 properties = default;
                 return false;
@@ -479,19 +479,19 @@ namespace Veldrid.MTL
 
             uint sampleCounts = 0;
 
-            for (int i = 0; i < _supportedSampleCounts.Length; i++)
-                if (_supportedSampleCounts[i])
+            for (int i = 0; i < supportedSampleCounts.Length; i++)
+                if (supportedSampleCounts[i])
                     sampleCounts |= (uint)(1 << i);
 
             var maxFeatureSet = MetalFeatures.MaxFeatureSet;
-            uint maxArrayLayer = MTLFormats.GetMaxTextureVolume(maxFeatureSet);
+            uint maxArrayLayer = MtlFormats.GetMaxTextureVolume(maxFeatureSet);
             uint maxWidth;
             uint maxHeight;
             uint maxDepth;
 
             if (type == TextureType.Texture1D)
             {
-                maxWidth = MTLFormats.GetMaxTexture1DWidth(maxFeatureSet);
+                maxWidth = MtlFormats.GetMaxTexture1DWidth(maxFeatureSet);
                 maxHeight = 1;
                 maxDepth = 1;
             }
@@ -499,9 +499,9 @@ namespace Veldrid.MTL
             {
                 uint maxDimensions;
                 if ((usage & TextureUsage.Cubemap) != 0)
-                    maxDimensions = MTLFormats.GetMaxTextureCubeDimensions(maxFeatureSet);
+                    maxDimensions = MtlFormats.GetMaxTextureCubeDimensions(maxFeatureSet);
                 else
-                    maxDimensions = MTLFormats.GetMaxTexture2DDimensions(maxFeatureSet);
+                    maxDimensions = MtlFormats.GetMaxTexture2DDimensions(maxFeatureSet);
 
                 maxWidth = maxDimensions;
                 maxHeight = maxDimensions;
@@ -529,27 +529,27 @@ namespace Veldrid.MTL
 
         private protected override void SwapBuffersCore(Swapchain swapchain)
         {
-            var mtlSC = Util.AssertSubtype<Swapchain, MTLSwapchain>(swapchain);
-            IntPtr currentDrawablePtr = mtlSC.CurrentDrawable.NativePtr;
+            var mtlSc = Util.AssertSubtype<Swapchain, MtlSwapchain>(swapchain);
+            IntPtr currentDrawablePtr = mtlSc.CurrentDrawable.NativePtr;
 
             if (currentDrawablePtr != IntPtr.Zero)
             {
                 using (NSAutoreleasePool.Begin())
                 {
-                    var submitCB = _commandQueue.commandBuffer();
-                    submitCB.presentDrawable(currentDrawablePtr);
-                    submitCB.commit();
+                    var submitCb = commandQueue.commandBuffer();
+                    submitCb.presentDrawable(currentDrawablePtr);
+                    submitCb.commit();
                 }
 
-                mtlSC.InvalidateDrawable();
+                mtlSc.InvalidateDrawable();
             }
 
-            _frameEndedEvent.Set();
+            frameEndedEvent.Set();
         }
 
         private protected override void UpdateBufferCore(DeviceBuffer buffer, uint bufferOffsetInBytes, IntPtr source, uint sizeInBytes)
         {
-            var mtlBuffer = Util.AssertSubtype<DeviceBuffer, MTLBuffer>(buffer);
+            var mtlBuffer = Util.AssertSubtype<DeviceBuffer, MtlBuffer>(buffer);
             var destPtr = mtlBuffer.Pointer;
             byte* destOffsetPtr = (byte*)destPtr + bufferOffsetInBytes;
 
@@ -572,7 +572,7 @@ namespace Veldrid.MTL
             uint mipLevel,
             uint arrayLayer)
         {
-            var mtlTex = Util.AssertSubtype<Texture, MTLTexture>(texture);
+            var mtlTex = Util.AssertSubtype<Texture, MtlTexture>(texture);
 
             if (mtlTex.StagingBuffer.IsNull)
             {
@@ -611,17 +611,17 @@ namespace Veldrid.MTL
 
         private protected override void WaitForIdleCore()
         {
-            var lastCB = default(MTLCommandBuffer);
+            var lastCb = default(MTLCommandBuffer);
 
-            lock (_submittedCommandsLock)
+            lock (submittedCommandsLock)
             {
-                lastCB = _latestSubmittedCB;
-                ObjectiveCRuntime.retain(lastCB.NativePtr);
+                lastCb = latestSubmittedCb;
+                ObjectiveCRuntime.retain(lastCb.NativePtr);
             }
 
-            if (lastCB.NativePtr != IntPtr.Zero && lastCB.status != MTLCommandBufferStatus.Completed) lastCB.waitUntilCompleted();
+            if (lastCb.NativePtr != IntPtr.Zero && lastCb.status != MTLCommandBufferStatus.Completed) lastCb.waitUntilCompleted();
 
-            ObjectiveCRuntime.release(lastCB.NativePtr);
+            ObjectiveCRuntime.release(lastCb.NativePtr);
         }
     }
 

@@ -4,9 +4,9 @@
     {
         public override PixelFormat Format { get; }
 
-        public override uint Width => _width;
+        public override uint Width => width;
 
-        public override uint Height => _height;
+        public override uint Height => height;
 
         public override uint Depth => 1;
 
@@ -20,12 +20,12 @@
 
         public override TextureType Type => TextureType.Texture2D;
 
-        public override bool IsDisposed => _disposed;
+        public override bool IsDisposed => disposed;
 
         public override string Name { get; set; }
-        private uint _height;
-        private uint _width;
-        private bool _disposed;
+        private uint height;
+        private uint width;
+        private bool disposed;
 
         public OpenGLPlaceholderTexture(
             uint width,
@@ -34,8 +34,8 @@
             TextureUsage usage,
             TextureSampleCount sampleCount)
         {
-            _width = width;
-            _height = height;
+            this.width = width;
+            this.height = height;
             Format = format;
             Usage = usage;
             SampleCount = sampleCount;
@@ -43,13 +43,13 @@
 
         public void Resize(uint width, uint height)
         {
-            _width = width;
-            _height = height;
+            this.width = width;
+            this.height = height;
         }
 
         private protected override void DisposeCore()
         {
-            _disposed = true;
+            disposed = true;
         }
     }
 }

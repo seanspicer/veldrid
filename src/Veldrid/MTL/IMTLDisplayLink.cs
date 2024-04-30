@@ -5,7 +5,7 @@ using System;
 
 namespace Veldrid.MTL
 {
-    internal interface IMTLDisplayLink : IDisposable
+    internal interface IMtlDisplayLink : IDisposable
     {
         public double GetActualOutputVideoRefreshPeriod();
         public void UpdateActiveDisplay(int x, int y, int w, int h);
