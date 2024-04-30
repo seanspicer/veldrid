@@ -47,9 +47,9 @@ namespace Veldrid.MTL
         private uint ibOffset;
         private MTLIndexType indexType;
         private MtlPipeline lastGraphicsPipeline;
-        private new MtlPipeline graphicsPipeline;
+        private MtlPipeline graphicsPipeline;
         private MtlPipeline lastComputePipeline;
-        private new MtlPipeline computePipeline;
+        private MtlPipeline computePipeline;
         private MTLViewport[] viewports = Array.Empty<MTLViewport>();
         private bool viewportsChanged;
         private MTLScissorRect[] activeScissorRects = Array.Empty<MTLScissorRect>();

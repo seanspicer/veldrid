@@ -85,14 +85,14 @@ namespace Veldrid.D3D11
         private ID3D11DomainShader domainShader;
         private ID3D11PixelShader pixelShader;
 
-        private new D3D11Pipeline graphicsPipeline;
+        private D3D11Pipeline graphicsPipeline;
 
         private BoundResourceSetInfo[] graphicsResourceSets = new BoundResourceSetInfo[1];
 
         // Resource sets are invalidated when a new resource set is bound with an incompatible SRV or UAV.
         private bool[] invalidatedGraphicsResourceSets = new bool[1];
 
-        private new D3D11Pipeline computePipeline;
+        private D3D11Pipeline computePipeline;
 
         private BoundResourceSetInfo[] computeResourceSets = new BoundResourceSetInfo[1];
 
