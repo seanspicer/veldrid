@@ -281,10 +281,10 @@ namespace Veldrid.OpenGL
 
             if (dsa)
             {
-                uint texture;
-                glCreateTextures(TextureTarget, 1, &texture);
+                uint t;
+                glCreateTextures(TextureTarget, 1, &t);
                 CheckLastError();
-                this.texture = texture;
+                texture = t;
             }
             else
             {

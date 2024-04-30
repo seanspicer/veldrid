@@ -580,11 +580,10 @@ namespace Veldrid.OpenGL
             }
             else
             {
-                var bufferTarget = BufferTarget.CopyWriteBuffer;
-                glBindBuffer(bufferTarget, glBuffer.Buffer);
+                glBindBuffer(BufferTarget.CopyWriteBuffer, glBuffer.Buffer);
                 CheckLastError();
                 glBufferSubData(
-                    bufferTarget,
+                    BufferTarget.CopyWriteBuffer,
                     (IntPtr)bufferOffsetInBytes,
                     sizeInBytes,
                     dataPtr.ToPointer());
@@ -625,7 +624,7 @@ namespace Veldrid.OpenGL
 
             // Compressed textures can specify regions that are larger than the dimensions.
             // We should only pass up to the dimensions to OpenGL, though.
-            Util.GetMipDimensions(glTex, mipLevel, out uint mipWidth, out uint mipHeight, out uint mipDepth);
+            Util.GetMipDimensions(glTex, mipLevel, out uint mipWidth, out uint mipHeight, out uint _);
             width = Math.Min(width, mipWidth);
             height = Math.Min(height, mipHeight);
 
@@ -1705,7 +1704,7 @@ namespace Veldrid.OpenGL
                 textureSamplerManager.SetTextureTransient(dstTarget, dstGLTexture.Texture);
                 CheckLastError();
 
-                Util.GetMipDimensions(srcGLTexture, srcMipLevel, out uint mipWidth, out uint mipHeight, out uint mipDepth);
+                Util.GetMipDimensions(srcGLTexture, srcMipLevel, out uint mipWidth, out uint mipHeight, out uint _);
                 uint fullRowPitch = FormatHelpers.GetRowPitch(mipWidth, srcGLTexture.Format);
                 uint fullDepthPitch = FormatHelpers.GetDepthPitch(
                     fullRowPitch,

@@ -280,30 +280,15 @@ namespace Veldrid.OpenGL
             if (originalTarget == TextureTarget.Texture1D)
                 TextureTarget = TextureTarget.Texture1D;
             else if (originalTarget == TextureTarget.Texture1DArray)
-            {
-                if (ArrayLayers > 1)
-                    TextureTarget = TextureTarget.Texture1DArray;
-                else
-                    TextureTarget = TextureTarget.Texture1D;
-            }
+                TextureTarget = ArrayLayers > 1 ? TextureTarget.Texture1DArray : TextureTarget.Texture1D;
             else if (originalTarget == TextureTarget.Texture2D)
                 TextureTarget = TextureTarget.Texture2D;
             else if (originalTarget == TextureTarget.Texture2DArray)
-            {
-                if (ArrayLayers > 1)
-                    TextureTarget = TextureTarget.Texture2DArray;
-                else
-                    TextureTarget = TextureTarget.Texture2D;
-            }
+                TextureTarget = ArrayLayers > 1 ? TextureTarget.Texture2DArray : TextureTarget.Texture2D;
             else if (originalTarget == TextureTarget.Texture2DMultisample)
                 TextureTarget = TextureTarget.Texture2DMultisample;
             else if (originalTarget == TextureTarget.Texture2DMultisampleArray)
-            {
-                if (ArrayLayers > 1)
-                    TextureTarget = TextureTarget.Texture2DMultisampleArray;
-                else
-                    TextureTarget = TextureTarget.Texture2DMultisample;
-            }
+                TextureTarget = ArrayLayers > 1 ? TextureTarget.Texture2DMultisampleArray : TextureTarget.Texture2DMultisample;
             else if (originalTarget == TextureTarget.Texture3D)
                 TextureTarget = TextureTarget.Texture3D;
             else if (originalTarget == TextureTarget.TextureCubeMap)

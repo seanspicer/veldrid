@@ -32,10 +32,10 @@ namespace Veldrid.OpenGL
 
                 if (maxLabelLength == null)
                 {
-                    int maxLabelLength = -1;
-                    glGetIntegerv(GetPName.MaxLabelLength, &maxLabelLength);
+                    int localMaxLabelLength = -1;
+                    glGetIntegerv(GetPName.MaxLabelLength, &localMaxLabelLength);
                     CheckLastError();
-                    OpenGLUtil.maxLabelLength = maxLabelLength;
+                    maxLabelLength = localMaxLabelLength;
                 }
 
                 if (byteCount >= maxLabelLength)

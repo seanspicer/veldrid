@@ -200,7 +200,6 @@ namespace Veldrid.OpenGL
         {
             int resourceLayoutCount = layouts.Length;
             setInfos = new SetBindingsInfo[resourceLayoutCount];
-            int lastTextureLocation = -1;
             int relativeTextureIndex = -1;
             int relativeImageIndex = -1;
             uint storageBlockIndex = 0; // Tracks OpenGL ES storage buffers.
@@ -239,7 +238,6 @@ namespace Veldrid.OpenGL
                         int location = getUniformLocation(resource.Name);
                         relativeTextureIndex += 1;
                         textureBindings[i] = new OpenGLTextureBindingSlotInfo { RelativeIndex = relativeTextureIndex, UniformLocation = location };
-                        lastTextureLocation = location;
                         samplerTrackedRelativeTextureIndices.Add(relativeTextureIndex);
                     }
                     else if (resource.Kind == ResourceKind.TextureReadWrite)

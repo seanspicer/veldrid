@@ -52,7 +52,7 @@ namespace Veldrid.OpenGL
             ArbDirectStateAccess = IsExtensionSupported("GL_ARB_direct_state_access");
             ArbMultiBind = IsExtensionSupported("GL_ARB_multi_bind");
             ArbTextureView = GLVersion(4, 3) || IsExtensionSupported("GL_ARB_texture_view") // OpenGL 4.3
-                                              || IsExtensionSupported("GL_OES_texture_view");
+                                             || IsExtensionSupported("GL_OES_texture_view");
             CopyImage = IsExtensionSupported("GL_ARB_copy_image")
                         || GLESVersion(3, 2)
                         || IsExtensionSupported("GL_OES_copy_image")

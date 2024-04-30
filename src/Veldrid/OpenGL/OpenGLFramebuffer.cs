@@ -110,16 +110,13 @@ namespace Veldrid.OpenGL
                 CheckLastError();
             }
 
-            uint depthTextureID = 0;
-            var depthTarget = TextureTarget.Texture2D;
-
             if (DepthTarget != null)
             {
                 var glDepthTex = Util.AssertSubtype<Texture, OpenGLTexture>(DepthTarget.Value.Target);
                 glDepthTex.EnsureResourcesCreated();
-                depthTarget = glDepthTex.TextureTarget;
 
-                depthTextureID = glDepthTex.Texture;
+                var depthTarget = glDepthTex.TextureTarget;
+                uint depthTextureID = glDepthTex.Texture;
 
                 gd.TextureSamplerManager.SetTextureTransient(depthTarget, glDepthTex.Texture);
                 CheckLastError();
@@ -163,8 +160,9 @@ namespace Veldrid.OpenGL
             if (!disposed)
             {
                 disposed = true;
-                uint framebuffer = this.framebuffer;
-                glDeleteFramebuffers(1, ref framebuffer);
+
+                uint f = framebuffer;
+                glDeleteFramebuffers(1, ref f);
                 CheckLastError();
             }
         }

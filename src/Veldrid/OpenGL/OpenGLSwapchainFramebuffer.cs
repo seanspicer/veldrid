@@ -11,17 +11,15 @@ namespace Veldrid.OpenGL
         public override bool IsDisposed => disposed;
 
         public override IReadOnlyList<FramebufferAttachment> ColorTargets => colorTargets;
-        public override FramebufferAttachment? DepthTarget => depthTarget;
+        public override FramebufferAttachment? DepthTarget { get; }
 
         public bool DisableSrgbConversion { get; }
         public override string Name { get; set; }
-        private readonly PixelFormat? depthFormat;
 
         private readonly OpenGLPlaceholderTexture colorTexture;
         private readonly OpenGLPlaceholderTexture depthTexture;
 
         private readonly FramebufferAttachment[] colorTargets;
-        private readonly FramebufferAttachment? depthTarget;
         private bool disposed;
 
         internal OpenGLSwapchainFramebuffer(
@@ -30,10 +28,9 @@ namespace Veldrid.OpenGL
             PixelFormat? depthFormat,
             bool disableSrgbConversion)
         {
-            this.depthFormat = depthFormat;
             // This is wrong, but it's not really used.
-            var depthDesc = this.depthFormat != null
-                ? new OutputAttachmentDescription(this.depthFormat.Value)
+            var depthDesc = depthFormat != null
+                ? new OutputAttachmentDescription(depthFormat.Value)
                 : (OutputAttachmentDescription?)null;
             OutputDescription = new OutputDescription(
                 depthDesc,
@@ -47,7 +44,7 @@ namespace Veldrid.OpenGL
                 TextureSampleCount.Count1);
             colorTargets = new[] { new FramebufferAttachment(colorTexture, 0) };
 
-            if (this.depthFormat != null)
+            if (depthFormat != null)
             {
                 depthTexture = new OpenGLPlaceholderTexture(
                     width,
@@ -55,7 +52,7 @@ namespace Veldrid.OpenGL
                     depthFormat.Value,
                     TextureUsage.DepthStencil,
                     TextureSampleCount.Count1);
-                depthTarget = new FramebufferAttachment(depthTexture, 0);
+                DepthTarget = new FramebufferAttachment(depthTexture, 0);
             }
 
             OutputDescription = OutputDescription.CreateFromFramebuffer(this);
