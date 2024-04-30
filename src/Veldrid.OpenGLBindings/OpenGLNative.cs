@@ -438,31 +438,31 @@ namespace Veldrid.OpenGLBindings
 
         [UnmanagedFunctionPointer(CallConv)]
         private delegate void glColorMask_t(
-            GLboolean red,
-            GLboolean green,
-            GLboolean blue,
-            GLboolean alpha);
+            GLBoolean red,
+            GLBoolean green,
+            GLBoolean blue,
+            GLBoolean alpha);
         private static glColorMask_t p_glColorMask;
         public static void glColorMask(
-            GLboolean red,
-            GLboolean green,
-            GLboolean blue,
-            GLboolean alpha) => p_glColorMask(red, green, blue, alpha);
+            GLBoolean red,
+            GLBoolean green,
+            GLBoolean blue,
+            GLBoolean alpha) => p_glColorMask(red, green, blue, alpha);
 
         [UnmanagedFunctionPointer(CallConv)]
         private delegate void glColorMaski_t(
             uint buf,
-            GLboolean red,
-            GLboolean green,
-            GLboolean blue,
-            GLboolean alpha);
+            GLBoolean red,
+            GLBoolean green,
+            GLBoolean blue,
+            GLBoolean alpha);
         private static glColorMaski_t p_glColorMaski;
         public static void glColorMaski(
             uint buf,
-            GLboolean red,
-            GLboolean green,
-            GLboolean blue,
-            GLboolean alpha) => p_glColorMaski(buf, red, green, blue, alpha);
+            GLBoolean red,
+            GLBoolean green,
+            GLBoolean blue,
+            GLBoolean alpha) => p_glColorMaski(buf, red, green, blue, alpha);
 
         [UnmanagedFunctionPointer(CallConv)]
         private delegate void glBlendFuncSeparatei_t(
@@ -536,9 +536,9 @@ namespace Veldrid.OpenGLBindings
         public static void glDepthFunc(DepthFunction func) => p_glDepthFunc(func);
 
         [UnmanagedFunctionPointer(CallConv)]
-        private delegate void glDepthMask_t(GLboolean flag);
+        private delegate void glDepthMask_t(GLBoolean flag);
         private static glDepthMask_t p_glDepthMask;
-        public static void glDepthMask(GLboolean flag) => p_glDepthMask(flag);
+        public static void glDepthMask(GLBoolean flag) => p_glDepthMask(flag);
 
         [UnmanagedFunctionPointer(CallConv)]
         private delegate void glCullFace_t(CullFaceMode mode);
@@ -747,7 +747,7 @@ namespace Veldrid.OpenGLBindings
             uint index,
             int size,
             VertexAttribPointerType type,
-            GLboolean normalized,
+            GLBoolean normalized,
             uint stride,
             void* pointer);
         private static glVertexAttribPointer_t p_glVertexAttribPointer;
@@ -755,7 +755,7 @@ namespace Veldrid.OpenGLBindings
             uint index,
             int size,
             VertexAttribPointerType type,
-            GLboolean normalized,
+            GLBoolean normalized,
             uint stride,
             void* pointer) => p_glVertexAttribPointer(index, size, type, normalized, stride, pointer);
 
@@ -829,7 +829,7 @@ namespace Veldrid.OpenGLBindings
             PixelInternalFormat internalformat,
             uint width,
             uint height,
-            GLboolean fixedsamplelocations);
+            GLBoolean fixedsamplelocations);
         private static glTexImage2DMultisample_t p_glTexImage2DMultisample;
         public static void glTexImage2DMultiSample(
             TextureTarget target,
@@ -837,7 +837,7 @@ namespace Veldrid.OpenGLBindings
             PixelInternalFormat internalformat,
             uint width,
             uint height,
-            GLboolean fixedsamplelocations) => p_glTexImage2DMultisample(
+            GLBoolean fixedsamplelocations) => p_glTexImage2DMultisample(
                 target,
                 samples,
                 internalformat,
@@ -853,7 +853,7 @@ namespace Veldrid.OpenGLBindings
             uint width,
             uint height,
             uint depth,
-            GLboolean fixedsamplelocations);
+            GLBoolean fixedsamplelocations);
         private static glTexImage3DMultisample_t p_glTexImage3DMultisample;
         public static void glTexImage3DMultisample(
             TextureTarget target,
@@ -862,7 +862,7 @@ namespace Veldrid.OpenGLBindings
             uint width,
             uint height,
             uint depth,
-            GLboolean fixedsamplelocations) => p_glTexImage3DMultisample(
+            GLBoolean fixedsamplelocations) => p_glTexImage3DMultisample(
                 target,
                 samples,
                 internalformat,
@@ -985,7 +985,7 @@ namespace Veldrid.OpenGLBindings
             uint unit​,
             uint texture​,
             int level​,
-            GLboolean layered​,
+            GLBoolean layered​,
             int layer​,
             TextureAccess access​,
             SizedInternalFormat format​);
@@ -994,7 +994,7 @@ namespace Veldrid.OpenGLBindings
             uint unit​,
             uint texture​,
             int level​,
-            GLboolean layered​,
+            GLBoolean layered​,
             int layer​,
             TextureAccess access​,
             SizedInternalFormat format​) => p_glBindImageTexture(unit, texture, level, layered, layer, access, format);
@@ -1095,7 +1095,7 @@ namespace Veldrid.OpenGLBindings
             SizedInternalFormat internalformat,
             uint width,
             uint height,
-            GLboolean fixedsamplelocations);
+            GLBoolean fixedsamplelocations);
         private static glTextureStorage2DMultisample_t p_glTextureStorage2DMultisample;
         public static void glTextureStorage2DMultisample(
             uint texture,
@@ -1103,7 +1103,7 @@ namespace Veldrid.OpenGLBindings
             SizedInternalFormat internalformat,
             uint width,
             uint height,
-            GLboolean fixedsamplelocations)
+            GLBoolean fixedsamplelocations)
             => p_glTextureStorage2DMultisample(texture, samples, internalformat, width, height, fixedsamplelocations);
 
         [UnmanagedFunctionPointer(CallConv)]
@@ -1114,7 +1114,7 @@ namespace Veldrid.OpenGLBindings
             uint width,
             uint height,
             uint depth,
-            GLboolean fixedsamplelocations);
+            GLBoolean fixedsamplelocations);
         private static glTextureStorage3DMultisample_t p_glTextureStorage3DMultisample;
         public static void glTextureStorage3DMultisample(
             uint texture,
@@ -1123,7 +1123,7 @@ namespace Veldrid.OpenGLBindings
             uint width,
             uint height,
             uint depth,
-            GLboolean fixedsamplelocations)
+            GLBoolean fixedsamplelocations)
             => p_glTextureStorage3DMultisample(texture, samples, internalformat, width, height, depth, fixedsamplelocations);
 
         [UnmanagedFunctionPointer(CallConv)]
@@ -1133,7 +1133,7 @@ namespace Veldrid.OpenGLBindings
             SizedInternalFormat internalformat,
             uint width,
             uint height,
-            GLboolean fixedsamplelocations);
+            GLBoolean fixedsamplelocations);
         private static glTexStorage2DMultisample_t p_glTexStorage2DMultisample;
         public static void glTexStorage2DMultisample(
             TextureTarget target,
@@ -1141,7 +1141,7 @@ namespace Veldrid.OpenGLBindings
             SizedInternalFormat internalformat,
             uint width,
             uint height,
-            GLboolean fixedsamplelocations)
+            GLBoolean fixedsamplelocations)
             => p_glTexStorage2DMultisample(target, samples, internalformat, width, height, fixedsamplelocations);
 
         [UnmanagedFunctionPointer(CallConv)]
@@ -1152,7 +1152,7 @@ namespace Veldrid.OpenGLBindings
             uint width,
             uint height,
             uint depth,
-            GLboolean fixedsamplelocations);
+            GLBoolean fixedsamplelocations);
         private static glTexStorage3DMultisample_t p_glTexStorage3DMultisample;
         public static void glTexStorage3DMultisample(
             TextureTarget target,
@@ -1161,7 +1161,7 @@ namespace Veldrid.OpenGLBindings
             uint width,
             uint height,
             uint depth,
-            GLboolean fixedsamplelocations)
+            GLBoolean fixedsamplelocations)
             => p_glTexStorage3DMultisample(target, samples, internalformat, width, height, depth, fixedsamplelocations);
 
         [UnmanagedFunctionPointer(CallConv)]
@@ -1197,14 +1197,14 @@ namespace Veldrid.OpenGLBindings
         public static void* glMapNamedBuffer(uint buffer, BufferAccess access) => p_glMapNamedBuffer(buffer, access);
 
         [UnmanagedFunctionPointer(CallConv)]
-        private delegate GLboolean glUnmapBuffer_t(BufferTarget target);
+        private delegate GLBoolean glUnmapBuffer_t(BufferTarget target);
         private static glUnmapBuffer_t p_glUnmapBuffer;
-        public static GLboolean glUnmapBuffer(BufferTarget target) => p_glUnmapBuffer(target);
+        public static GLBoolean glUnmapBuffer(BufferTarget target) => p_glUnmapBuffer(target);
 
         [UnmanagedFunctionPointer(CallConv)]
-        private delegate GLboolean glUnmapNamedBuffer_t(uint buffer);
+        private delegate GLBoolean glUnmapNamedBuffer_t(uint buffer);
         private static glUnmapNamedBuffer_t p_glUnmapNamedBuffer;
-        public static GLboolean glUnmapNamedBuffer(uint buffer) => p_glUnmapNamedBuffer(buffer);
+        public static GLBoolean glUnmapNamedBuffer(uint buffer) => p_glUnmapNamedBuffer(buffer);
 
         [UnmanagedFunctionPointer(CallConv)]
         private delegate void glCopyBufferSubData_t(
