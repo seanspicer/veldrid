@@ -6,29 +6,36 @@ using Veldrid.MetalBindings;
 
 namespace Veldrid.MTL
 {
-    internal unsafe class MTLCVDisplayLink : IMTLDisplayLink
+    internal unsafe class MtlcvDisplayLink : IMtlDisplayLink
     {
-        public event Action Callback;
+        private CVDisplayLink displayLink;
+        private readonly CVDisplayLinkOutputCallbackDelegate cvDisplayLinkCallbackHandler;
 
-        private CVDisplayLink _displayLink;
-        private CVDisplayLinkOutputCallbackDelegate _cvDisplayLinkCallbackHandler;
-
-        public MTLCVDisplayLink()
+        public MtlcvDisplayLink()
         {
-            _cvDisplayLinkCallbackHandler = OnCallback;
-            _displayLink = CVDisplayLink.CreateWithActiveCGDisplays();
-            _displayLink.SetOutputCallback(_cvDisplayLinkCallbackHandler, IntPtr.Zero);
-            _displayLink.Start();
+            cvDisplayLinkCallbackHandler = OnCallback;
+            displayLink = CVDisplayLink.CreateWithActiveCGDisplays();
+            displayLink.SetOutputCallback(cvDisplayLinkCallbackHandler, IntPtr.Zero);
+            displayLink.Start();
         }
+
+        #region Disposal
+
+        public void Dispose()
+        {
+            displayLink.Release();
+        }
+
+        #endregion
 
         public void UpdateActiveDisplay(int x, int y, int w, int h)
         {
-            _displayLink.UpdateActiveMonitor(x, y, w, h);
+            displayLink.UpdateActiveMonitor(x, y, w, h);
         }
 
         public double GetActualOutputVideoRefreshPeriod()
         {
-            return _displayLink.GetActualOutputVideoRefreshPeriod();
+            return displayLink.GetActualOutputVideoRefreshPeriod();
         }
 
         private int OnCallback(CVDisplayLink displaylink, CVTimeStamp* innow, CVTimeStamp* inoutputtime, long flagsin, long flagsout, IntPtr userdata)
@@ -37,9 +44,6 @@ namespace Veldrid.MTL
             return 0;
         }
 
-        public void Dispose()
-        {
-            _displayLink.Release();
-        }
+        public event Action Callback;
     }
 }

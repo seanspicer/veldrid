@@ -280,7 +280,7 @@ namespace Veldrid.MetalBindings
 
         public static void retain(IntPtr receiver) => objc_msgSend(receiver, sel_retain);
         public static void release(IntPtr receiver) => objc_msgSend(receiver, sel_release);
-        public static ulong GetRetainCount(IntPtr receiver) => (ulong)UIntPtr_objc_msgSend(receiver, sel_retainCount);
+        public static ulong GetRetainCount(IntPtr receiver) => UIntPtr_objc_msgSend(receiver, sel_retainCount);
 
         private static readonly Selector sel_retain = "retain";
         private static readonly Selector sel_release = "release";

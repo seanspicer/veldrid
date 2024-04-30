@@ -3,37 +3,48 @@ using System.Threading;
 
 namespace Veldrid.MTL
 {
-    internal class MTLFence : Fence
+    internal class MtlFence : Fence
     {
-        private readonly ManualResetEvent _mre;
-        private bool _disposed;
+        public ManualResetEvent ResetEvent { get; }
 
-        public MTLFence(bool signaled)
-        {
-            _mre = new ManualResetEvent(signaled);
-        }
+        public override bool Signaled => ResetEvent.WaitOne(0);
+        public override bool IsDisposed => disposed;
 
         public override string Name { get; set; }
-        public ManualResetEvent ResetEvent => _mre;
+        private bool disposed;
 
-        public void Set() => _mre.Set();
-        public override void Reset() => _mre.Reset();
-        public override bool Signaled => _mre.WaitOne(0);
-        public override bool IsDisposed => _disposed;
+        public MtlFence(bool signaled)
+        {
+            ResetEvent = new ManualResetEvent(signaled);
+        }
+
+        #region Disposal
 
         public override void Dispose()
         {
-            if (!_disposed)
+            if (!disposed)
             {
-                _mre.Dispose();
-                _disposed = true;
+                ResetEvent.Dispose();
+                disposed = true;
             }
+        }
+
+        #endregion
+
+        public void Set()
+        {
+            ResetEvent.Set();
+        }
+
+        public override void Reset()
+        {
+            ResetEvent.Reset();
         }
 
         internal bool Wait(ulong nanosecondTimeout)
         {
             ulong timeout = Math.Min(int.MaxValue, nanosecondTimeout / 1_000_000);
-            return _mre.WaitOne((int)timeout);
+            return ResetEvent.WaitOne((int)timeout);
         }
     }
 }

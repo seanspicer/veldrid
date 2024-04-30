@@ -1,25 +1,24 @@
 using System;
-using System.Diagnostics;
 using System.Text;
 using Veldrid.MetalBindings;
 
 namespace Veldrid.MTL
 {
-    internal class MTLShader : Shader
+    internal class MtlShader : Shader
     {
-        private readonly MTLGraphicsDevice _device;
-        private bool _disposed;
-
-        public MTLLibrary Library { get; private set; }
-        public MTLFunction Function { get; private set; }
-        public override string Name { get; set; }
         public bool HasFunctionConstants { get; }
-        public override bool IsDisposed => _disposed;
+        public override bool IsDisposed => disposed;
 
-        public unsafe MTLShader(ref ShaderDescription description, MTLGraphicsDevice gd)
+        public MTLLibrary Library { get; }
+        public MTLFunction Function { get; }
+        public override string Name { get; set; }
+        private readonly MtlGraphicsDevice device;
+        private bool disposed;
+
+        public unsafe MtlShader(ref ShaderDescription description, MtlGraphicsDevice gd)
             : base(description.Stage, description.EntryPoint)
         {
-            _device = gd;
+            device = gd;
 
             if (description.ShaderBytes.Length > 4
                 && description.ShaderBytes[0] == 0x4d
@@ -27,14 +26,16 @@ namespace Veldrid.MTL
                 && description.ShaderBytes[2] == 0x4c
                 && description.ShaderBytes[3] == 0x42)
             {
-                DispatchQueue queue = Dispatch.dispatch_get_global_queue(QualityOfServiceLevel.QOS_CLASS_USER_INTERACTIVE, 0);
+                var queue = Dispatch.dispatch_get_global_queue(QualityOfServiceLevel.QOS_CLASS_USER_INTERACTIVE, 0);
+
                 fixed (byte* shaderBytesPtr = description.ShaderBytes)
                 {
-                    DispatchData dispatchData = Dispatch.dispatch_data_create(
+                    var dispatchData = Dispatch.dispatch_data_create(
                         shaderBytesPtr,
                         (UIntPtr)description.ShaderBytes.Length,
                         queue,
                         IntPtr.Zero);
+
                     try
                     {
                         Library = gd.Device.newLibraryWithData(dispatchData);
@@ -48,12 +49,13 @@ namespace Veldrid.MTL
             else
             {
                 string source = Encoding.UTF8.GetString(description.ShaderBytes);
-                MTLCompileOptions compileOptions = MTLCompileOptions.New();
+                var compileOptions = MTLCompileOptions.New();
                 Library = gd.Device.newLibraryWithSource(source, compileOptions);
                 ObjectiveCRuntime.release(compileOptions);
             }
 
             Function = Library.newFunctionWithName(description.EntryPoint);
+
             if (Function.NativePtr == IntPtr.Zero)
             {
                 throw new VeldridException(
@@ -63,14 +65,18 @@ namespace Veldrid.MTL
             HasFunctionConstants = Function.functionConstantsDictionary.count != UIntPtr.Zero;
         }
 
+        #region Disposal
+
         public override void Dispose()
         {
-            if (!_disposed)
+            if (!disposed)
             {
-                _disposed = true;
+                disposed = true;
                 ObjectiveCRuntime.release(Function.NativePtr);
                 ObjectiveCRuntime.release(Library.NativePtr);
             }
         }
+
+        #endregion
     }
 }

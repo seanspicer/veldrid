@@ -5,23 +5,33 @@ namespace Veldrid.Vk
 {
     internal unsafe class VkSampler : Sampler
     {
-        private readonly VkGraphicsDevice _gd;
-        private readonly Vulkan.VkSampler _sampler;
-        private bool _disposed;
-        private string _name;
-
-        public Vulkan.VkSampler DeviceSampler => _sampler;
+        public Vulkan.VkSampler DeviceSampler => sampler;
 
         public ResourceRefCount RefCount { get; }
 
-        public override bool IsDisposed => _disposed;
+        public override bool IsDisposed => disposed;
+
+        public override string Name
+        {
+            get => name;
+            set
+            {
+                name = value;
+                gd.SetResourceName(this, value);
+            }
+        }
+
+        private readonly VkGraphicsDevice gd;
+        private readonly Vulkan.VkSampler sampler;
+        private bool disposed;
+        private string name;
 
         public VkSampler(VkGraphicsDevice gd, ref SamplerDescription description)
         {
-            _gd = gd;
-            VkFormats.GetFilterParams(description.Filter, out VkFilter minFilter, out VkFilter magFilter, out VkSamplerMipmapMode mipmapMode);
+            this.gd = gd;
+            VkFormats.GetFilterParams(description.Filter, out var minFilter, out var magFilter, out var mipmapMode);
 
-            VkSamplerCreateInfo samplerCI = new VkSamplerCreateInfo
+            var samplerCi = new VkSamplerCreateInfo
             {
                 sType = VkStructureType.SamplerCreateInfo,
                 addressModeU = VkFormats.VdToVkSamplerAddressMode(description.AddressModeU),
@@ -42,31 +52,25 @@ namespace Veldrid.Vk
                 borderColor = VkFormats.VdToVkSamplerBorderColor(description.BorderColor)
             };
 
-            vkCreateSampler(_gd.Device, ref samplerCI, null, out _sampler);
-            RefCount = new ResourceRefCount(DisposeCore);
+            vkCreateSampler(this.gd.Device, ref samplerCi, null, out sampler);
+            RefCount = new ResourceRefCount(disposeCore);
         }
 
-        public override string Name
-        {
-            get => _name;
-            set
-            {
-                _name = value;
-                _gd.SetResourceName(this, value);
-            }
-        }
+        #region Disposal
 
         public override void Dispose()
         {
             RefCount.Decrement();
         }
 
-        private void DisposeCore()
+        #endregion
+
+        private void disposeCore()
         {
-            if (!_disposed)
+            if (!disposed)
             {
-                vkDestroySampler(_gd.Device, _sampler, null);
-                _disposed = true;
+                vkDestroySampler(gd.Device, sampler, null);
+                disposed = true;
             }
         }
     }

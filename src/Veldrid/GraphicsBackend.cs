@@ -1,29 +1,33 @@
 ﻿namespace Veldrid
 {
     /// <summary>
-    /// The specific graphics API used by the <see cref="GraphicsDevice"/>.
+    ///     The specific graphics API used by the <see cref="GraphicsDevice" />.
     /// </summary>
     public enum GraphicsBackend : byte
     {
         /// <summary>
-        /// Direct3D 11.
+        ///     Direct3D 11.
         /// </summary>
         Direct3D11,
+
         /// <summary>
-        /// Vulkan.
+        ///     Vulkan.
         /// </summary>
         Vulkan,
+
         /// <summary>
-        /// OpenGL.
+        ///     OpenGL.
         /// </summary>
         OpenGL,
+
         /// <summary>
-        /// Metal.
+        ///     Metal.
         /// </summary>
         Metal,
+
         /// <summary>
-        /// OpenGL ES.
+        ///     OpenGL ES.
         /// </summary>
-        OpenGLES,
+        OpenGLES
     }
 }

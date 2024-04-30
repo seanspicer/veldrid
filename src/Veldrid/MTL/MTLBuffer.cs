@@ -1,48 +1,46 @@
-using System;
 using Veldrid.MetalBindings;
 
 namespace Veldrid.MTL
 {
-    internal class MTLBuffer : DeviceBuffer
+    internal class MtlBuffer : DeviceBuffer
     {
-        private string _name;
-        private bool _disposed;
-
         public override uint SizeInBytes { get; }
         public override BufferUsage Usage { get; }
 
         public uint ActualCapacity { get; }
 
+        public override bool IsDisposed => disposed;
+
         public override string Name
         {
-            get => _name;
+            get => name;
             set
             {
-                NSString nameNSS = NSString.New(value);
-                DeviceBuffer.addDebugMarker(nameNSS, new NSRange(0, SizeInBytes));
-                ObjectiveCRuntime.release(nameNSS.NativePtr);
-                _name = value;
+                var nameNss = NSString.New(value);
+                DeviceBuffer.addDebugMarker(nameNss, new NSRange(0, SizeInBytes));
+                ObjectiveCRuntime.release(nameNss.NativePtr);
+                name = value;
             }
         }
 
-        public override bool IsDisposed => _disposed;
-
-        public MetalBindings.MTLBuffer DeviceBuffer { get; private set; }
+        public MTLBuffer DeviceBuffer { get; }
 
         public unsafe void* Pointer { get; private set; }
+        private string name;
+        private bool disposed;
 
-        public MTLBuffer(ref BufferDescription bd, MTLGraphicsDevice gd)
+        public MtlBuffer(ref BufferDescription bd, MtlGraphicsDevice gd)
         {
             SizeInBytes = bd.SizeInBytes;
-            uint roundFactor = (4 - (SizeInBytes % 4)) % 4;
+            uint roundFactor = (4 - SizeInBytes % 4) % 4;
             ActualCapacity = SizeInBytes + roundFactor;
             Usage = bd.Usage;
 
-            var sharedMemory = Usage == BufferUsage.Staging || (Usage & BufferUsage.Dynamic) == BufferUsage.Dynamic;
+            bool sharedMemory = Usage == BufferUsage.Staging || (Usage & BufferUsage.Dynamic) == BufferUsage.Dynamic;
             var bufferOptions = sharedMemory ? MTLResourceOptions.StorageModeShared : MTLResourceOptions.StorageModePrivate;
 
             DeviceBuffer = gd.Device.newBufferWithLengthOptions(
-                (UIntPtr)ActualCapacity,
+                ActualCapacity,
                 bufferOptions);
 
             unsafe
@@ -52,13 +50,17 @@ namespace Veldrid.MTL
             }
         }
 
+        #region Disposal
+
         public override void Dispose()
         {
-            if (!_disposed)
+            if (!disposed)
             {
-                _disposed = true;
+                disposed = true;
                 ObjectiveCRuntime.release(DeviceBuffer.NativePtr);
             }
         }
+
+        #endregion
     }
 }

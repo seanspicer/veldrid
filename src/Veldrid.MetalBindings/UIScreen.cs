@@ -3,7 +3,7 @@ using static Veldrid.MetalBindings.ObjectiveCRuntime;
 
 namespace Veldrid.MetalBindings
 {
-    public unsafe struct UIScreen
+    public struct UIScreen
     {
         public readonly IntPtr NativePtr;
         public UIScreen(IntPtr ptr)

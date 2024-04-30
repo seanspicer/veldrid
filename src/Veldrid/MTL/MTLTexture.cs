@@ -3,20 +3,17 @@ using Veldrid.MetalBindings;
 
 namespace Veldrid.MTL
 {
-    internal class MTLTexture : Texture
+    internal class MtlTexture : Texture
     {
-        private bool _disposed;
+        /// <summary>
+        ///     The native MTLTexture object. This property is only valid for non-staging Textures.
+        /// </summary>
+        public MTLTexture DeviceTexture { get; }
 
         /// <summary>
-        /// The native MTLTexture object. This property is only valid for non-staging Textures.
+        ///     The staging MTLBuffer object. This property is only valid for staging Textures.
         /// </summary>
-        public MetalBindings.MTLTexture DeviceTexture { get; }
-        /// <summary>
-        /// The staging MTLBuffer object. This property is only valid for staging Textures.
-        /// </summary>
-        public MetalBindings.MTLBuffer StagingBuffer { get; }
-
-        public unsafe void* StagingBufferPointer { get; private set; }
+        public MTLBuffer StagingBuffer { get; }
 
         public override PixelFormat Format { get; }
 
@@ -35,13 +32,16 @@ namespace Veldrid.MTL
         public override TextureType Type { get; }
 
         public override TextureSampleCount SampleCount { get; }
-        public override string Name { get; set; }
-        public override bool IsDisposed => _disposed;
-        public MTLPixelFormat MTLPixelFormat { get; }
-        public MTLTextureType MTLTextureType { get; }
-        public MTLStorageMode MTLStorageMode { get; }
+        public override bool IsDisposed => disposed;
+        public MTLPixelFormat MtlPixelFormat { get; }
+        public MTLTextureType MtlTextureType { get; }
+        public MTLStorageMode MtlStorageMode { get; }
 
-        public MTLTexture(ref TextureDescription description, MTLGraphicsDevice _gd)
+        public unsafe void* StagingBufferPointer { get; private set; }
+        public override string Name { get; set; }
+        private bool disposed;
+
+        public MtlTexture(ref TextureDescription description, MtlGraphicsDevice gd)
         {
             Width = description.Width;
             Height = description.Height;
@@ -54,36 +54,37 @@ namespace Veldrid.MTL
             SampleCount = description.SampleCount;
             bool isDepth = (Usage & TextureUsage.DepthStencil) == TextureUsage.DepthStencil;
 
-            MTLPixelFormat = MTLFormats.VdToMTLPixelFormat(Format, isDepth);
-            MTLTextureType = MTLFormats.VdToMTLTextureType(
-                    Type,
-                    ArrayLayers,
-                    SampleCount != TextureSampleCount.Count1,
-                    (Usage & TextureUsage.Cubemap) != 0);
+            MtlPixelFormat = MtlFormats.VdToMtlPixelFormat(Format, isDepth);
+            MtlTextureType = MtlFormats.VdToMtlTextureType(
+                Type,
+                ArrayLayers,
+                SampleCount != TextureSampleCount.Count1,
+                (Usage & TextureUsage.Cubemap) != 0);
 
             if (Usage != TextureUsage.Staging)
             {
-                MTLStorageMode = isDepth && _gd.PreferMemorylessDepthTargets ? MTLStorageMode.Memoryless : MTLStorageMode.Private;
+                MtlStorageMode = isDepth && gd.PreferMemorylessDepthTargets ? MTLStorageMode.Memoryless : MTLStorageMode.Private;
 
-                MTLTextureDescriptor texDescriptor = MTLTextureDescriptor.New();
-                texDescriptor.width = (UIntPtr)Width;
-                texDescriptor.height = (UIntPtr)Height;
-                texDescriptor.depth = (UIntPtr)Depth;
-                texDescriptor.mipmapLevelCount = (UIntPtr)MipLevels;
-                texDescriptor.arrayLength = (UIntPtr)ArrayLayers;
-                texDescriptor.sampleCount = (UIntPtr)FormatHelpers.GetSampleCountUInt32(SampleCount);
-                texDescriptor.textureType = MTLTextureType;
-                texDescriptor.pixelFormat = MTLPixelFormat;
-                texDescriptor.textureUsage = MTLFormats.VdToMTLTextureUsage(Usage);
-                texDescriptor.storageMode = MTLStorageMode;
+                var texDescriptor = MTLTextureDescriptor.New();
+                texDescriptor.width = Width;
+                texDescriptor.height = Height;
+                texDescriptor.depth = Depth;
+                texDescriptor.mipmapLevelCount = MipLevels;
+                texDescriptor.arrayLength = ArrayLayers;
+                texDescriptor.sampleCount = FormatHelpers.GetSampleCountUInt32(SampleCount);
+                texDescriptor.textureType = MtlTextureType;
+                texDescriptor.pixelFormat = MtlPixelFormat;
+                texDescriptor.textureUsage = MtlFormats.VdToMtlTextureUsage(Usage);
+                texDescriptor.storageMode = MtlStorageMode;
 
-                DeviceTexture = _gd.Device.newTextureWithDescriptor(texDescriptor);
+                DeviceTexture = gd.Device.newTextureWithDescriptor(texDescriptor);
                 ObjectiveCRuntime.release(texDescriptor.NativePtr);
             }
             else
             {
                 uint blockSize = FormatHelpers.IsCompressedFormat(Format) ? 4u : 1u;
                 uint totalStorageSize = 0;
+
                 for (uint level = 0; level < MipLevels; level++)
                 {
                     Util.GetMipDimensions(this, level, out uint levelWidth, out uint levelHeight, out uint levelDepth);
@@ -94,10 +95,11 @@ namespace Veldrid.MTL
                         levelHeight,
                         Format);
                 }
+
                 totalStorageSize *= ArrayLayers;
 
-                StagingBuffer = _gd.Device.newBufferWithLengthOptions(
-                    (UIntPtr)totalStorageSize,
+                StagingBuffer = gd.Device.newBufferWithLengthOptions(
+                    totalStorageSize,
                     MTLResourceOptions.StorageModeShared);
 
                 unsafe
@@ -107,9 +109,9 @@ namespace Veldrid.MTL
             }
         }
 
-        public MTLTexture(ulong nativeTexture, ref TextureDescription description)
+        public MtlTexture(ulong nativeTexture, ref TextureDescription description)
         {
-            DeviceTexture = new MetalBindings.MTLTexture((IntPtr)nativeTexture);
+            DeviceTexture = new MTLTexture((IntPtr)nativeTexture);
             Width = description.Width;
             Height = description.Height;
             Depth = description.Depth;
@@ -121,15 +123,15 @@ namespace Veldrid.MTL
             SampleCount = description.SampleCount;
             bool isDepth = (Usage & TextureUsage.DepthStencil) == TextureUsage.DepthStencil;
 
-            MTLPixelFormat = MTLFormats.VdToMTLPixelFormat(Format, isDepth);
-            MTLTextureType = MTLFormats.VdToMTLTextureType(
-                    Type,
-                    ArrayLayers,
-                    SampleCount != TextureSampleCount.Count1,
-                    (Usage & TextureUsage.Cubemap) != 0);
+            MtlPixelFormat = MtlFormats.VdToMtlPixelFormat(Format, isDepth);
+            MtlTextureType = MtlFormats.VdToMtlTextureType(
+                Type,
+                ArrayLayers,
+                SampleCount != TextureSampleCount.Count1,
+                (Usage & TextureUsage.Cubemap) != 0);
         }
 
-        public MTLTexture(CAMetalDrawable drawable, CGSize size, PixelFormat format)
+        public MtlTexture(CAMetalDrawable drawable, CGSize size, PixelFormat format)
         {
             DeviceTexture = drawable.texture;
             Width = (uint)size.width;
@@ -142,8 +144,8 @@ namespace Veldrid.MTL
             Type = TextureType.Texture2D;
             SampleCount = TextureSampleCount.Count1;
 
-            MTLPixelFormat = MTLFormats.VdToMTLPixelFormat(Format, false);
-            MTLTextureType = MTLTextureType.Type2D;
+            MtlPixelFormat = MtlFormats.VdToMtlPixelFormat(Format, false);
+            MtlTextureType = MTLTextureType.Type2D;
         }
 
         internal uint GetSubresourceSize(uint mipLevel, uint arrayLayer)
@@ -170,17 +172,13 @@ namespace Veldrid.MTL
 
         private protected override void DisposeCore()
         {
-            if (!_disposed)
+            if (!disposed)
             {
-                _disposed = true;
+                disposed = true;
                 if (!StagingBuffer.IsNull)
-                {
                     ObjectiveCRuntime.release(StagingBuffer.NativePtr);
-                }
                 else
-                {
                     ObjectiveCRuntime.release(DeviceTexture.NativePtr);
-                }
             }
         }
     }

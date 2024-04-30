@@ -21,10 +21,8 @@ namespace Veldrid.MetalBindings
                 {
                     return objc_msgSend_stret<MTLSize>(this, sel_maxThreadsPerThreadgroup);
                 }
-                else
-                {
-                    return MTLSize_objc_msgSend(this, sel_maxThreadsPerThreadgroup);
-                }
+
+                return MTLSize_objc_msgSend(this, sel_maxThreadsPerThreadgroup);
             }
         }
 

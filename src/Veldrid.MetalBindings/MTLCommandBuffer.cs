@@ -1,6 +1,6 @@
-using static Veldrid.MetalBindings.ObjectiveCRuntime;
 using System;
 using System.Runtime.InteropServices;
+using static Veldrid.MetalBindings.ObjectiveCRuntime;
 
 namespace Veldrid.MetalBindings
 {

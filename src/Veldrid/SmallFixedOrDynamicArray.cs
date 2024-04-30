@@ -6,26 +6,24 @@ namespace Veldrid
 {
     internal unsafe struct SmallFixedOrDynamicArray : IDisposable
     {
-        private const int MaxFixedValues = 5;
+        private const int max_fixed_values = 5;
 
         public readonly uint Count;
-        private fixed uint FixedData[MaxFixedValues];
+        private fixed uint fixedData[max_fixed_values];
         public readonly uint[] Data;
 
-        public uint Get(uint i) => Count > MaxFixedValues ? Data[i] : FixedData[i];
+        public uint Get(uint i)
+        {
+            return Count > max_fixed_values ? Data[i] : fixedData[i];
+        }
 
         public SmallFixedOrDynamicArray(uint count, ref uint data)
         {
-            if (count > MaxFixedValues)
-            {
+            if (count > max_fixed_values)
                 Data = ArrayPool<uint>.Shared.Rent((int)count);
-            }
             else
             {
-                for (int i = 0; i < count; i++)
-                {
-                    FixedData[i] = Unsafe.Add(ref data, i);
-                }
+                for (int i = 0; i < count; i++) fixedData[i] = Unsafe.Add(ref data, i);
 
                 Data = null;
             }
@@ -35,7 +33,7 @@ namespace Veldrid
 
         public void Dispose()
         {
-            if (Data != null) { ArrayPool<uint>.Shared.Return(Data); }
+            if (Data != null) ArrayPool<uint>.Shared.Return(Data);
         }
     }
 }

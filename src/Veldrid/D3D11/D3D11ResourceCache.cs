@@ -8,25 +8,40 @@ namespace Veldrid.D3D11
 {
     internal class D3D11ResourceCache : IDisposable
     {
-        private readonly ID3D11Device _device;
-        private readonly object _lock = new object();
+        private readonly ID3D11Device device;
+        private readonly object @lock = new object();
 
-        private readonly Dictionary<BlendStateDescription, ID3D11BlendState> _blendStates
+        private readonly Dictionary<BlendStateDescription, ID3D11BlendState> blendStates
             = new Dictionary<BlendStateDescription, ID3D11BlendState>();
 
-        private readonly Dictionary<DepthStencilStateDescription, ID3D11DepthStencilState> _depthStencilStates
+        private readonly Dictionary<DepthStencilStateDescription, ID3D11DepthStencilState> depthStencilStates
             = new Dictionary<DepthStencilStateDescription, ID3D11DepthStencilState>();
 
-        private readonly Dictionary<D3D11RasterizerStateCacheKey, ID3D11RasterizerState> _rasterizerStates
+        private readonly Dictionary<D3D11RasterizerStateCacheKey, ID3D11RasterizerState> rasterizerStates
             = new Dictionary<D3D11RasterizerStateCacheKey, ID3D11RasterizerState>();
 
-        private readonly Dictionary<InputLayoutCacheKey, ID3D11InputLayout> _inputLayouts
+        private readonly Dictionary<InputLayoutCacheKey, ID3D11InputLayout> inputLayouts
             = new Dictionary<InputLayoutCacheKey, ID3D11InputLayout>();
 
         public D3D11ResourceCache(ID3D11Device device)
         {
-            _device = device;
+            this.device = device;
         }
+
+        #region Disposal
+
+        public void Dispose()
+        {
+            foreach (var kvp in blendStates) kvp.Value.Dispose();
+
+            foreach (var kvp in depthStencilStates) kvp.Value.Dispose();
+
+            foreach (var kvp in rasterizerStates) kvp.Value.Dispose();
+
+            foreach (var kvp in inputLayouts) kvp.Value.Dispose();
+        }
+
+        #endregion
 
         public void GetPipelineResources(
             ref BlendStateDescription blendDesc,
@@ -40,37 +55,38 @@ namespace Veldrid.D3D11
             out ID3D11RasterizerState rasterState,
             out ID3D11InputLayout inputLayout)
         {
-            lock (_lock)
+            lock (@lock)
             {
-                blendState = GetBlendState(ref blendDesc);
-                depthState = GetDepthStencilState(ref dssDesc);
-                rasterState = GetRasterizerState(ref rasterDesc, multisample);
-                inputLayout = GetInputLayout(vertexLayouts, vsBytecode);
+                blendState = getBlendState(ref blendDesc);
+                depthState = getDepthStencilState(ref dssDesc);
+                rasterState = getRasterizerState(ref rasterDesc, multisample);
+                inputLayout = getInputLayout(vertexLayouts, vsBytecode);
             }
         }
 
-        private ID3D11BlendState GetBlendState(ref BlendStateDescription description)
+        private ID3D11BlendState getBlendState(ref BlendStateDescription description)
         {
-            Debug.Assert(Monitor.IsEntered(_lock));
-            if (!_blendStates.TryGetValue(description, out ID3D11BlendState blendState))
+            Debug.Assert(Monitor.IsEntered(@lock));
+
+            if (!blendStates.TryGetValue(description, out var blendState))
             {
-                blendState = CreateNewBlendState(ref description);
-                BlendStateDescription key = description;
+                blendState = createNewBlendState(ref description);
+                var key = description;
                 key.AttachmentStates = (BlendAttachmentDescription[])key.AttachmentStates.Clone();
-                _blendStates.Add(key, blendState);
+                blendStates.Add(key, blendState);
             }
 
             return blendState;
         }
 
-        private ID3D11BlendState CreateNewBlendState(ref BlendStateDescription description)
+        private ID3D11BlendState createNewBlendState(ref BlendStateDescription description)
         {
-            BlendAttachmentDescription[] attachmentStates = description.AttachmentStates;
-            Vortice.Direct3D11.BlendDescription d3dBlendStateDesc = new Vortice.Direct3D11.BlendDescription();
+            var attachmentStates = description.AttachmentStates;
+            var d3dBlendStateDesc = new BlendDescription();
 
             for (int i = 0; i < attachmentStates.Length; i++)
             {
-                BlendAttachmentDescription state = attachmentStates[i];
+                var state = attachmentStates[i];
                 d3dBlendStateDesc.RenderTarget[i].BlendEnable = state.BlendEnabled;
                 d3dBlendStateDesc.RenderTarget[i].RenderTargetWriteMask = D3D11Formats.VdToD3D11ColorWriteEnable(state.ColorWriteMask.GetOrDefault());
                 d3dBlendStateDesc.RenderTarget[i].SourceBlend = D3D11Formats.VdToD3D11Blend(state.SourceColorFactor);
@@ -84,40 +100,41 @@ namespace Veldrid.D3D11
             d3dBlendStateDesc.AlphaToCoverageEnable = description.AlphaToCoverageEnabled;
             d3dBlendStateDesc.IndependentBlendEnable = true;
 
-            return _device.CreateBlendState(d3dBlendStateDesc);
+            return device.CreateBlendState(d3dBlendStateDesc);
         }
 
-        private ID3D11DepthStencilState GetDepthStencilState(ref DepthStencilStateDescription description)
+        private ID3D11DepthStencilState getDepthStencilState(ref DepthStencilStateDescription description)
         {
-            Debug.Assert(Monitor.IsEntered(_lock));
-            if (!_depthStencilStates.TryGetValue(description, out ID3D11DepthStencilState dss))
+            Debug.Assert(Monitor.IsEntered(@lock));
+
+            if (!depthStencilStates.TryGetValue(description, out var dss))
             {
-                dss = CreateNewDepthStencilState(ref description);
-                DepthStencilStateDescription key = description;
-                _depthStencilStates.Add(key, dss);
+                dss = createNewDepthStencilState(ref description);
+                var key = description;
+                depthStencilStates.Add(key, dss);
             }
 
             return dss;
         }
 
-        private ID3D11DepthStencilState CreateNewDepthStencilState(ref DepthStencilStateDescription description)
+        private ID3D11DepthStencilState createNewDepthStencilState(ref DepthStencilStateDescription description)
         {
-            DepthStencilDescription dssDesc = new DepthStencilDescription
+            var dssDesc = new DepthStencilDescription
             {
                 DepthFunc = D3D11Formats.VdToD3D11ComparisonFunc(description.DepthComparison),
                 DepthEnable = description.DepthTestEnabled,
                 DepthWriteMask = description.DepthWriteEnabled ? DepthWriteMask.All : DepthWriteMask.Zero,
                 StencilEnable = description.StencilTestEnabled,
-                FrontFace = ToD3D11StencilOpDesc(description.StencilFront),
-                BackFace = ToD3D11StencilOpDesc(description.StencilBack),
+                FrontFace = toD3D11StencilOpDesc(description.StencilFront),
+                BackFace = toD3D11StencilOpDesc(description.StencilBack),
                 StencilReadMask = description.StencilReadMask,
                 StencilWriteMask = description.StencilWriteMask
             };
 
-            return _device.CreateDepthStencilState(dssDesc);
+            return device.CreateDepthStencilState(dssDesc);
         }
 
-        private DepthStencilOperationDescription ToD3D11StencilOpDesc(StencilBehaviorDescription sbd)
+        private DepthStencilOperationDescription toD3D11StencilOpDesc(StencilBehaviorDescription sbd)
         {
             return new DepthStencilOperationDescription
             {
@@ -128,22 +145,23 @@ namespace Veldrid.D3D11
             };
         }
 
-        private ID3D11RasterizerState GetRasterizerState(ref RasterizerStateDescription description, bool multisample)
+        private ID3D11RasterizerState getRasterizerState(ref RasterizerStateDescription description, bool multisample)
         {
-            Debug.Assert(Monitor.IsEntered(_lock));
-            D3D11RasterizerStateCacheKey key = new D3D11RasterizerStateCacheKey(description, multisample);
-            if (!_rasterizerStates.TryGetValue(key, out ID3D11RasterizerState rasterizerState))
+            Debug.Assert(Monitor.IsEntered(@lock));
+            var key = new D3D11RasterizerStateCacheKey(description, multisample);
+
+            if (!rasterizerStates.TryGetValue(key, out var rasterizerState))
             {
-                rasterizerState = CreateNewRasterizerState(ref key);
-                _rasterizerStates.Add(key, rasterizerState);
+                rasterizerState = createNewRasterizerState(ref key);
+                rasterizerStates.Add(key, rasterizerState);
             }
 
             return rasterizerState;
         }
 
-        private ID3D11RasterizerState CreateNewRasterizerState(ref D3D11RasterizerStateCacheKey key)
+        private ID3D11RasterizerState createNewRasterizerState(ref D3D11RasterizerStateCacheKey key)
         {
-            RasterizerDescription rssDesc = new RasterizerDescription
+            var rssDesc = new RasterizerDescription
             {
                 CullMode = D3D11Formats.VdToD3D11CullMode(key.VeldridDescription.CullMode),
                 FillMode = D3D11Formats.VdToD3D11FillMode(key.VeldridDescription.FillMode),
@@ -153,47 +171,47 @@ namespace Veldrid.D3D11
                 MultisampleEnable = key.Multisampled
             };
 
-            return _device.CreateRasterizerState(rssDesc);
+            return device.CreateRasterizerState(rssDesc);
         }
 
-        private ID3D11InputLayout GetInputLayout(VertexLayoutDescription[] vertexLayouts, byte[] vsBytecode)
+        private ID3D11InputLayout getInputLayout(VertexLayoutDescription[] vertexLayouts, byte[] vsBytecode)
         {
-            Debug.Assert(Monitor.IsEntered(_lock));
+            Debug.Assert(Monitor.IsEntered(@lock));
 
-            if (vsBytecode == null || vertexLayouts == null || vertexLayouts.Length == 0) { return null; }
+            if (vsBytecode == null || vertexLayouts == null || vertexLayouts.Length == 0) return null;
 
-            InputLayoutCacheKey tempKey = InputLayoutCacheKey.CreateTempKey(vertexLayouts);
-            if (!_inputLayouts.TryGetValue(tempKey, out ID3D11InputLayout inputLayout))
+            var tempKey = InputLayoutCacheKey.CreateTempKey(vertexLayouts);
+
+            if (!inputLayouts.TryGetValue(tempKey, out var inputLayout))
             {
-                inputLayout = CreateNewInputLayout(vertexLayouts, vsBytecode);
-                InputLayoutCacheKey permanentKey = InputLayoutCacheKey.CreatePermanentKey(vertexLayouts);
-                _inputLayouts.Add(permanentKey, inputLayout);
+                inputLayout = createNewInputLayout(vertexLayouts, vsBytecode);
+                var permanentKey = InputLayoutCacheKey.CreatePermanentKey(vertexLayouts);
+                inputLayouts.Add(permanentKey, inputLayout);
             }
 
             return inputLayout;
         }
 
-        private ID3D11InputLayout CreateNewInputLayout(VertexLayoutDescription[] vertexLayouts, byte[] vsBytecode)
+        private ID3D11InputLayout createNewInputLayout(VertexLayoutDescription[] vertexLayouts, byte[] vsBytecode)
         {
             int totalCount = 0;
-            for (int i = 0; i < vertexLayouts.Length; i++)
-            {
-                totalCount += vertexLayouts[i].Elements.Length;
-            }
+            for (int i = 0; i < vertexLayouts.Length; i++) totalCount += vertexLayouts[i].Elements.Length;
 
             int element = 0; // Total element index across slots.
-            InputElementDescription[] elements = new InputElementDescription[totalCount];
-            SemanticIndices si = new SemanticIndices();
+            var elements = new InputElementDescription[totalCount];
+            var si = new SemanticIndices();
+
             for (int slot = 0; slot < vertexLayouts.Length; slot++)
             {
-                VertexElementDescription[] elementDescs = vertexLayouts[slot].Elements;
+                var elementDescs = vertexLayouts[slot].Elements;
                 uint stepRate = vertexLayouts[slot].InstanceStepRate;
                 int currentOffset = 0;
+
                 for (int i = 0; i < elementDescs.Length; i++)
                 {
-                    VertexElementDescription desc = elementDescs[i];
+                    var desc = elementDescs[i];
                     elements[element] = new InputElementDescription(
-                        GetSemanticString(desc.Semantic),
+                        getSemanticString(desc.Semantic),
                         SemanticIndices.GetAndIncrement(ref si, desc.Semantic),
                         D3D11Formats.ToDxgiFormat(desc.Format),
                         desc.Offset != 0 ? (int)desc.Offset : currentOffset,
@@ -206,65 +224,53 @@ namespace Veldrid.D3D11
                 }
             }
 
-            return _device.CreateInputLayout(elements, vsBytecode);
+            return device.CreateInputLayout(elements, vsBytecode);
         }
 
-        private string GetSemanticString(VertexElementSemantic semantic)
+        private string getSemanticString(VertexElementSemantic semantic)
         {
             switch (semantic)
             {
                 case VertexElementSemantic.Position:
                     return "POSITION";
+
                 case VertexElementSemantic.Normal:
                     return "NORMAL";
+
                 case VertexElementSemantic.TextureCoordinate:
                     return "TEXCOORD";
+
                 case VertexElementSemantic.Color:
                     return "COLOR";
+
                 default:
                     throw Illegal.Value<VertexElementSemantic>();
             }
         }
 
-        public void Dispose()
-        {
-            foreach (KeyValuePair<BlendStateDescription, ID3D11BlendState> kvp in _blendStates)
-            {
-                kvp.Value.Dispose();
-            }
-            foreach (KeyValuePair<DepthStencilStateDescription, ID3D11DepthStencilState> kvp in _depthStencilStates)
-            {
-                kvp.Value.Dispose();
-            }
-            foreach (KeyValuePair<D3D11RasterizerStateCacheKey, ID3D11RasterizerState> kvp in _rasterizerStates)
-            {
-                kvp.Value.Dispose();
-            }
-            foreach (KeyValuePair<InputLayoutCacheKey, ID3D11InputLayout> kvp in _inputLayouts)
-            {
-                kvp.Value.Dispose();
-            }
-        }
-
         private struct SemanticIndices
         {
-            private int _position;
-            private int _texCoord;
-            private int _normal;
-            private int _color;
+            private int position;
+            private int texCoord;
+            private int normal;
+            private int color;
 
             public static int GetAndIncrement(ref SemanticIndices si, VertexElementSemantic type)
             {
                 switch (type)
                 {
                     case VertexElementSemantic.Position:
-                        return si._position++;
+                        return si.position++;
+
                     case VertexElementSemantic.TextureCoordinate:
-                        return si._texCoord++;
+                        return si.texCoord++;
+
                     case VertexElementSemantic.Normal:
-                        return si._normal++;
+                        return si.normal++;
+
                     case VertexElementSemantic.Color:
-                        return si._color++;
+                        return si.color++;
+
                     default:
                         throw Illegal.Value<VertexElementSemantic>();
                 }
@@ -276,11 +282,14 @@ namespace Veldrid.D3D11
             public VertexLayoutDescription[] VertexLayouts;
 
             public static InputLayoutCacheKey CreateTempKey(VertexLayoutDescription[] original)
-                => new InputLayoutCacheKey { VertexLayouts = original };
+            {
+                return new InputLayoutCacheKey { VertexLayouts = original };
+            }
 
             public static InputLayoutCacheKey CreatePermanentKey(VertexLayoutDescription[] original)
             {
-                VertexLayoutDescription[] vertexLayouts = new VertexLayoutDescription[original.Length];
+                var vertexLayouts = new VertexLayoutDescription[original.Length];
+
                 for (int i = 0; i < original.Length; i++)
                 {
                     vertexLayouts[i].Stride = original[i].Stride;
@@ -305,7 +314,7 @@ namespace Veldrid.D3D11
         private struct D3D11RasterizerStateCacheKey : IEquatable<D3D11RasterizerStateCacheKey>
         {
             public RasterizerStateDescription VeldridDescription;
-            public bool Multisampled;
+            public readonly bool Multisampled;
 
             public D3D11RasterizerStateCacheKey(RasterizerStateDescription veldridDescription, bool multisampled)
             {
@@ -316,7 +325,7 @@ namespace Veldrid.D3D11
             public bool Equals(D3D11RasterizerStateCacheKey other)
             {
                 return VeldridDescription.Equals(other.VeldridDescription)
-                    && Multisampled.Equals(other.Multisampled);
+                       && Multisampled.Equals(other.Multisampled);
             }
 
             public override int GetHashCode()

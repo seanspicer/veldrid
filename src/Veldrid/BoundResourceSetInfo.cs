@@ -16,11 +16,12 @@ namespace Veldrid
 
         public bool Equals(ResourceSet set, uint offsetsCount, ref uint offsets)
         {
-            if (set != Set || offsetsCount != Offsets.Count) { return false; }
+            if (set != Set || offsetsCount != Offsets.Count) return false;
 
             for (uint i = 0; i < Offsets.Count; i++)
             {
-                if (Unsafe.Add(ref offsets, (int)i) != Offsets.Get(i)) { return false; }
+                if (Unsafe.Add(ref offsets, (int)i) != Offsets.Get(i))
+                    return false;
             }
 
             return true;
@@ -28,17 +29,11 @@ namespace Veldrid
 
         public bool Equals(BoundResourceSetInfo other)
         {
-            if (Set != other.Set || Offsets.Count != other.Offsets.Count)
-            {
-                return false;
-            }
+            if (Set != other.Set || Offsets.Count != other.Offsets.Count) return false;
 
             for (uint i = 0; i < Offsets.Count; i++)
             {
-                if (Offsets.Get(i) != other.Offsets.Get(i))
-                {
-                    return false;
-                }
+                if (Offsets.Get(i) != other.Offsets.Get(i)) return false;
             }
 
             return true;

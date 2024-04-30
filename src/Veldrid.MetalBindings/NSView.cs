@@ -4,7 +4,7 @@ using static Veldrid.MetalBindings.ObjectiveCRuntime;
 
 namespace Veldrid.MetalBindings
 {
-    public unsafe struct NSView
+    public struct NSView
     {
         public readonly IntPtr NativePtr;
         public static implicit operator IntPtr(NSView nsView) => nsView.NativePtr;

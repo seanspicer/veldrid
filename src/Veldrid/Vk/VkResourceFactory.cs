@@ -4,68 +4,77 @@ namespace Veldrid.Vk
 {
     internal class VkResourceFactory : ResourceFactory
     {
-        private readonly VkGraphicsDevice _gd;
-        private readonly VkDevice _device;
+        public override GraphicsBackend BackendType => GraphicsBackend.Vulkan;
+        private readonly VkGraphicsDevice gd;
+        private readonly VkDevice device;
 
         public VkResourceFactory(VkGraphicsDevice vkGraphicsDevice)
-            : base (vkGraphicsDevice.Features)
+            : base(vkGraphicsDevice.Features)
         {
-            _gd = vkGraphicsDevice;
-            _device = vkGraphicsDevice.Device;
+            gd = vkGraphicsDevice;
+            device = vkGraphicsDevice.Device;
         }
-
-        public override GraphicsBackend BackendType => GraphicsBackend.Vulkan;
 
         public override CommandList CreateCommandList(ref CommandListDescription description)
         {
-            return new VkCommandList(_gd, ref description);
+            return new VkCommandList(gd, ref description);
         }
 
         public override Framebuffer CreateFramebuffer(ref FramebufferDescription description)
         {
-            return new VkFramebuffer(_gd, ref description, false);
-        }
-
-        protected override Pipeline CreateGraphicsPipelineCore(ref GraphicsPipelineDescription description)
-        {
-            return new VkPipeline(_gd, ref description);
+            return new VkFramebuffer(gd, ref description, false);
         }
 
         public override Pipeline CreateComputePipeline(ref ComputePipelineDescription description)
         {
-            return new VkPipeline(_gd, ref description);
+            return new VkPipeline(gd, ref description);
         }
 
         public override ResourceLayout CreateResourceLayout(ref ResourceLayoutDescription description)
         {
-            return new VkResourceLayout(_gd, ref description);
+            return new VkResourceLayout(gd, ref description);
         }
 
         public override ResourceSet CreateResourceSet(ref ResourceSetDescription description)
         {
-            ValidationHelpers.ValidateResourceSet(_gd, ref description);
-            return new VkResourceSet(_gd, ref description);
+            ValidationHelpers.ValidateResourceSet(gd, ref description);
+            return new VkResourceSet(gd, ref description);
+        }
+
+        public override Fence CreateFence(bool signaled)
+        {
+            return new VkFence(gd, signaled);
+        }
+
+        public override Swapchain CreateSwapchain(ref SwapchainDescription description)
+        {
+            return new VkSwapchain(gd, ref description);
+        }
+
+        protected override Pipeline CreateGraphicsPipelineCore(ref GraphicsPipelineDescription description)
+        {
+            return new VkPipeline(gd, ref description);
         }
 
         protected override Sampler CreateSamplerCore(ref SamplerDescription description)
         {
-            return new VkSampler(_gd, ref description);
+            return new VkSampler(gd, ref description);
         }
 
         protected override Shader CreateShaderCore(ref ShaderDescription description)
         {
-            return new VkShader(_gd, ref description);
+            return new VkShader(gd, ref description);
         }
 
         protected override Texture CreateTextureCore(ref TextureDescription description)
         {
-            return new VkTexture(_gd, ref description);
+            return new VkTexture(gd, ref description);
         }
 
         protected override Texture CreateTextureCore(ulong nativeTexture, ref TextureDescription description)
         {
             return new VkTexture(
-                _gd,
+                gd,
                 description.Width, description.Height,
                 description.MipLevels, description.ArrayLayers,
                 VkFormats.VdToVkPixelFormat(description.Format, (description.Usage & TextureUsage.DepthStencil) != 0),
@@ -76,22 +85,12 @@ namespace Veldrid.Vk
 
         protected override TextureView CreateTextureViewCore(ref TextureViewDescription description)
         {
-            return new VkTextureView(_gd, ref description);
+            return new VkTextureView(gd, ref description);
         }
 
         protected override DeviceBuffer CreateBufferCore(ref BufferDescription description)
         {
-            return new VkBuffer(_gd, description.SizeInBytes, description.Usage);
-        }
-
-        public override Fence CreateFence(bool signaled)
-        {
-            return new VkFence(_gd, signaled);
-        }
-
-        public override Swapchain CreateSwapchain(ref SwapchainDescription description)
-        {
-            return new VkSwapchain(_gd, ref description);
+            return new VkBuffer(gd, description.SizeInBytes, description.Usage);
         }
     }
 }

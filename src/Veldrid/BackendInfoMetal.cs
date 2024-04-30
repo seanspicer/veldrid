@@ -7,24 +7,22 @@ using Veldrid.MTL;
 namespace Veldrid
 {
     /// <summary>
-    /// Exposes Metal-specific functionality,
-    /// useful for interoperating with native components which interface directly with Metal.
-    /// Can only be used on <see cref="GraphicsBackend.Metal"/>.
+    ///     Exposes Metal-specific functionality,
+    ///     useful for interoperating with native components which interface directly with Metal.
+    ///     Can only be used on <see cref="GraphicsBackend.Metal" />.
     /// </summary>
     public class BackendInfoMetal
     {
-        private readonly MTLGraphicsDevice _gd;
-        private ReadOnlyCollection<MTLFeatureSet> _featureSet;
+        public ReadOnlyCollection<MTLFeatureSet> FeatureSet { get; }
 
-        internal BackendInfoMetal(MTLGraphicsDevice gd)
+        public MTLFeatureSet MaxFeatureSet => gd.MetalFeatures.MaxFeatureSet;
+        private readonly MtlGraphicsDevice gd;
+
+        internal BackendInfoMetal(MtlGraphicsDevice gd)
         {
-            _gd = gd;
-            _featureSet = new ReadOnlyCollection<MTLFeatureSet>(_gd.MetalFeatures.ToArray());
+            this.gd = gd;
+            FeatureSet = new ReadOnlyCollection<MTLFeatureSet>(this.gd.MetalFeatures.ToArray());
         }
-
-        public ReadOnlyCollection<MTLFeatureSet> FeatureSet => _featureSet;
-
-        public MTLFeatureSet MaxFeatureSet => _gd.MetalFeatures.MaxFeatureSet;
     }
 }
 #endif

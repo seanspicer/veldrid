@@ -1,53 +1,67 @@
-﻿using System;
-using static Veldrid.OpenGLBinding.OpenGLNative;
+﻿using System.Diagnostics;
+using Veldrid.OpenGLBindings;
+using static Veldrid.OpenGLBindings.OpenGLNative;
 using static Veldrid.OpenGL.OpenGLUtil;
-using Veldrid.OpenGLBinding;
-using System.Diagnostics;
 
 namespace Veldrid.OpenGL
 {
-    internal unsafe class OpenGLBuffer : DeviceBuffer, OpenGLDeferredResource
+    internal unsafe class OpenGLBuffer : DeviceBuffer, IOpenGLDeferredResource
     {
-        private readonly OpenGLGraphicsDevice _gd;
-        private uint _buffer;
-        private bool _dynamic;
-        private bool _disposeRequested;
-
-        private string _name;
-        private bool _nameChanged;
-
-        public override string Name { get => _name; set { _name = value; _nameChanged = true; } }
-
         public override uint SizeInBytes { get; }
         public override BufferUsage Usage { get; }
 
-        public uint Buffer => _buffer;
+        public uint Buffer => buffer;
+
+        public override bool IsDisposed => disposeRequested;
+
+        public override string Name
+        {
+            get => name;
+            set
+            {
+                name = value;
+                nameChanged = true;
+            }
+        }
 
         public bool Created { get; private set; }
+        private readonly OpenGLGraphicsDevice gd;
+        private uint buffer;
+        private readonly bool dynamic;
+        private bool disposeRequested;
 
-        public override bool IsDisposed => _disposeRequested;
+        private string name;
+        private bool nameChanged;
 
         public OpenGLBuffer(OpenGLGraphicsDevice gd, uint sizeInBytes, BufferUsage usage)
         {
-            _gd = gd;
+            this.gd = gd;
             SizeInBytes = sizeInBytes;
-            _dynamic = (usage & BufferUsage.Dynamic) == BufferUsage.Dynamic;
+            dynamic = (usage & BufferUsage.Dynamic) == BufferUsage.Dynamic;
             Usage = usage;
         }
 
+        #region Disposal
+
+        public override void Dispose()
+        {
+            if (!disposeRequested)
+            {
+                disposeRequested = true;
+                gd.EnqueueDisposal(this);
+            }
+        }
+
+        #endregion
+
         public void EnsureResourcesCreated()
         {
-            if (!Created)
+            if (!Created) CreateGLResources();
+
+            if (nameChanged)
             {
-                CreateGLResources();
-            }
-            if (_nameChanged)
-            {
-                _nameChanged = false;
-                if (_gd.Extensions.KHR_Debug)
-                {
-                    SetObjectLabel(ObjectLabelIdentifier.Buffer, _buffer, _name);
-                }
+                nameChanged = false;
+                if (gd.Extensions.KhrDebug) SetObjectLabel(ObjectLabelIdentifier.Buffer, buffer, name);
             }
         }
 
@@ -55,51 +69,42 @@ namespace Veldrid.OpenGL
         {
             Debug.Assert(!Created);
 
-            if (_gd.Extensions.ARB_DirectStateAccess)
+            if (gd.Extensions.ArbDirectStateAccess)
             {
                 uint buffer;
                 glCreateBuffers(1, &buffer);
                 CheckLastError();
-                _buffer = buffer;
+                this.buffer = buffer;
 
                 glNamedBufferData(
-                    _buffer,
+                    this.buffer,
                     SizeInBytes,
                     null,
-                    _dynamic ? BufferUsageHint.DynamicDraw : BufferUsageHint.StaticDraw);
+                    dynamic ? BufferUsageHint.DynamicDraw : BufferUsageHint.StaticDraw);
                 CheckLastError();
             }
             else
             {
-                glGenBuffers(1, out _buffer);
+                glGenBuffers(1, out buffer);
                 CheckLastError();
 
-                glBindBuffer(BufferTarget.CopyReadBuffer, _buffer);
+                glBindBuffer(BufferTarget.CopyReadBuffer, buffer);
                 CheckLastError();
 
                 glBufferData(
                     BufferTarget.CopyReadBuffer,
-                    (UIntPtr)SizeInBytes,
+                    SizeInBytes,
                     null,
-                    _dynamic ? BufferUsageHint.DynamicDraw : BufferUsageHint.StaticDraw);
+                    dynamic ? BufferUsageHint.DynamicDraw : BufferUsageHint.StaticDraw);
                 CheckLastError();
             }
 
             Created = true;
         }
 
-        public override void Dispose()
-        {
-            if (!_disposeRequested)
-            {
-                _disposeRequested = true;
-                _gd.EnqueueDisposal(this);
-            }
-        }
-
         public void DestroyGLResources()
         {
-            uint buffer = _buffer;
+            uint buffer = this.buffer;
             glDeleteBuffers(1, ref buffer);
             CheckLastError();
         }

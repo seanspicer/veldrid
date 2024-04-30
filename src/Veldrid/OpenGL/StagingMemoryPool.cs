@@ -6,103 +6,106 @@ using System.Runtime.InteropServices;
 
 namespace Veldrid.OpenGL
 {
-    internal unsafe sealed class StagingMemoryPool : IDisposable
+    internal sealed unsafe class StagingMemoryPool : IDisposable
     {
-        private const uint MinimumCapacity = 128;
+        private const uint minimum_capacity = 128;
 
-        private readonly List<StagingBlock> _storage;
-        private readonly SortedList<uint, uint> _availableBlocks;
-        private object _lock = new object();
-        private bool _disposed;
+        private readonly List<StagingBlock> storage;
+        private readonly SortedList<uint, uint> availableBlocks;
+        private readonly object @lock = new object();
+        private bool disposed;
 
         public StagingMemoryPool()
         {
-            _storage = new List<StagingBlock>();
-            _availableBlocks = new SortedList<uint, uint>(new CapacityComparer());
+            storage = new List<StagingBlock>();
+            availableBlocks = new SortedList<uint, uint>(new CapacityComparer());
         }
+
+        #region Disposal
+
+        public void Dispose()
+        {
+            lock (@lock)
+            {
+                availableBlocks.Clear();
+                foreach (var block in storage) Marshal.FreeHGlobal((IntPtr)block.Data);
+                storage.Clear();
+                disposed = true;
+            }
+        }
+
+        #endregion
 
         public StagingBlock Stage(IntPtr source, uint sizeInBytes)
         {
-            Rent(sizeInBytes, out StagingBlock block);
+            rent(sizeInBytes, out var block);
             Unsafe.CopyBlock(block.Data, source.ToPointer(), sizeInBytes);
             return block;
         }
 
         public StagingBlock Stage(byte[] bytes)
         {
-            Rent((uint)bytes.Length, out StagingBlock block);
+            rent((uint)bytes.Length, out var block);
             Marshal.Copy(bytes, 0, (IntPtr)block.Data, bytes.Length);
             return block;
         }
 
         public StagingBlock GetStagingBlock(uint sizeInBytes)
         {
-            Rent(sizeInBytes, out StagingBlock block);
+            rent(sizeInBytes, out var block);
             return block;
         }
 
         public StagingBlock RetrieveById(uint id)
         {
-            return _storage[(int)id];
+            return storage[(int)id];
         }
 
-        private void Rent(uint size, out StagingBlock block)
+        public void Free(StagingBlock block)
         {
-            lock (_lock)
+            lock (@lock)
             {
-                SortedList<uint, uint> available = _availableBlocks;
-                IList<uint> indices = available.Values;
+                if (!disposed)
+                {
+                    Debug.Assert(block.Id < storage.Count);
+                    availableBlocks.Add(block.Capacity, block.Id);
+                }
+            }
+        }
+
+        private void rent(uint size, out StagingBlock block)
+        {
+            lock (@lock)
+            {
+                var available = availableBlocks;
+                var indices = available.Values;
+
                 for (int i = 0; i < available.Count; i++)
                 {
                     int index = (int)indices[i];
-                    StagingBlock current = _storage[index];
+                    var current = storage[index];
+
                     if (current.Capacity >= size)
                     {
                         available.RemoveAt(i);
                         current.SizeInBytes = size;
                         block = current;
-                        _storage[index] = current;
+                        storage[index] = current;
                         return;
                     }
                 }
 
-                Allocate(size, out block);
+                allocate(size, out block);
             }
         }
 
-        private void Allocate(uint sizeInBytes, out StagingBlock stagingBlock)
+        private void allocate(uint sizeInBytes, out StagingBlock stagingBlock)
         {
-            uint capacity = Math.Max(MinimumCapacity, sizeInBytes);
+            uint capacity = Math.Max(minimum_capacity, sizeInBytes);
             IntPtr ptr = Marshal.AllocHGlobal((int)capacity);
-            uint id = (uint)_storage.Count;
+            uint id = (uint)storage.Count;
             stagingBlock = new StagingBlock(id, (void*)ptr, capacity, sizeInBytes);
-            _storage.Add(stagingBlock);
-        }
-
-        public void Free(StagingBlock block)
-        {
-            lock (_lock)
-            {
-                if (!_disposed)
-                {
-                    Debug.Assert(block.Id < _storage.Count);
-                    _availableBlocks.Add(block.Capacity, block.Id);
-                }
-            }
-        }
-
-        public void Dispose()
-        {
-            lock (_lock)
-            {
-                _availableBlocks.Clear();
-                foreach (StagingBlock block in _storage)
-                {
-                    Marshal.FreeHGlobal((IntPtr)block.Data);
-                }
-                _storage.Clear();
-                _disposed = true;
-            }
+            storage.Add(stagingBlock);
         }
 
         private class CapacityComparer : IComparer<uint>

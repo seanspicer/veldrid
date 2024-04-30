@@ -1,55 +1,70 @@
-﻿using static Veldrid.OpenGLBinding.OpenGLNative;
+﻿using Veldrid.OpenGLBindings;
+using static Veldrid.OpenGLBindings.OpenGLNative;
 using static Veldrid.OpenGL.OpenGLUtil;
-using Veldrid.OpenGLBinding;
 
 namespace Veldrid.OpenGL
 {
-    internal unsafe class OpenGLFramebuffer : Framebuffer, OpenGLDeferredResource
+    internal unsafe class OpenGLFramebuffer : Framebuffer, IOpenGLDeferredResource
     {
-        private readonly OpenGLGraphicsDevice _gd;
-        private uint _framebuffer;
+        public uint Framebuffer => framebuffer;
 
-        private string _name;
-        private bool _nameChanged;
-        private bool _disposeRequested;
-        private bool _disposed;
+        public override bool IsDisposed => disposeRequested;
 
-        public override string Name { get => _name; set { _name = value; _nameChanged = true; } }
-
-        public uint Framebuffer => _framebuffer;
+        public override string Name
+        {
+            get => name;
+            set
+            {
+                name = value;
+                nameChanged = true;
+            }
+        }
 
         public bool Created { get; private set; }
+        private readonly OpenGLGraphicsDevice gd;
+        private uint framebuffer;
 
-        public override bool IsDisposed => _disposeRequested;
+        private string name;
+        private bool nameChanged;
+        private bool disposeRequested;
+        private bool disposed;
 
         public OpenGLFramebuffer(OpenGLGraphicsDevice gd, ref FramebufferDescription description)
             : base(description.DepthTarget, description.ColorTargets)
         {
-            _gd = gd;
+            this.gd = gd;
         }
+
+        #region Disposal
+
+        public override void Dispose()
+        {
+            if (!disposeRequested)
+            {
+                disposeRequested = true;
+                gd.EnqueueDisposal(this);
+            }
+        }
+
+        #endregion
 
         public void EnsureResourcesCreated()
         {
-            if (!Created)
+            if (!Created) CreateGLResources();
+
+            if (nameChanged)
             {
-                CreateGLResources();
-            }
-            if (_nameChanged)
-            {
-                _nameChanged = false;
-                if (_gd.Extensions.KHR_Debug)
-                {
-                    SetObjectLabel(ObjectLabelIdentifier.Framebuffer, _framebuffer, _name);
-                }
+                nameChanged = false;
+                if (gd.Extensions.KhrDebug) SetObjectLabel(ObjectLabelIdentifier.Framebuffer, framebuffer, name);
             }
         }
 
         public void CreateGLResources()
         {
-            glGenFramebuffers(1, out _framebuffer);
+            glGenFramebuffers(1, out framebuffer);
             CheckLastError();
 
-            glBindFramebuffer(FramebufferTarget.Framebuffer, _framebuffer);
+            glBindFramebuffer(FramebufferTarget.Framebuffer, framebuffer);
             CheckLastError();
 
             uint colorCount = (uint)ColorTargets.Count;
@@ -58,14 +73,14 @@ namespace Veldrid.OpenGL
             {
                 for (int i = 0; i < colorCount; i++)
                 {
-                    FramebufferAttachment colorAttachment = ColorTargets[i];
-                    OpenGLTexture glTex = Util.AssertSubtype<Texture, OpenGLTexture>(colorAttachment.Target);
+                    var colorAttachment = ColorTargets[i];
+                    var glTex = Util.AssertSubtype<Texture, OpenGLTexture>(colorAttachment.Target);
                     glTex.EnsureResourcesCreated();
 
-                    _gd.TextureSamplerManager.SetTextureTransient(glTex.TextureTarget, glTex.Texture);
+                    gd.TextureSamplerManager.SetTextureTransient(glTex.TextureTarget, glTex.Texture);
                     CheckLastError();
 
-                    TextureTarget textureTarget = GetTextureTarget (glTex, colorAttachment.ArrayLayer);
+                    var textureTarget = GetTextureTarget(glTex, colorAttachment.ArrayLayer);
 
                     if (glTex.ArrayLayers == 1)
                     {
@@ -82,42 +97,37 @@ namespace Veldrid.OpenGL
                         glFramebufferTextureLayer(
                             FramebufferTarget.Framebuffer,
                             GLFramebufferAttachment.ColorAttachment0 + i,
-                            (uint)glTex.Texture,
+                            glTex.Texture,
                             (int)colorAttachment.MipLevel,
                             (int)colorAttachment.ArrayLayer);
                         CheckLastError();
                     }
                 }
 
-                DrawBuffersEnum* bufs = stackalloc DrawBuffersEnum[(int)colorCount];
-                for (int i = 0; i < colorCount; i++)
-                {
-                    bufs[i] = DrawBuffersEnum.ColorAttachment0 + i;
-                }
+                var bufs = stackalloc DrawBuffersEnum[(int)colorCount];
+                for (int i = 0; i < colorCount; i++) bufs[i] = DrawBuffersEnum.ColorAttachment0 + i;
                 glDrawBuffers(colorCount, bufs);
                 CheckLastError();
             }
 
             uint depthTextureID = 0;
-            TextureTarget depthTarget = TextureTarget.Texture2D;
+            var depthTarget = TextureTarget.Texture2D;
+
             if (DepthTarget != null)
             {
-                OpenGLTexture glDepthTex = Util.AssertSubtype<Texture, OpenGLTexture>(DepthTarget.Value.Target);
+                var glDepthTex = Util.AssertSubtype<Texture, OpenGLTexture>(DepthTarget.Value.Target);
                 glDepthTex.EnsureResourcesCreated();
                 depthTarget = glDepthTex.TextureTarget;
 
                 depthTextureID = glDepthTex.Texture;
 
-                _gd.TextureSamplerManager.SetTextureTransient(depthTarget, glDepthTex.Texture);
+                gd.TextureSamplerManager.SetTextureTransient(depthTarget, glDepthTex.Texture);
                 CheckLastError();
 
-                depthTarget = GetTextureTarget (glDepthTex, DepthTarget.Value.ArrayLayer);
+                depthTarget = GetTextureTarget(glDepthTex, DepthTarget.Value.ArrayLayer);
 
-                GLFramebufferAttachment framebufferAttachment = GLFramebufferAttachment.DepthAttachment;
-                if (FormatHelpers.IsStencilFormat(glDepthTex.Format))
-                {
-                    framebufferAttachment = GLFramebufferAttachment.DepthStencilAttachment;
-                }
+                var framebufferAttachment = GLFramebufferAttachment.DepthAttachment;
+                if (FormatHelpers.IsStencilFormat(glDepthTex.Format)) framebufferAttachment = GLFramebufferAttachment.DepthStencilAttachment;
 
                 if (glDepthTex.ArrayLayers == 1)
                 {
@@ -139,34 +149,21 @@ namespace Veldrid.OpenGL
                         (int)DepthTarget.Value.ArrayLayer);
                     CheckLastError();
                 }
-
             }
 
-            FramebufferErrorCode errorCode = glCheckFramebufferStatus(FramebufferTarget.Framebuffer);
+            var errorCode = glCheckFramebufferStatus(FramebufferTarget.Framebuffer);
             CheckLastError();
-            if (errorCode != FramebufferErrorCode.FramebufferComplete)
-            {
-                throw new VeldridException("Framebuffer was not successfully created: " + errorCode);
-            }
+            if (errorCode != FramebufferErrorCode.FramebufferComplete) throw new VeldridException("Framebuffer was not successfully created: " + errorCode);
 
             Created = true;
         }
 
-        public override void Dispose()
-        {
-            if (!_disposeRequested)
-            {
-                _disposeRequested = true;
-                _gd.EnqueueDisposal(this);
-            }
-        }
-
         public void DestroyGLResources()
         {
-            if (!_disposed)
+            if (!disposed)
             {
-                _disposed = true;
-                uint framebuffer = _framebuffer;
+                disposed = true;
+                uint framebuffer = this.framebuffer;
                 glDeleteFramebuffers(1, ref framebuffer);
                 CheckLastError();
             }

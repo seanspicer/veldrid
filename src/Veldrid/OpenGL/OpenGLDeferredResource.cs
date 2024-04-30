@@ -1,6 +1,6 @@
 ﻿namespace Veldrid.OpenGL
 {
-    internal interface OpenGLDeferredResource
+    internal interface IOpenGLDeferredResource
     {
         bool Created { get; }
         void EnsureResourcesCreated();

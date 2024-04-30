@@ -5,18 +5,15 @@ using static Vulkan.VulkanNative;
 
 namespace Veldrid.Vk
 {
-    internal unsafe static class VulkanUtil
+    internal static unsafe class VulkanUtil
     {
-        private static Lazy<bool> s_isVulkanLoaded = new Lazy<bool>(TryLoadVulkan);
-        private static readonly Lazy<string[]> s_instanceExtensions = new Lazy<string[]>(EnumerateInstanceExtensions);
+        private static readonly Lazy<bool> s_is_vulkan_loaded = new Lazy<bool>(tryLoadVulkan);
+        private static readonly Lazy<string[]> s_instance_extensions = new Lazy<string[]>(enumerateInstanceExtensions);
 
         [Conditional("DEBUG")]
         public static void CheckResult(VkResult result)
         {
-            if (result != VkResult.Success)
-            {
-                throw new VeldridException("Unsuccessful VkResult: " + result);
-            }
+            if (result != VkResult.Success) throw new VeldridException("Unsuccessful VkResult: " + result);
         }
 
         public static bool TryFindMemoryType(VkPhysicalDeviceMemoryProperties memProperties, uint typeFilter, VkMemoryPropertyFlags properties, out uint typeIndex)
@@ -25,7 +22,7 @@ namespace Veldrid.Vk
 
             for (int i = 0; i < memProperties.memoryTypeCount; i++)
             {
-                if (((typeFilter & (1 << i)) != 0)
+                if ((typeFilter & (1 << i)) != 0
                     && (memProperties.GetMemoryType((uint)i).propertyFlags & properties) == properties)
                 {
                     typeIndex = (uint)i;
@@ -39,74 +36,31 @@ namespace Veldrid.Vk
         public static string[] EnumerateInstanceLayers()
         {
             uint propCount = 0;
-            VkResult result = vkEnumerateInstanceLayerProperties(ref propCount, null);
+            var result = vkEnumerateInstanceLayerProperties(ref propCount, null);
             CheckResult(result);
-            if (propCount == 0)
-            {
-                return Array.Empty<string>();
-            }
+            if (propCount == 0) return Array.Empty<string>();
 
-            VkLayerProperties[] props = new VkLayerProperties[propCount];
+            var props = new VkLayerProperties[propCount];
             vkEnumerateInstanceLayerProperties(ref propCount, ref props[0]);
 
             string[] ret = new string[propCount];
+
             for (int i = 0; i < propCount; i++)
             {
-                fixed (byte* layerNamePtr = props[i].layerName)
-                {
-                    ret[i] = Util.GetString(layerNamePtr);
-                }
+                fixed (byte* layerNamePtr = props[i].layerName) ret[i] = Util.GetString(layerNamePtr);
             }
 
             return ret;
         }
 
-        public static string[] GetInstanceExtensions() => s_instanceExtensions.Value;
-
-        private static string[] EnumerateInstanceExtensions()
+        public static string[] GetInstanceExtensions()
         {
-            if (!IsVulkanLoaded())
-            {
-                return Array.Empty<string>();
-            }
-
-            uint propCount = 0;
-            VkResult result = vkEnumerateInstanceExtensionProperties((byte*)null, ref propCount, null);
-            if (result != VkResult.Success)
-            {
-                return Array.Empty<string>();
-            }
-
-            if (propCount == 0)
-            {
-                return Array.Empty<string>();
-            }
-
-            VkExtensionProperties[] props = new VkExtensionProperties[propCount];
-            vkEnumerateInstanceExtensionProperties((byte*)null, ref propCount, ref props[0]);
-
-            string[] ret = new string[propCount];
-            for (int i = 0; i < propCount; i++)
-            {
-                fixed (byte* extensionNamePtr = props[i].extensionName)
-                {
-                    ret[i] = Util.GetString(extensionNamePtr);
-                }
-            }
-
-            return ret;
+            return s_instance_extensions.Value;
         }
 
-        public static bool IsVulkanLoaded() => s_isVulkanLoaded.Value;
-        private static bool TryLoadVulkan()
+        public static bool IsVulkanLoaded()
         {
-            try
-            {
-                uint propCount;
-                vkEnumerateInstanceExtensionProperties((byte*)null, &propCount, null);
-                return true;
-            }
-            catch { return false; }
+            return s_is_vulkan_loaded.Value;
         }
 
         public static void TransitionImageLayout(
@@ -121,7 +75,7 @@ namespace Veldrid.Vk
             VkImageLayout newLayout)
         {
             Debug.Assert(oldLayout != newLayout);
-            VkImageMemoryBarrier barrier = VkImageMemoryBarrier.New();
+            var barrier = VkImageMemoryBarrier.New();
             barrier.oldLayout = oldLayout;
             barrier.newLayout = newLayout;
             barrier.srcQueueFamilyIndex = QueueFamilyIgnored;
@@ -133,8 +87,8 @@ namespace Veldrid.Vk
             barrier.subresourceRange.baseArrayLayer = baseArrayLayer;
             barrier.subresourceRange.layerCount = layerCount;
 
-            VkPipelineStageFlags srcStageFlags = VkPipelineStageFlags.None;
-            VkPipelineStageFlags dstStageFlags = VkPipelineStageFlags.None;
+            var srcStageFlags = VkPipelineStageFlags.None;
+            var dstStageFlags = VkPipelineStageFlags.None;
 
             if ((oldLayout == VkImageLayout.Undefined || oldLayout == VkImageLayout.Preinitialized) && newLayout == VkImageLayout.TransferDstOptimal)
             {
@@ -299,9 +253,7 @@ namespace Veldrid.Vk
                 dstStageFlags = VkPipelineStageFlags.Transfer;
             }
             else
-            {
                 Debug.Fail("Invalid image layout transition.");
-            }
 
             vkCmdPipelineBarrier(
                 cb,
@@ -312,9 +264,43 @@ namespace Veldrid.Vk
                 0, null,
                 1, &barrier);
         }
+
+        private static string[] enumerateInstanceExtensions()
+        {
+            if (!IsVulkanLoaded()) return Array.Empty<string>();
+
+            uint propCount = 0;
+            var result = vkEnumerateInstanceExtensionProperties((byte*)null, ref propCount, null);
+            if (result != VkResult.Success) return Array.Empty<string>();
+
+            if (propCount == 0) return Array.Empty<string>();
+
+            var props = new VkExtensionProperties[propCount];
+            vkEnumerateInstanceExtensionProperties((byte*)null, ref propCount, ref props[0]);
+
+            string[] ret = new string[propCount];
+
+            for (int i = 0; i < propCount; i++)
+            {
+                fixed (byte* extensionNamePtr = props[i].extensionName) ret[i] = Util.GetString(extensionNamePtr);
+            }
+
+            return ret;
+        }
+
+        private static bool tryLoadVulkan()
+        {
+            try
+            {
+                uint propCount;
+                vkEnumerateInstanceExtensionProperties((byte*)null, &propCount, null);
+                return true;
+            }
+            catch { return false; }
+        }
     }
 
-    internal unsafe static class VkPhysicalDeviceMemoryPropertiesEx
+    internal static unsafe class VkPhysicalDeviceMemoryPropertiesEx
     {
         public static VkMemoryType GetMemoryType(this VkPhysicalDeviceMemoryProperties memoryProperties, uint index)
         {

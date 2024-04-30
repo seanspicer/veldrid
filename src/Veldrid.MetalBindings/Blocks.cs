@@ -9,9 +9,9 @@ namespace Veldrid.MetalBindings
         public int reserved;
         public IntPtr invoke;
         public BlockDescriptor* descriptor;
-    };
+    }
 
-    public unsafe struct BlockDescriptor
+    public struct BlockDescriptor
     {
         public ulong reserved;
         public ulong Block_size;

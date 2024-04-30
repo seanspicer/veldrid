@@ -3,53 +3,51 @@ using Veldrid.MetalBindings;
 
 namespace Veldrid.MTL
 {
-    internal class MTLSampler : Sampler
+    internal class MtlSampler : Sampler
     {
-        private bool _disposed;
-
         public MTLSamplerState DeviceSampler { get; }
 
-        public MTLSampler(ref SamplerDescription description, MTLGraphicsDevice gd)
-        {
-            MTLFormats.GetMinMagMipFilter(
-                description.Filter,
-                out MTLSamplerMinMagFilter min,
-                out MTLSamplerMinMagFilter mag,
-                out MTLSamplerMipFilter mip);
+        public override bool IsDisposed => disposed;
 
-            MTLSamplerDescriptor mtlDesc = MTLSamplerDescriptor.New();
-            mtlDesc.sAddressMode = MTLFormats.VdToMTLAddressMode(description.AddressModeU);
-            mtlDesc.tAddressMode = MTLFormats.VdToMTLAddressMode(description.AddressModeV);
-            mtlDesc.rAddressMode = MTLFormats.VdToMTLAddressMode(description.AddressModeW);
+        public override string Name { get; set; }
+        private bool disposed;
+
+        public MtlSampler(ref SamplerDescription description, MtlGraphicsDevice gd)
+        {
+            MtlFormats.GetMinMagMipFilter(
+                description.Filter,
+                out var min,
+                out var mag,
+                out var mip);
+
+            var mtlDesc = MTLSamplerDescriptor.New();
+            mtlDesc.sAddressMode = MtlFormats.VdToMtlAddressMode(description.AddressModeU);
+            mtlDesc.tAddressMode = MtlFormats.VdToMtlAddressMode(description.AddressModeV);
+            mtlDesc.rAddressMode = MtlFormats.VdToMtlAddressMode(description.AddressModeW);
             mtlDesc.minFilter = min;
             mtlDesc.magFilter = mag;
             mtlDesc.mipFilter = mip;
-            if (gd.MetalFeatures.IsMacOS)
-            {
-                mtlDesc.borderColor = MTLFormats.VdToMTLBorderColor(description.BorderColor);
-            }
-            if (description.ComparisonKind != null)
-            {
-                mtlDesc.compareFunction = MTLFormats.VdToMTLCompareFunction(description.ComparisonKind.Value);
-            }
+            if (gd.MetalFeatures.IsMacOS) mtlDesc.borderColor = MtlFormats.VdToMtlBorderColor(description.BorderColor);
+
+            if (description.ComparisonKind != null) mtlDesc.compareFunction = MtlFormats.VdToMtlCompareFunction(description.ComparisonKind.Value);
             mtlDesc.lodMinClamp = description.MinimumLod;
             mtlDesc.lodMaxClamp = description.MaximumLod;
-            mtlDesc.maxAnisotropy = (UIntPtr)(Math.Max(1, description.MaximumAnisotropy));
+            mtlDesc.maxAnisotropy = Math.Max(1, description.MaximumAnisotropy);
             DeviceSampler = gd.Device.newSamplerStateWithDescriptor(mtlDesc);
             ObjectiveCRuntime.release(mtlDesc.NativePtr);
         }
 
-        public override string Name { get; set; }
-
-        public override bool IsDisposed => _disposed;
+        #region Disposal
 
         public override void Dispose()
         {
-            if (!_disposed)
+            if (!disposed)
             {
-                _disposed = true;
+                disposed = true;
                 ObjectiveCRuntime.release(DeviceSampler.NativePtr);
             }
         }
+
+        #endregion
     }
 }

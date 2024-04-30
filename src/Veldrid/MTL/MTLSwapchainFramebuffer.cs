@@ -1,81 +1,85 @@
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Veldrid.MetalBindings;
 
 namespace Veldrid.MTL
 {
-    internal class MTLSwapchainFramebuffer : MTLFramebuffer
+    internal class MtlSwapchainFramebuffer : MtlFramebuffer
     {
-        private readonly MTLGraphicsDevice _gd;
-        private MTLTexture _colorTexture;
-        private MTLTexture _depthTexture;
-        private readonly MTLSwapchain _parentSwapchain;
-        private readonly PixelFormat _colorFormat;
-
-        public override uint Width => _colorTexture.Width;
-        public override uint Height => _colorTexture.Height;
+        public override uint Width => colorTexture.Width;
+        public override uint Height => colorTexture.Height;
 
         public override OutputDescription OutputDescription { get; }
 
-        private FramebufferAttachment[] _colorTargets;
-        private FramebufferAttachment? _depthTarget;
+        public override IReadOnlyList<FramebufferAttachment> ColorTargets => colorTargets;
+        public override FramebufferAttachment? DepthTarget => depthTarget;
+        private readonly MtlGraphicsDevice gd;
+        private readonly MtlSwapchain parentSwapchain;
+        private readonly PixelFormat colorFormat;
 
-        private readonly PixelFormat? _depthFormat;
+        private readonly PixelFormat? depthFormat;
+        private MtlTexture colorTexture;
+        private MtlTexture depthTexture;
 
-        public override IReadOnlyList<FramebufferAttachment> ColorTargets => _colorTargets;
-        public override FramebufferAttachment? DepthTarget => _depthTarget;
+        private FramebufferAttachment[] colorTargets;
+        private FramebufferAttachment? depthTarget;
 
-        public MTLSwapchainFramebuffer(
-            MTLGraphicsDevice gd,
-            MTLSwapchain parent,
+        public MtlSwapchainFramebuffer(
+            MtlGraphicsDevice gd,
+            MtlSwapchain parent,
             PixelFormat? depthFormat,
             PixelFormat colorFormat)
         {
-            _gd = gd;
-            _parentSwapchain = parent;
-            _colorFormat = colorFormat;
+            this.gd = gd;
+            parentSwapchain = parent;
+            this.colorFormat = colorFormat;
 
             OutputAttachmentDescription? depthAttachment = null;
+
             if (depthFormat != null)
             {
-                _depthFormat = depthFormat;
+                this.depthFormat = depthFormat;
                 depthAttachment = new OutputAttachmentDescription(depthFormat.Value);
             }
-            OutputAttachmentDescription colorAttachment = new OutputAttachmentDescription(colorFormat);
+
+            var colorAttachment = new OutputAttachmentDescription(colorFormat);
 
             OutputDescription = new OutputDescription(depthAttachment, colorAttachment);
         }
 
-        private void RecreateDepthTexture(uint width, uint height)
-        {
-            Debug.Assert(_depthFormat.HasValue);
-            if (_depthTexture != null)
-            {
-                _depthTexture.Dispose();
-            }
-
-            _depthTexture = Util.AssertSubtype<Texture, MTLTexture>(
-                _gd.ResourceFactory.CreateTexture(TextureDescription.Texture2D(
-                    width, height, 1, 1, _depthFormat.Value, TextureUsage.DepthStencil)));
-            _depthTarget = new FramebufferAttachment(_depthTexture, 0);
-        }
-
-        public void UpdateTextures(CAMetalDrawable drawable, CGSize size)
-        {
-            _colorTexture = new MTLTexture(drawable, size, _colorFormat);
-            _colorTargets = new[] { new FramebufferAttachment(_colorTexture, 0) };
-
-            if (_depthFormat.HasValue && (size.width != _depthTexture?.Width || size.height != _depthTexture?.Height))
-                RecreateDepthTexture((uint)size.width, (uint)size.height);
-        }
-
-        public bool EnsureDrawableAvailable() => _parentSwapchain.EnsureDrawableAvailable();
+        #region Disposal
 
         public override void Dispose()
         {
-            _depthTexture?.Dispose();
+            depthTexture?.Dispose();
             base.Dispose();
+        }
+
+        #endregion
+
+        public void UpdateTextures(CAMetalDrawable drawable, CGSize size)
+        {
+            colorTexture = new MtlTexture(drawable, size, colorFormat);
+            colorTargets = new[] { new FramebufferAttachment(colorTexture, 0) };
+
+            if (depthFormat.HasValue && (size.width != depthTexture?.Width || size.height != depthTexture?.Height))
+                recreateDepthTexture((uint)size.width, (uint)size.height);
+        }
+
+        public bool EnsureDrawableAvailable()
+        {
+            return parentSwapchain.EnsureDrawableAvailable();
+        }
+
+        private void recreateDepthTexture(uint width, uint height)
+        {
+            Debug.Assert(depthFormat.HasValue);
+            depthTexture?.Dispose();
+
+            depthTexture = Util.AssertSubtype<Texture, MtlTexture>(
+                gd.ResourceFactory.CreateTexture(TextureDescription.Texture2D(
+                    width, height, 1, 1, depthFormat.Value, TextureUsage.DepthStencil)));
+            depthTarget = new FramebufferAttachment(depthTexture, 0);
         }
     }
 }

@@ -3,7 +3,7 @@ using static Veldrid.MetalBindings.ObjectiveCRuntime;
 
 namespace Veldrid.MetalBindings
 {
-    public unsafe struct NSWindow
+    public struct NSWindow
     {
         public readonly IntPtr NativePtr;
         public NSWindow(IntPtr ptr)

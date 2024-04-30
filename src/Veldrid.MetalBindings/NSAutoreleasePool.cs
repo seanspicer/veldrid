@@ -15,7 +15,7 @@ namespace Veldrid.MetalBindings
 
         public void Dispose()
         {
-            ObjectiveCRuntime.release(this.NativePtr);
+            ObjectiveCRuntime.release(NativePtr);
         }
     }
 }

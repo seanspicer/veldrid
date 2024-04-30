@@ -6,30 +6,36 @@ using static Veldrid.MetalBindings.ObjectiveCRuntime;
 namespace Veldrid.OpenGL.EAGL
 {
     [StructLayout(LayoutKind.Sequential)]
-    internal struct CAEAGLLayer
+    internal struct CaeaglLayer
     {
         public readonly IntPtr NativePtr;
 
-        public static CAEAGLLayer New()
+        public static CaeaglLayer New()
         {
-            return MTLUtil.AllocInit<CAEAGLLayer>("CAEAGLLayer");
+            return MTLUtil.AllocInit<CaeaglLayer>("CAEAGLLayer");
         }
 
-        public CGRect frame
+        public CGRect Frame
         {
             get => CGRect_objc_msgSend(NativePtr, sel_frame);
             set => objc_msgSend(NativePtr, sel_setFrame, value);
         }
 
-        public Bool8 opaque
+        public Bool8 Opaque
         {
             get => bool8_objc_msgSend(NativePtr, sel_isOpaque);
             set => objc_msgSend(NativePtr, sel_setOpaque, value);
         }
 
-        public void removeFromSuperlayer() => objc_msgSend(NativePtr, sel_removeFromSuperlayer);
+        public void RemoveFromSuperlayer()
+        {
+            objc_msgSend(NativePtr, sel_removeFromSuperlayer);
+        }
 
-        public void Release() => release(NativePtr);
+        public void Release()
+        {
+            release(NativePtr);
+        }
 
         private static readonly Selector sel_frame = "frame";
         private static readonly Selector sel_setFrame = "setFrame:";

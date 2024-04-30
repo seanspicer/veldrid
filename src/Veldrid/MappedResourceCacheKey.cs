@@ -4,10 +4,10 @@ namespace Veldrid
 {
     internal struct MappedResourceCacheKey : IEquatable<MappedResourceCacheKey>
     {
-        public readonly MappableResource Resource;
+        public readonly IMappableResource Resource;
         public readonly uint Subresource;
 
-        public MappedResourceCacheKey(MappableResource resource, uint subresource)
+        public MappedResourceCacheKey(IMappableResource resource, uint subresource)
         {
             Resource = resource;
             Subresource = subresource;
@@ -16,7 +16,7 @@ namespace Veldrid
         public bool Equals(MappedResourceCacheKey other)
         {
             return Resource.Equals(other.Resource)
-                && Subresource.Equals(other.Subresource);
+                   && Subresource.Equals(other.Subresource);
         }
 
         public override int GetHashCode()
