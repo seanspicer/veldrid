@@ -95,7 +95,7 @@ namespace Veldrid.Vk
                 imageCi.extent.depth = Depth;
                 imageCi.initialLayout = VkImageLayout.Preinitialized;
                 imageCi.usage = VkFormats.VdToVkTextureUsage(Usage);
-                imageCi.tiling = isStaging ? VkImageTiling.Linear : VkImageTiling.Optimal;
+                imageCi.tiling = VkImageTiling.Optimal;
                 imageCi.format = VkFormat;
                 imageCi.flags = VkImageCreateFlags.MutableFormat;
 
@@ -269,8 +269,7 @@ namespace Veldrid.Vk
             }
             else
             {
-                uint blockSize = FormatHelpers.IsCompressedFormat(Format) ? 4u : 1u;
-                Util.GetMipDimensions(this, mipLevel, out uint mipWidth, out uint mipHeight, out uint mipDepth);
+                Util.GetMipDimensions(this, mipLevel, out uint mipWidth, out uint mipHeight, out uint _);
                 uint rowPitch = FormatHelpers.GetRowPitch(mipWidth, Format);
                 uint depthPitch = FormatHelpers.GetDepthPitch(rowPitch, mipHeight, Format);
 

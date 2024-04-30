@@ -237,7 +237,7 @@ namespace Veldrid.MTL
                 var srcBuffer = srcMtlTexture.StagingBuffer;
                 var dstTexture = dstMtlTexture.DeviceTexture;
 
-                Util.GetMipDimensions(srcMtlTexture, srcMipLevel, out uint mipWidth, out uint mipHeight, out uint mipDepth);
+                Util.GetMipDimensions(srcMtlTexture, srcMipLevel, out uint mipWidth, out uint mipHeight, out uint _);
 
                 for (uint layer = 0; layer < layerCount; layer++)
                 {
@@ -285,7 +285,7 @@ namespace Veldrid.MTL
                         gd.MetalFeatures.IsMacOS);
                 }
             }
-            else if (srcIsStaging && dstIsStaging)
+            else if (srcIsStaging)
             {
                 for (uint layer = 0; layer < layerCount; layer++)
                 {
@@ -374,7 +374,7 @@ namespace Veldrid.MTL
                     }
                 }
             }
-            else if (!srcIsStaging && dstIsStaging)
+            else if (dstIsStaging)
             {
                 // Normal -> Staging
                 var srcOrigin = new MTLOrigin(srcX, srcY, srcZ);
@@ -388,7 +388,7 @@ namespace Veldrid.MTL
                         out uint dstBytesPerRow,
                         out uint dstBytesPerImage);
 
-                    Util.GetMipDimensions(srcMtlTexture, dstMipLevel, out uint mipWidth, out uint mipHeight, out uint mipDepth);
+                    Util.GetMipDimensions(srcMtlTexture, dstMipLevel, out uint mipWidth, out uint mipHeight, out uint _);
                     uint blockSize = FormatHelpers.IsCompressedFormat(srcMtlTexture.Format) ? 4u : 1u;
                     uint bufferRowLength = Math.Max(mipWidth, blockSize);
                     uint bufferImageHeight = Math.Max(mipHeight, blockSize);
@@ -1025,7 +1025,7 @@ namespace Veldrid.MTL
                 depthAttachment.loadAction = MTLLoadAction.Clear;
                 depthAttachment.clearDepth = clearDepth.Value.depth;
 
-                if (FormatHelpers.IsStencilFormat(mtlFramebuffer.DepthTarget.Value.Target.Format))
+                if (mtlFramebuffer.DepthTarget != null && FormatHelpers.IsStencilFormat(mtlFramebuffer.DepthTarget.Value.Target.Format))
                 {
                     var stencilAttachment = rpDesc.stencilAttachment;
                     stencilAttachment.loadAction = MTLLoadAction.Clear;

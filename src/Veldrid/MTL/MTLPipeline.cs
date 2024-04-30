@@ -185,8 +185,8 @@ namespace Veldrid.MTL
 
                         var vdFrontDesc = description.DepthStencilState.StencilFront;
                         var front = MTLUtil.AllocInit<MTLStencilDescriptor>(nameof(MTLStencilDescriptor));
-                        front.readMask = stencilEnabled ? description.DepthStencilState.StencilReadMask : 0u;
-                        front.writeMask = stencilEnabled ? description.DepthStencilState.StencilWriteMask : 0u;
+                        front.readMask = description.DepthStencilState.StencilReadMask;
+                        front.writeMask = description.DepthStencilState.StencilWriteMask;
                         front.depthFailureOperation = MtlFormats.VdToMtlStencilOperation(vdFrontDesc.DepthFail);
                         front.stencilFailureOperation = MtlFormats.VdToMtlStencilOperation(vdFrontDesc.Fail);
                         front.depthStencilPassOperation = MtlFormats.VdToMtlStencilOperation(vdFrontDesc.Pass);
@@ -195,8 +195,8 @@ namespace Veldrid.MTL
 
                         var vdBackDesc = description.DepthStencilState.StencilBack;
                         var back = MTLUtil.AllocInit<MTLStencilDescriptor>(nameof(MTLStencilDescriptor));
-                        back.readMask = stencilEnabled ? description.DepthStencilState.StencilReadMask : 0u;
-                        back.writeMask = stencilEnabled ? description.DepthStencilState.StencilWriteMask : 0u;
+                        back.readMask = description.DepthStencilState.StencilReadMask;
+                        back.writeMask = description.DepthStencilState.StencilWriteMask;
                         back.depthFailureOperation = MtlFormats.VdToMtlStencilOperation(vdBackDesc.DepthFail);
                         back.stencilFailureOperation = MtlFormats.VdToMtlStencilOperation(vdBackDesc.Fail);
                         back.depthStencilPassOperation = MtlFormats.VdToMtlStencilOperation(vdBackDesc.Pass);
@@ -341,8 +341,7 @@ namespace Veldrid.MTL
 
         private void addSpecializedFunction(MTLFunction function)
         {
-            if (specializedFunctions == null) specializedFunctions = new List<MTLFunction>();
-
+            specializedFunctions ??= new List<MTLFunction>();
             specializedFunctions.Add(function);
         }
 

@@ -53,10 +53,7 @@ namespace Veldrid.D3D11
                     }
                     else
                     {
-                        if (tex.SampleCount == TextureSampleCount.Count1)
-                            srvDesc.ViewDimension = ShaderResourceViewDimension.Texture2D;
-                        else
-                            srvDesc.ViewDimension = ShaderResourceViewDimension.Texture2DMultisampled;
+                        srvDesc.ViewDimension = tex.SampleCount == TextureSampleCount.Count1 ? ShaderResourceViewDimension.Texture2D : ShaderResourceViewDimension.Texture2DMultisampled;
                         srvDesc.Texture2D.MostDetailedMip = (int)baseMipLevel;
                         srvDesc.Texture2D.MipLevels = (int)levelCount;
                     }

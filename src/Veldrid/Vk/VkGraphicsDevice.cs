@@ -132,7 +132,6 @@ namespace Veldrid.Vk
 
             MemoryManager = new VkDeviceMemoryManager(
                 device,
-                PhysicalDevice,
                 physicalDeviceProperties.limits.bufferImageGranularity,
                 GetBufferMemoryRequirements2,
                 GetImageMemoryRequirements2);
@@ -290,11 +289,11 @@ namespace Veldrid.Vk
                         setDebugMarkerName(
                             VkDebugReportObjectTypeEXT.CommandBufferEXT,
                             (ulong)commandList.CommandBuffer.Handle,
-                            string.Format("{0}_CommandBuffer", name));
+                            $"{name}_CommandBuffer");
                         setDebugMarkerName(
                             VkDebugReportObjectTypeEXT.CommandPoolEXT,
                             commandList.CommandPool.Handle,
-                            string.Format("{0}_CommandPool", name));
+                            $"{name}_CommandPool");
                         break;
 
                     case VkFramebuffer framebuffer:
@@ -427,7 +426,7 @@ namespace Veldrid.Vk
 
         protected override MappedResource MapCore(IMappableResource resource, MapMode mode, uint subresource)
         {
-            var memoryBlock = default(VkMemoryBlock);
+            VkMemoryBlock memoryBlock;
             IntPtr mappedPtr = IntPtr.Zero;
             uint sizeInBytes;
             uint offset = 0;
@@ -471,7 +470,7 @@ namespace Veldrid.Vk
 
         protected override void UnmapCore(IMappableResource resource, uint subresource)
         {
-            var memoryBlock = default(VkMemoryBlock);
+            VkMemoryBlock memoryBlock;
 
             if (resource is VkBuffer buffer)
                 memoryBlock = buffer.Memory;
@@ -481,7 +480,8 @@ namespace Veldrid.Vk
                 memoryBlock = tex.Memory;
             }
 
-            if (memoryBlock.DeviceMemory.Handle != 0 && !memoryBlock.IsPersistentMapped) vkUnmapMemory(device, memoryBlock.DeviceMemory);
+            if (memoryBlock.DeviceMemory.Handle != 0 && !memoryBlock.IsPersistentMapped)
+                vkUnmapMemory(device, memoryBlock.DeviceMemory);
         }
 
         protected override void PlatformDispose()
@@ -625,8 +625,8 @@ namespace Veldrid.Vk
             si.pSignalSemaphores = signalSemaphoresPtr;
             si.signalSemaphoreCount = signalSemaphoreCount;
 
-            var vkFence = Vulkan.VkFence.Null;
-            var submissionFence = Vulkan.VkFence.Null;
+            Vulkan.VkFence vkFence;
+            Vulkan.VkFence submissionFence;
 
             if (useExtraFence)
             {
@@ -651,7 +651,8 @@ namespace Veldrid.Vk
                 }
             }
 
-            lock (submittedFencesLock) submittedFences.Add(new FenceSubmissionInfo(submissionFence, vkCl, vkCb));
+            lock (submittedFencesLock)
+                submittedFences.Add(new FenceSubmissionInfo(submissionFence, vkCl, vkCb));
         }
 
         private void checkSubmittedFences()
@@ -685,25 +686,19 @@ namespace Veldrid.Vk
 
             lock (stagingResourcesLock)
             {
-                if (submittedStagingTextures.TryGetValue(completedCb, out var stagingTex))
-                {
-                    submittedStagingTextures.Remove(completedCb);
+                if (submittedStagingTextures.Remove(completedCb, out var stagingTex))
                     availableStagingTextures.Add(stagingTex);
-                }
 
-                if (submittedStagingBuffers.TryGetValue(completedCb, out var stagingBuffer))
+                if (submittedStagingBuffers.Remove(completedCb, out var stagingBuffer))
                 {
-                    submittedStagingBuffers.Remove(completedCb);
                     if (stagingBuffer.SizeInBytes <= max_staging_buffer_size)
                         availableStagingBuffers.Add(stagingBuffer);
                     else
                         stagingBuffer.Dispose();
                 }
 
-                if (submittedSharedCommandPools.TryGetValue(completedCb, out var sharedPool))
+                if (submittedSharedCommandPools.Remove(completedCb, out var sharedPool))
                 {
-                    submittedSharedCommandPools.Remove(completedCb);
-
                     lock (graphicsCommandPoolLock)
                     {
                         if (sharedPool.IsCached)
@@ -857,7 +852,7 @@ namespace Veldrid.Vk
             if (hasDeviceProperties2)
             {
                 getPhysicalDeviceProperties2 = getInstanceProcAddr<VkGetPhysicalDeviceProperties2T>("vkGetPhysicalDeviceProperties2")
-                                                ?? getInstanceProcAddr<VkGetPhysicalDeviceProperties2T>("vkGetPhysicalDeviceProperties2KHR");
+                                               ?? getInstanceProcAddr<VkGetPhysicalDeviceProperties2T>("vkGetPhysicalDeviceProperties2KHR");
             }
 
             foreach (var tempStr in tempStrings) tempStr.Dispose();
@@ -921,7 +916,7 @@ namespace Veldrid.Vk
 
             int i = 0;
 
-            foreach (uint index in familyIndices)
+            foreach (uint _ in familyIndices)
             {
                 var queueCreateInfo = VkDeviceQueueCreateInfo.New();
                 queueCreateInfo.queueFamilyIndex = GraphicsQueueIndex;
@@ -1161,10 +1156,7 @@ namespace Veldrid.Vk
                     sharedPool = sharedGraphicsCommandPools.Pop();
             }
 
-            if (sharedPool == null)
-                sharedPool = new SharedCommandPool(this, false);
-
-            return sharedPool;
+            return sharedPool ?? new SharedCommandPool(this, false);
         }
 
         private IntPtr mapBuffer(VkBuffer buffer, uint numBytes)
@@ -1500,6 +1492,7 @@ namespace Veldrid.Vk
         VkAllocationCallbacks* pAllocator,
         VkSurfaceKHR* pSurface);
 
+#pragma warning disable CS0649 // Field is never assigned to, and will always have its default value
     internal unsafe struct VkMetalSurfaceCreateInfoExt
     {
         public const VkStructureType VK_STRUCTURE_TYPE_METAL_SURFACE_CREATE_INFO_EXT = (VkStructureType)1000217000;
@@ -1540,4 +1533,5 @@ namespace Veldrid.Vk
         public byte Subminor;
         public byte Patch;
     }
+#pragma warning restore CS0649 // Field is never assigned to, and will always have its default value
 }

@@ -44,7 +44,6 @@ namespace Veldrid.Vk
         private readonly VkSwapchainFramebuffer framebuffer;
         private readonly uint presentQueueIndex;
         private readonly VkQueue presentQueue;
-        private readonly SwapchainSource swapchainSource;
         private readonly bool colorSrgb;
         private VkSwapchainKHR deviceSwapchain;
         private Vulkan.VkFence imageAvailableFence;
@@ -63,13 +62,13 @@ namespace Veldrid.Vk
         {
             this.gd = gd;
             syncToVBlank = description.SyncToVerticalBlank;
-            swapchainSource = description.Source;
             colorSrgb = description.ColorSrgb;
 
-            if (existingSurface == VkSurfaceKHR.Null)
-                Surface = VkSurfaceUtil.CreateSurface(gd, gd.Instance, swapchainSource);
-            else
-                Surface = existingSurface;
+            SwapchainSource swapchainSource = description.Source;
+
+            Surface = existingSurface == VkSurfaceKHR.Null
+                ? VkSurfaceUtil.CreateSurface(gd, gd.Instance, swapchainSource)
+                : existingSurface;
 
             if (!getPresentQueueIndex(out presentQueueIndex)) throw new VeldridException("The system does not support presenting the given Vulkan surface.");
 
@@ -259,18 +258,18 @@ namespace Veldrid.Vk
 
         private bool getPresentQueueIndex(out uint queueFamilyIndex)
         {
-            uint graphicsQueueIndex = gd.GraphicsQueueIndex;
-            uint presentQueueIndex = gd.PresentQueueIndex;
+            uint deviceGraphicsQueueIndex = gd.GraphicsQueueIndex;
+            uint devicePresentQueueIndex = gd.PresentQueueIndex;
 
-            if (queueSupportsPresent(graphicsQueueIndex, Surface))
+            if (queueSupportsPresent(deviceGraphicsQueueIndex, Surface))
             {
-                queueFamilyIndex = graphicsQueueIndex;
+                queueFamilyIndex = deviceGraphicsQueueIndex;
                 return true;
             }
 
-            if (graphicsQueueIndex != presentQueueIndex && queueSupportsPresent(presentQueueIndex, Surface))
+            if (deviceGraphicsQueueIndex != devicePresentQueueIndex && queueSupportsPresent(devicePresentQueueIndex, Surface))
             {
-                queueFamilyIndex = presentQueueIndex;
+                queueFamilyIndex = devicePresentQueueIndex;
                 return true;
             }
 

@@ -12,14 +12,11 @@ namespace Veldrid.MTL
         public MTLLibrary Library { get; }
         public MTLFunction Function { get; }
         public override string Name { get; set; }
-        private readonly MtlGraphicsDevice device;
         private bool disposed;
 
         public unsafe MtlShader(ref ShaderDescription description, MtlGraphicsDevice gd)
             : base(description.Stage, description.EntryPoint)
         {
-            device = gd;
-
             if (description.ShaderBytes.Length > 4
                 && description.ShaderBytes[0] == 0x4d
                 && description.ShaderBytes[1] == 0x54

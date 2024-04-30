@@ -82,14 +82,11 @@ namespace Veldrid.MTL
             }
             else
             {
-                uint blockSize = FormatHelpers.IsCompressedFormat(Format) ? 4u : 1u;
                 uint totalStorageSize = 0;
 
                 for (uint level = 0; level < MipLevels; level++)
                 {
                     Util.GetMipDimensions(this, level, out uint levelWidth, out uint levelHeight, out uint levelDepth);
-                    uint storageWidth = Math.Max(levelWidth, blockSize);
-                    uint storageHeight = Math.Max(levelHeight, blockSize);
                     totalStorageSize += levelDepth * FormatHelpers.GetDepthPitch(
                         FormatHelpers.GetRowPitch(levelWidth, Format),
                         levelHeight,
@@ -163,7 +160,7 @@ namespace Veldrid.MTL
         internal void GetSubresourceLayout(uint mipLevel, uint arrayLayer, out uint rowPitch, out uint depthPitch)
         {
             uint blockSize = FormatHelpers.IsCompressedFormat(Format) ? 4u : 1u;
-            Util.GetMipDimensions(this, mipLevel, out uint mipWidth, out uint mipHeight, out uint mipDepth);
+            Util.GetMipDimensions(this, mipLevel, out uint mipWidth, out uint mipHeight, out uint _);
             uint storageWidth = Math.Max(blockSize, mipWidth);
             uint storageHeight = Math.Max(blockSize, mipHeight);
             rowPitch = FormatHelpers.GetRowPitch(storageWidth, Format);
@@ -175,10 +172,12 @@ namespace Veldrid.MTL
             if (!disposed)
             {
                 disposed = true;
-                if (!StagingBuffer.IsNull)
-                    ObjectiveCRuntime.release(StagingBuffer.NativePtr);
-                else
+
+                // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
+                if (StagingBuffer.IsNull)
                     ObjectiveCRuntime.release(DeviceTexture.NativePtr);
+                else
+                    ObjectiveCRuntime.release(StagingBuffer.NativePtr);
             }
         }
     }

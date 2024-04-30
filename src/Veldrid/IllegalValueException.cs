@@ -9,6 +9,7 @@ namespace Veldrid
             return new IllegalValueException<T>();
         }
 
+        // ReSharper disable once UnusedTypeParameter
         internal class IllegalValueException<T> : VeldridException
         {
         }

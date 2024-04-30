@@ -232,6 +232,7 @@ namespace Veldrid
             int pipelineLength = layout.Description.Elements.Length;
             var layoutDesc = rs.Layout.Description;
             int setLength = layoutDesc.Elements.Length;
+
             if (pipelineLength != setLength)
             {
                 throw new VeldridException(
@@ -348,6 +349,7 @@ namespace Veldrid
             var layout = ComputePipeline.ResourceLayouts[slot];
             int pipelineLength = layout.Description.Elements.Length;
             int setLength = rs.Layout.Description.Elements.Length;
+
             if (pipelineLength != setLength)
             {
                 throw new VeldridException(

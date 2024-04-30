@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Vortice.Direct3D;
@@ -18,11 +19,11 @@ namespace Veldrid.D3D11
 {
     internal class D3D11GraphicsDevice : GraphicsDevice
     {
-        public override string DeviceName => deviceName;
+        public override string DeviceName { get; }
 
-        public override string VendorName => vendorName;
+        public override string VendorName { get; }
 
-        public override GraphicsApiVersion ApiVersion => apiVersion;
+        public override GraphicsApiVersion ApiVersion { get; }
 
         public override GraphicsBackend BackendType => GraphicsBackend.Direct3D11;
 
@@ -58,9 +59,6 @@ namespace Veldrid.D3D11
 
         private readonly IDXGIAdapter dxgiAdapter;
         private readonly ID3D11Device device;
-        private readonly string deviceName;
-        private readonly string vendorName;
-        private readonly GraphicsApiVersion apiVersion;
         private readonly ID3D11DeviceContext immediateContext;
         private readonly D3D11ResourceFactory d3d11ResourceFactory;
         private readonly D3D11Swapchain mainSwapchain;
@@ -128,50 +126,50 @@ namespace Veldrid.D3D11
                 VorticeD3D11.D3D11CreateDevice(IntPtr.Zero,
                     DriverType.Hardware,
                     flags,
-                    null,
+                    Array.Empty<FeatureLevel>(),
                     out device).CheckError();
             }
 
-            using (var dxgiDevice = device.QueryInterface<IDXGIDevice>())
+            using (var dxgiDevice = device!.QueryInterface<IDXGIDevice>())
             {
                 // Store a pointer to the DXGI adapter.
                 // This is for the case of no preferred DXGI adapter, or fallback to WARP.
                 dxgiDevice.GetAdapter(out dxgiAdapter).CheckError();
 
                 var desc = dxgiAdapter.Description;
-                deviceName = desc.Description;
-                vendorName = "id:" + ((uint)desc.VendorId).ToString("x8");
+                DeviceName = desc.Description;
+                VendorName = "id:" + ((uint)desc.VendorId).ToString("x8");
                 DeviceId = desc.DeviceId;
             }
 
             switch (device.FeatureLevel)
             {
                 case FeatureLevel.Level_10_0:
-                    apiVersion = new GraphicsApiVersion(10, 0, 0, 0);
+                    ApiVersion = new GraphicsApiVersion(10, 0, 0, 0);
                     break;
 
                 case FeatureLevel.Level_10_1:
-                    apiVersion = new GraphicsApiVersion(10, 1, 0, 0);
+                    ApiVersion = new GraphicsApiVersion(10, 1, 0, 0);
                     break;
 
                 case FeatureLevel.Level_11_0:
-                    apiVersion = new GraphicsApiVersion(11, 0, 0, 0);
+                    ApiVersion = new GraphicsApiVersion(11, 0, 0, 0);
                     break;
 
                 case FeatureLevel.Level_11_1:
-                    apiVersion = new GraphicsApiVersion(11, 1, 0, 0);
+                    ApiVersion = new GraphicsApiVersion(11, 1, 0, 0);
                     break;
 
                 case FeatureLevel.Level_12_0:
-                    apiVersion = new GraphicsApiVersion(12, 0, 0, 0);
+                    ApiVersion = new GraphicsApiVersion(12, 0, 0, 0);
                     break;
 
                 case FeatureLevel.Level_12_1:
-                    apiVersion = new GraphicsApiVersion(12, 1, 0, 0);
+                    ApiVersion = new GraphicsApiVersion(12, 1, 0, 0);
                     break;
 
                 case FeatureLevel.Level_12_2:
-                    apiVersion = new GraphicsApiVersion(12, 2, 0, 0);
+                    ApiVersion = new GraphicsApiVersion(12, 2, 0, 0);
                     break;
             }
 
@@ -243,14 +241,16 @@ namespace Veldrid.D3D11
                 msTimeout = (int)Math.Min(nanosecondTimeout / 1_000_000, int.MaxValue);
 
             var events = getResetEventArray(fences.Length);
-            for (int i = 0; i < fences.Length; i++) events[i] = Util.AssertSubtype<Fence, D3D11Fence>(fences[i]).ResetEvent;
+            for (int i = 0; i < fences.Length; i++)
+                events[i] = Util.AssertSubtype<Fence, D3D11Fence>(fences[i]).ResetEvent;
+
             bool result;
 
             if (waitAll)
-                result = WaitHandle.WaitAll(events, msTimeout);
+                result = WaitHandle.WaitAll(events.Cast<WaitHandle>().ToArray(), msTimeout);
             else
             {
-                int index = WaitHandle.WaitAny(events, msTimeout);
+                int index = WaitHandle.WaitAny(events.Cast<WaitHandle>().ToArray(), msTimeout);
                 result = index != WaitHandle.WaitTimeout;
             }
 
@@ -325,7 +325,7 @@ namespace Veldrid.D3D11
                                 (int)arrayLayer,
                                 D3D11Formats.VdToD3D11MapMode(false, mode),
                                 MapFlags.None,
-                                out int mipSize,
+                                out int _,
                                 out MappedSubresource msr);
 
                             info.MappedResource = new MappedResource(
@@ -350,14 +350,13 @@ namespace Veldrid.D3D11
         protected override void UnmapCore(IMappableResource resource, uint subresource)
         {
             var key = new MappedResourceCacheKey(resource, subresource);
-            bool commitUnmap;
 
             lock (mappedResourceLock)
             {
                 if (!mappedResources.TryGetValue(key, out var info)) throw new VeldridException($"The given resource ({resource}) is not mapped.");
 
                 info.RefCount -= 1;
-                commitUnmap = info.RefCount == 0;
+                bool commitUnmap = info.RefCount == 0;
 
                 if (commitUnmap)
                 {
@@ -383,7 +382,9 @@ namespace Veldrid.D3D11
         protected override void PlatformDispose()
         {
             // Dispose staging buffers
-            foreach (DeviceBuffer buffer in availableStagingBuffers) buffer.Dispose();
+            foreach (D3D11Buffer buffer in availableStagingBuffers)
+                buffer.Dispose();
+
             availableStagingBuffers.Clear();
 
             d3d11ResourceFactory.Dispose();
@@ -628,7 +629,6 @@ namespace Veldrid.D3D11
             if (useMap)
             {
                 uint subresource = texture.CalculateSubresource(mipLevel, arrayLayer);
-                var key = new MappedResourceCacheKey(texture, subresource);
                 var map = MapCore(texture, MapMode.Write, subresource);
 
                 uint denseRowSize = FormatHelpers.GetRowPitch(width, texture.Format);

@@ -32,12 +32,10 @@ namespace Veldrid.D3D11
             }
         }
 
-        private readonly ID3D11Device device;
         private string name;
 
         public D3D11Texture(ID3D11Device device, ref TextureDescription description)
         {
-            this.device = device;
             Width = description.Width;
             Height = description.Height;
             Depth = description.Depth;
@@ -151,7 +149,6 @@ namespace Veldrid.D3D11
 
         public D3D11Texture(ID3D11Texture2D existingTexture, TextureType type, PixelFormat format)
         {
-            device = existingTexture.Device;
             DeviceTexture = existingTexture;
             Width = (uint)existingTexture.Description.Width;
             Height = (uint)existingTexture.Description.Height;
