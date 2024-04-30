@@ -258,17 +258,18 @@ namespace Veldrid.Vk
 
         private bool getPresentQueueIndex(out uint queueFamilyIndex)
         {
-            uint graphicsQueueIndex = gd.GraphicsQueueIndex;
+            uint deviceGraphicsQueueIndex = gd.GraphicsQueueIndex;
+            uint devicePresentQueueIndex = gd.PresentQueueIndex;
 
-            if (queueSupportsPresent(graphicsQueueIndex, Surface))
+            if (queueSupportsPresent(deviceGraphicsQueueIndex, Surface))
             {
-                queueFamilyIndex = graphicsQueueIndex;
+                queueFamilyIndex = deviceGraphicsQueueIndex;
                 return true;
             }
 
-            if (graphicsQueueIndex != gd.PresentQueueIndex && queueSupportsPresent(gd.PresentQueueIndex, Surface))
+            if (deviceGraphicsQueueIndex != devicePresentQueueIndex && queueSupportsPresent(devicePresentQueueIndex, Surface))
             {
-                queueFamilyIndex = gd.PresentQueueIndex;
+                queueFamilyIndex = devicePresentQueueIndex;
                 return true;
             }
 
