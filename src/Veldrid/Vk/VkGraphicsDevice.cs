@@ -532,12 +532,14 @@ namespace Veldrid.Vk
             if (!IsVulkanLoaded()) return false;
 
             var instanceCi = VkInstanceCreateInfo.New();
-            var applicationInfo = new VkApplicationInfo();
-            applicationInfo.apiVersion = new VkVersion(1, 0, 0);
-            applicationInfo.applicationVersion = new VkVersion(1, 0, 0);
-            applicationInfo.engineVersion = new VkVersion(1, 0, 0);
-            applicationInfo.pApplicationName = s_name;
-            applicationInfo.pEngineName = s_name;
+            var applicationInfo = new VkApplicationInfo
+            {
+                apiVersion = new VkVersion(1, 0, 0),
+                applicationVersion = new VkVersion(1, 0, 0),
+                engineVersion = new VkVersion(1, 0, 0),
+                pApplicationName = s_name,
+                pEngineName = s_name
+            };
 
             instanceCi.pApplicationInfo = &applicationInfo;
 
@@ -751,12 +753,14 @@ namespace Veldrid.Vk
             var availableInstanceExtensions = new HashSet<string>(GetInstanceExtensions());
 
             var instanceCi = VkInstanceCreateInfo.New();
-            var applicationInfo = new VkApplicationInfo();
-            applicationInfo.apiVersion = new VkVersion(1, 0, 0);
-            applicationInfo.applicationVersion = new VkVersion(1, 0, 0);
-            applicationInfo.engineVersion = new VkVersion(1, 0, 0);
-            applicationInfo.pApplicationName = s_name;
-            applicationInfo.pEngineName = s_name;
+            var applicationInfo = new VkApplicationInfo
+            {
+                apiVersion = new VkVersion(1, 0, 0),
+                applicationVersion = new VkVersion(1, 0, 0),
+                engineVersion = new VkVersion(1, 0, 0),
+                pApplicationName = s_name,
+                pEngineName = s_name
+            };
 
             instanceCi.pApplicationInfo = &applicationInfo;
 

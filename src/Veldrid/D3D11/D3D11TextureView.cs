@@ -41,8 +41,10 @@ namespace Veldrid.D3D11
 
             if ((d3dTex.Usage & TextureUsage.Storage) == TextureUsage.Storage)
             {
-                var uavDesc = new UnorderedAccessViewDescription();
-                uavDesc.Format = D3D11Formats.GetViewFormat(d3dTex.DxgiFormat);
+                var uavDesc = new UnorderedAccessViewDescription
+                {
+                    Format = D3D11Formats.GetViewFormat(d3dTex.DxgiFormat)
+                };
 
                 if ((d3dTex.Usage & TextureUsage.Cubemap) == TextureUsage.Cubemap)
                     throw new NotSupportedException();

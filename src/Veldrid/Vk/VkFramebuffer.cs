@@ -54,24 +54,28 @@ namespace Veldrid.Vk
             for (int i = 0; i < colorAttachmentCount; i++)
             {
                 var vkColorTex = Util.AssertSubtype<Texture, VkTexture>(ColorTargets[i].Target);
-                var colorAttachmentDesc = new VkAttachmentDescription();
-                colorAttachmentDesc.format = vkColorTex.VkFormat;
-                colorAttachmentDesc.samples = vkColorTex.VkSampleCount;
-                colorAttachmentDesc.loadOp = VkAttachmentLoadOp.Load;
-                colorAttachmentDesc.storeOp = VkAttachmentStoreOp.Store;
-                colorAttachmentDesc.stencilLoadOp = VkAttachmentLoadOp.DontCare;
-                colorAttachmentDesc.stencilStoreOp = VkAttachmentStoreOp.DontCare;
-                colorAttachmentDesc.initialLayout = isPresented
-                    ? VkImageLayout.PresentSrcKHR
-                    : (vkColorTex.Usage & TextureUsage.Sampled) != 0
-                        ? VkImageLayout.ShaderReadOnlyOptimal
-                        : VkImageLayout.ColorAttachmentOptimal;
-                colorAttachmentDesc.finalLayout = VkImageLayout.ColorAttachmentOptimal;
+                var colorAttachmentDesc = new VkAttachmentDescription
+                {
+                    format = vkColorTex.VkFormat,
+                    samples = vkColorTex.VkSampleCount,
+                    loadOp = VkAttachmentLoadOp.Load,
+                    storeOp = VkAttachmentStoreOp.Store,
+                    stencilLoadOp = VkAttachmentLoadOp.DontCare,
+                    stencilStoreOp = VkAttachmentStoreOp.DontCare,
+                    initialLayout = isPresented
+                        ? VkImageLayout.PresentSrcKHR
+                        : (vkColorTex.Usage & TextureUsage.Sampled) != 0
+                            ? VkImageLayout.ShaderReadOnlyOptimal
+                            : VkImageLayout.ColorAttachmentOptimal,
+                    finalLayout = VkImageLayout.ColorAttachmentOptimal
+                };
                 attachments.Add(colorAttachmentDesc);
 
-                var colorAttachmentRef = new VkAttachmentReference();
-                colorAttachmentRef.attachment = (uint)i;
-                colorAttachmentRef.layout = VkImageLayout.ColorAttachmentOptimal;
+                var colorAttachmentRef = new VkAttachmentReference
+                {
+                    attachment = (uint)i,
+                    layout = VkImageLayout.ColorAttachmentOptimal
+                };
                 colorAttachmentRefs.Add(colorAttachmentRef);
             }
 
@@ -99,8 +103,10 @@ namespace Veldrid.Vk
                 depthAttachmentRef.layout = VkImageLayout.DepthStencilAttachmentOptimal;
             }
 
-            var subpass = new VkSubpassDescription();
-            subpass.pipelineBindPoint = VkPipelineBindPoint.Graphics;
+            var subpass = new VkSubpassDescription
+            {
+                pipelineBindPoint = VkPipelineBindPoint.Graphics
+            };
 
             if (ColorTargets.Count > 0)
             {
@@ -114,11 +120,13 @@ namespace Veldrid.Vk
                 attachments.Add(depthAttachmentDesc);
             }
 
-            var subpassDependency = new VkSubpassDependency();
-            subpassDependency.srcSubpass = SubpassExternal;
-            subpassDependency.srcStageMask = VkPipelineStageFlags.ColorAttachmentOutput;
-            subpassDependency.dstStageMask = VkPipelineStageFlags.ColorAttachmentOutput;
-            subpassDependency.dstAccessMask = VkAccessFlags.ColorAttachmentRead | VkAccessFlags.ColorAttachmentWrite;
+            var subpassDependency = new VkSubpassDependency
+            {
+                srcSubpass = SubpassExternal,
+                srcStageMask = VkPipelineStageFlags.ColorAttachmentOutput,
+                dstStageMask = VkPipelineStageFlags.ColorAttachmentOutput,
+                dstAccessMask = VkAccessFlags.ColorAttachmentRead | VkAccessFlags.ColorAttachmentWrite
+            };
 
             renderPassCi.attachmentCount = attachments.Count;
             renderPassCi.pAttachments = (VkAttachmentDescription*)attachments.Data;

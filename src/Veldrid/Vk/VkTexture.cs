@@ -279,9 +279,9 @@ namespace Veldrid.Vk
                     rowPitch = rowPitch,
                     depthPitch = depthPitch,
                     arrayPitch = depthPitch,
-                    size = depthPitch
+                    size = depthPitch,
+                    offset = Util.ComputeSubresourceOffset(this, mipLevel, arrayLayer)
                 };
-                layout.offset = Util.ComputeSubresourceOffset(this, mipLevel, arrayLayer);
 
                 return layout;
             }

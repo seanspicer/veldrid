@@ -1056,8 +1056,10 @@ namespace Veldrid.OpenGL
                 this.workItems = workItems;
                 this.makeCurrent = makeCurrent;
                 this.context = context;
-                var thread = new Thread(run);
-                thread.IsBackground = true;
+                var thread = new Thread(run)
+                {
+                    IsBackground = true
+                };
                 thread.Start();
             }
 
@@ -1065,10 +1067,12 @@ namespace Veldrid.OpenGL
             {
                 checkExceptions();
 
-                var mrp = new MapParams();
-                mrp.Map = true;
-                mrp.Subresource = subresource;
-                mrp.MapMode = mode;
+                var mrp = new MapParams
+                {
+                    Map = true,
+                    Subresource = subresource,
+                    MapMode = mode
+                };
 
                 var mre = new ManualResetEventSlim(false);
                 workItems.Add(new ExecutionThreadWorkItem(resource, &mrp, mre));
@@ -1091,9 +1095,11 @@ namespace Veldrid.OpenGL
             {
                 checkExceptions();
 
-                var mrp = new MapParams();
-                mrp.Map = false;
-                mrp.Subresource = subresource;
+                var mrp = new MapParams
+                {
+                    Map = false,
+                    Subresource = subresource
+                };
 
                 var mre = new ManualResetEventSlim(false);
                 workItems.Add(new ExecutionThreadWorkItem(resource, &mrp, mre));
@@ -1365,14 +1371,16 @@ namespace Veldrid.OpenGL
                                 CheckLastError();
                             }
 
-                            var info = new MappedResourceInfoWithStaging();
-                            info.MappedResource = new MappedResource(
-                                resource,
-                                mode,
-                                (IntPtr)mappedPtr,
-                                buffer.SizeInBytes);
-                            info.RefCount = 1;
-                            info.Mode = mode;
+                            var info = new MappedResourceInfoWithStaging
+                            {
+                                MappedResource = new MappedResource(
+                                    resource,
+                                    mode,
+                                    (IntPtr)mappedPtr,
+                                    buffer.SizeInBytes),
+                                RefCount = 1,
+                                Mode = mode
+                            };
                             gd.mappedResources.Add(key, info);
                             result->Data = (IntPtr)mappedPtr;
                             result->DataSize = buffer.SizeInBytes;
@@ -1556,18 +1564,20 @@ namespace Veldrid.OpenGL
 
                             uint rowPitch = FormatHelpers.GetRowPitch(mipWidth, texture.Format);
                             uint depthPitch = FormatHelpers.GetDepthPitch(rowPitch, mipHeight, texture.Format);
-                            var info = new MappedResourceInfoWithStaging();
-                            info.MappedResource = new MappedResource(
-                                resource,
-                                mode,
-                                (IntPtr)block.Data,
-                                subresourceSize,
-                                subresource,
-                                rowPitch,
-                                depthPitch);
-                            info.RefCount = 1;
-                            info.Mode = mode;
-                            info.StagingBlock = block;
+                            var info = new MappedResourceInfoWithStaging
+                            {
+                                MappedResource = new MappedResource(
+                                    resource,
+                                    mode,
+                                    (IntPtr)block.Data,
+                                    subresourceSize,
+                                    subresource,
+                                    rowPitch,
+                                    depthPitch),
+                                RefCount = 1,
+                                Mode = mode,
+                                StagingBlock = block
+                            };
                             gd.mappedResources.Add(key, info);
                             result->Data = (IntPtr)block.Data;
                             result->DataSize = subresourceSize;

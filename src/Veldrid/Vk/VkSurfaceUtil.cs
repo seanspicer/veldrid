@@ -144,9 +144,11 @@ namespace Veldrid.Vk
 
             if (hasExtMetalSurface)
             {
-                var surfaceCi = new VkMetalSurfaceCreateInfoExt();
-                surfaceCi.SType = VkMetalSurfaceCreateInfoExt.VK_STRUCTURE_TYPE_METAL_SURFACE_CREATE_INFO_EXT;
-                surfaceCi.PLayer = metalLayer.NativePtr.ToPointer();
+                var surfaceCi = new VkMetalSurfaceCreateInfoExt
+                {
+                    SType = VkMetalSurfaceCreateInfoExt.VK_STRUCTURE_TYPE_METAL_SURFACE_CREATE_INFO_EXT,
+                    PLayer = metalLayer.NativePtr.ToPointer()
+                };
                 VkSurfaceKHR surface;
                 var result = gd.CreateMetalSurfaceExt(instance, &surfaceCi, null, &surface);
                 CheckResult(result);
@@ -176,9 +178,11 @@ namespace Veldrid.Vk
 
             if (hasExtMetalSurface)
             {
-                var surfaceCi = new VkMetalSurfaceCreateInfoExt();
-                surfaceCi.SType = VkMetalSurfaceCreateInfoExt.VK_STRUCTURE_TYPE_METAL_SURFACE_CREATE_INFO_EXT;
-                surfaceCi.PLayer = metalLayer.NativePtr.ToPointer();
+                var surfaceCi = new VkMetalSurfaceCreateInfoExt
+                {
+                    SType = VkMetalSurfaceCreateInfoExt.VK_STRUCTURE_TYPE_METAL_SURFACE_CREATE_INFO_EXT,
+                    PLayer = metalLayer.NativePtr.ToPointer()
+                };
                 VkSurfaceKHR surface;
                 var result = gd.CreateMetalSurfaceExt(instance, &surfaceCi, null, &surface);
                 CheckResult(result);
