@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
-using Veldrid.OpenGLBinding;
+using Veldrid.OpenGLBindings;
 using static Veldrid.OpenGL.OpenGLUtil;
-using static Veldrid.OpenGLBinding.OpenGLNative;
+using static Veldrid.OpenGLBindings.OpenGLNative;
 
 namespace Veldrid.OpenGL
 {

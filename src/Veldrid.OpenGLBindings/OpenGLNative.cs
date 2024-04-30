@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-namespace Veldrid.OpenGLBinding
+namespace Veldrid.OpenGLBindings
 {
     // uint = uint
     // GLuint = uint
@@ -1877,7 +1877,7 @@ namespace Veldrid.OpenGLBinding
             LoadFunction("glTextureStorage3DMultisample", out p_glTextureStorage3DMultisample);
             LoadFunction("glTexStorage2DMultisample", out p_glTexStorage2DMultisample);
             LoadFunction("glTexStorage3DMultisample", out p_glTexStorage3DMultisample);
-            
+
             LoadFunction("glMapBuffer", out p_glMapBuffer);
             LoadFunction("glMapNamedBuffer", out p_glMapNamedBuffer);
             LoadFunction("glUnmapBuffer", out p_glUnmapBuffer);

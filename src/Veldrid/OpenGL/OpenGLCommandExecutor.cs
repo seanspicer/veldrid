@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text;
-using Veldrid.OpenGLBinding;
-using static Veldrid.OpenGLBinding.OpenGLNative;
+using Veldrid.OpenGLBindings;
+using static Veldrid.OpenGLBindings.OpenGLNative;
 using static Veldrid.OpenGL.OpenGLUtil;
 
 namespace Veldrid.OpenGL

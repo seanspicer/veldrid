@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Veldrid.OpenGLBinding
+namespace Veldrid.OpenGLBindings
 {
     /// <summary>
     /// A boolean value stored in an unsigned byte.
@@ -13,7 +13,7 @@ namespace Veldrid.OpenGLBinding
         public byte Value;
 
         /// <summary>
-        /// Constructs a new <see cref="GLboolean"/> with the given raw value. 
+        /// Constructs a new <see cref="GLboolean"/> with the given raw value.
         /// </summary>
         /// <param name="value"></param>
         public GLboolean(byte value)

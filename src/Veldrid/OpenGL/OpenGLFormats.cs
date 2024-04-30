@@ -1,5 +1,5 @@
 ﻿using System.Diagnostics;
-using Veldrid.OpenGLBinding;
+using Veldrid.OpenGLBindings;
 
 namespace Veldrid.OpenGL
 {

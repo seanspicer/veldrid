@@ -3,7 +3,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using Veldrid.OpenGL;
-using Veldrid.OpenGLBinding;
+using Veldrid.OpenGLBindings;
 
 namespace Veldrid
 {
