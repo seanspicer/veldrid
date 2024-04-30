@@ -1,38 +1,34 @@
 ﻿using System;
-using System.Diagnostics;
 using Veldrid.MetalBindings;
 
 namespace Veldrid.MTL
 {
     internal class MTLSwapchain : Swapchain
     {
-        private readonly MTLSwapchainFramebuffer _framebuffer;
-        private CAMetalLayer _metalLayer;
-        private readonly MTLGraphicsDevice _gd;
-        private UIView _uiView; // Valid only when a UIViewSwapchainSource is used.
-        private bool _syncToVerticalBlank;
-        private bool _disposed;
-
-        private CAMetalDrawable _drawable;
-
         public override Framebuffer Framebuffer => _framebuffer;
+
+        public override bool IsDisposed => _disposed;
+
+        public CAMetalDrawable CurrentDrawable => _drawable;
+
         public override bool SyncToVerticalBlank
         {
             get => _syncToVerticalBlank;
             set
             {
-                if (_syncToVerticalBlank != value)
-                {
-                    SetSyncToVerticalBlank(value);
-                }
+                if (_syncToVerticalBlank != value) SetSyncToVerticalBlank(value);
             }
         }
 
         public override string Name { get; set; }
+        private readonly MTLSwapchainFramebuffer _framebuffer;
+        private readonly MTLGraphicsDevice _gd;
+        private CAMetalLayer _metalLayer;
+        private UIView _uiView; // Valid only when a UIViewSwapchainSource is used.
+        private bool _syncToVerticalBlank;
+        private bool _disposed;
 
-        public override bool IsDisposed => _disposed;
-
-        public CAMetalDrawable CurrentDrawable => _drawable;
+        private CAMetalDrawable _drawable;
 
         public MTLSwapchain(MTLGraphicsDevice gd, ref SwapchainDescription description)
         {
@@ -42,12 +38,13 @@ namespace Veldrid.MTL
             uint width;
             uint height;
 
-            SwapchainSource source = description.Source;
+            var source = description.Source;
+
             if (source is NSWindowSwapchainSource nsWindowSource)
             {
-                NSWindow nswindow = new NSWindow(nsWindowSource.NSWindow);
-                NSView contentView = nswindow.contentView;
-                CGSize windowContentSize = contentView.frame.size;
+                var nswindow = new NSWindow(nsWindowSource.NSWindow);
+                var contentView = nswindow.contentView;
+                var windowContentSize = contentView.frame.size;
                 width = (uint)windowContentSize.width;
                 height = (uint)windowContentSize.height;
 
@@ -60,8 +57,8 @@ namespace Veldrid.MTL
             }
             else if (source is NSViewSwapchainSource nsViewSource)
             {
-                NSView contentView = new NSView(nsViewSource.NSView);
-                CGSize windowContentSize = contentView.frame.size;
+                var contentView = new NSView(nsViewSource.NSView);
+                var windowContentSize = contentView.frame.size;
                 width = (uint)windowContentSize.width;
                 height = (uint)windowContentSize.height;
 
@@ -75,7 +72,7 @@ namespace Veldrid.MTL
             else if (source is UIViewSwapchainSource uiViewSource)
             {
                 _uiView = new UIView(uiViewSource.UIView);
-                CGSize viewSize = _uiView.frame.size;
+                var viewSize = _uiView.frame.size;
                 width = (uint)viewSize.width;
                 height = (uint)viewSize.height;
 
@@ -88,11 +85,9 @@ namespace Veldrid.MTL
                 }
             }
             else
-            {
-                throw new VeldridException($"A Metal Swapchain can only be created from an NSWindow, NSView, or UIView.");
-            }
+                throw new VeldridException("A Metal Swapchain can only be created from an NSWindow, NSView, or UIView.");
 
-            PixelFormat format = description.ColorSrgb
+            var format = description.ColorSrgb
                 ? PixelFormat.B8_G8_R8_A8_UNorm_SRgb
                 : PixelFormat.B8_G8_R8_A8_UNorm;
 
@@ -112,12 +107,43 @@ namespace Veldrid.MTL
             getNextDrawable();
         }
 
+        #region Disposal
+
+        public override void Dispose()
+        {
+            if (_drawable.NativePtr != IntPtr.Zero) ObjectiveCRuntime.release(_drawable.NativePtr);
+            _framebuffer.Dispose();
+            ObjectiveCRuntime.release(_metalLayer.NativePtr);
+
+            _disposed = true;
+        }
+
+        #endregion
+
+        public override void Resize(uint width, uint height)
+        {
+            if (_uiView.NativePtr != IntPtr.Zero)
+                _metalLayer.frame = _uiView.frame;
+
+            _metalLayer.drawableSize = new CGSize(width, height);
+
+            getNextDrawable();
+        }
+
+        public bool EnsureDrawableAvailable()
+        {
+            return !_drawable.IsNull || getNextDrawable();
+        }
+
+        public void InvalidateDrawable()
+        {
+            ObjectiveCRuntime.release(_drawable.NativePtr);
+            _drawable = default;
+        }
+
         private bool getNextDrawable()
         {
-            if (!_drawable.IsNull)
-            {
-                ObjectiveCRuntime.release(_drawable.NativePtr);
-            }
+            if (!_drawable.IsNull) ObjectiveCRuntime.release(_drawable.NativePtr);
 
             using (NSAutoreleasePool.Begin())
             {
@@ -134,24 +160,6 @@ namespace Veldrid.MTL
             }
         }
 
-        public override void Resize(uint width, uint height)
-        {
-            if (_uiView.NativePtr != IntPtr.Zero)
-                _metalLayer.frame = _uiView.frame;
-
-            _metalLayer.drawableSize = new CGSize(width, height);
-
-            getNextDrawable();
-        }
-
-        public bool EnsureDrawableAvailable() => !_drawable.IsNull || getNextDrawable();
-
-        public void InvalidateDrawable()
-        {
-            ObjectiveCRuntime.release(_drawable.NativePtr);
-            _drawable = default;
-        }
-
         private void SetSyncToVerticalBlank(bool value)
         {
             _syncToVerticalBlank = value;
@@ -159,21 +167,7 @@ namespace Veldrid.MTL
             if (_gd.MetalFeatures.MaxFeatureSet == MTLFeatureSet.macOS_GPUFamily1_v3
                 || _gd.MetalFeatures.MaxFeatureSet == MTLFeatureSet.macOS_GPUFamily1_v4
                 || _gd.MetalFeatures.MaxFeatureSet == MTLFeatureSet.macOS_GPUFamily2_v1)
-            {
                 _metalLayer.displaySyncEnabled = value;
-            }
-        }
-
-        public override void Dispose()
-        {
-            if (_drawable.NativePtr != IntPtr.Zero)
-            {
-                ObjectiveCRuntime.release(_drawable.NativePtr);
-            }
-            _framebuffer.Dispose();
-            ObjectiveCRuntime.release(_metalLayer.NativePtr);
-
-            _disposed = true;
         }
     }
 }

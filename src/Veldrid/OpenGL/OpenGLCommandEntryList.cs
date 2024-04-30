@@ -5,6 +5,13 @@ namespace Veldrid.OpenGL
     internal interface OpenGLCommandEntryList
     {
         OpenGLCommandList Parent { get; }
+
+        #region Disposal
+
+        void Dispose();
+
+        #endregion
+
         void Begin();
         void ClearColorTarget(uint index, RgbaFloat clearColor);
         void ClearDepthTarget(float depth, byte stencil);
@@ -27,6 +34,7 @@ namespace Veldrid.OpenGL
         void ExecuteAll(OpenGLCommandExecutor executor);
         void DispatchIndirect(DeviceBuffer indirectBuffer, uint offset);
         void CopyBuffer(DeviceBuffer source, uint sourceOffset, DeviceBuffer destination, uint destinationOffset, uint sizeInBytes);
+
         void CopyTexture(
             Texture source,
             uint srcX, uint srcY, uint srcZ,
@@ -45,6 +53,5 @@ namespace Veldrid.OpenGL
         void InsertDebugMarker(string name);
 
         void Reset();
-        void Dispose();
     }
 }

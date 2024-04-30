@@ -8,10 +8,9 @@ namespace Veldrid.OpenGL.NoAllocEntryList
 {
     internal unsafe class OpenGLNoAllocCommandEntryList : OpenGLCommandEntryList, IDisposable
     {
+        public OpenGLCommandList Parent { get; }
         private readonly StagingMemoryPool _memoryPool;
         private readonly List<EntryStorageBlock> _blocks = new List<EntryStorageBlock>();
-        private EntryStorageBlock _currentBlock;
-        private uint _totalEntries;
         private readonly List<object> _resourceList = new List<object>();
         private readonly List<StagingBlock> _stagingBlocks = new List<StagingBlock>();
 
@@ -90,8 +89,8 @@ namespace Veldrid.OpenGL.NoAllocEntryList
 
         private const byte InsertDebugMarkerEntryID = 26;
         private static readonly uint InsertDebugMarkerEntrySize = Util.USizeOf<NoAllocInsertDebugMarkerEntry>();
-
-        public OpenGLCommandList Parent { get; }
+        private EntryStorageBlock _currentBlock;
+        private uint _totalEntries;
 
         public OpenGLNoAllocCommandEntryList(OpenGLCommandList cl)
         {
@@ -101,17 +100,7 @@ namespace Veldrid.OpenGL.NoAllocEntryList
             _blocks.Add(_currentBlock);
         }
 
-        public void Reset()
-        {
-            FlushStagingBlocks();
-            _resourceList.Clear();
-            _totalEntries = 0;
-            _currentBlock = _blocks[0];
-            foreach (EntryStorageBlock block in _blocks)
-            {
-                block.Clear();
-            }
-        }
+        #region Disposal
 
         public void Dispose()
         {
@@ -119,34 +108,38 @@ namespace Veldrid.OpenGL.NoAllocEntryList
             _resourceList.Clear();
             _totalEntries = 0;
             _currentBlock = _blocks[0];
-            foreach (EntryStorageBlock block in _blocks)
+
+            foreach (var block in _blocks)
             {
                 block.Clear();
                 block.Free();
             }
         }
 
-        private void FlushStagingBlocks()
-        {
-            StagingMemoryPool pool = _memoryPool;
-            foreach (StagingBlock block in _stagingBlocks)
-            {
-                pool.Free(block);
-            }
+        #endregion
 
-            _stagingBlocks.Clear();
+        public void Reset()
+        {
+            FlushStagingBlocks();
+            _resourceList.Clear();
+            _totalEntries = 0;
+            _currentBlock = _blocks[0];
+            foreach (var block in _blocks) block.Clear();
         }
 
         public void* GetStorageChunk(uint size, out byte* terminatorWritePtr)
         {
             terminatorWritePtr = null;
-            if (!_currentBlock.Alloc(size, out void* ptr))
+
+            if (!_currentBlock.Alloc(size, out var ptr))
             {
                 int currentBlockIndex = _blocks.IndexOf(_currentBlock);
                 bool anyWorked = false;
+
                 for (int i = currentBlockIndex + 1; i < _blocks.Count; i++)
                 {
-                    EntryStorageBlock nextBlock = _blocks[i];
+                    var nextBlock = _blocks[i];
+
                     if (nextBlock.Alloc(size, out ptr))
                     {
                         _currentBlock = nextBlock;
@@ -163,10 +156,8 @@ namespace Veldrid.OpenGL.NoAllocEntryList
                     Debug.Assert(result);
                 }
             }
-            if (_currentBlock.RemainingSize > size)
-            {
-                terminatorWritePtr = (byte*)ptr + size;
-            }
+
+            if (_currentBlock.RemainingSize > size) terminatorWritePtr = (byte*)ptr + size;
 
             return ptr;
         }
@@ -181,21 +172,19 @@ namespace Veldrid.OpenGL.NoAllocEntryList
         {
             Debug.Assert(sizeOfT == Unsafe.SizeOf<T>());
             uint storageSize = sizeOfT + 1; // Include ID
-            void* storagePtr = GetStorageChunk(storageSize, out byte* terminatorWritePtr);
+            var storagePtr = GetStorageChunk(storageSize, out byte* terminatorWritePtr);
             Unsafe.Write(storagePtr, id);
             Unsafe.Write((byte*)storagePtr + 1, entry);
-            if (terminatorWritePtr != null)
-            {
-                *terminatorWritePtr = 0;
-            }
+            if (terminatorWritePtr != null) *terminatorWritePtr = 0;
             _totalEntries += 1;
         }
 
         public void ExecuteAll(OpenGLCommandExecutor executor)
         {
             int currentBlockIndex = 0;
-            EntryStorageBlock block = _blocks[currentBlockIndex];
+            var block = _blocks[currentBlockIndex];
             uint currentOffset = 0;
+
             for (uint i = 0; i < _totalEntries; i++)
             {
                 if (currentOffset == block.TotalSize)
@@ -206,6 +195,7 @@ namespace Veldrid.OpenGL.NoAllocEntryList
                 }
 
                 uint id = Unsafe.Read<byte>(block.BasePtr + currentOffset);
+
                 if (id == 0)
                 {
                     currentBlockIndex += 1;
@@ -217,34 +207,40 @@ namespace Veldrid.OpenGL.NoAllocEntryList
                 Debug.Assert(id != 0);
                 currentOffset += 1;
                 byte* entryBasePtr = block.BasePtr + currentOffset;
+
                 switch (id)
                 {
                     case BeginEntryID:
                         executor.Begin();
                         currentOffset += BeginEntrySize;
                         break;
+
                     case ClearColorTargetID:
-                        NoAllocClearColorTargetEntry ccte = Unsafe.ReadUnaligned<NoAllocClearColorTargetEntry>(entryBasePtr);
+                        var ccte = Unsafe.ReadUnaligned<NoAllocClearColorTargetEntry>(entryBasePtr);
                         executor.ClearColorTarget(ccte.Index, ccte.ClearColor);
                         currentOffset += ClearColorTargetEntrySize;
                         break;
+
                     case ClearDepthTargetID:
-                        NoAllocClearDepthTargetEntry cdte = Unsafe.ReadUnaligned<NoAllocClearDepthTargetEntry>(entryBasePtr);
+                        var cdte = Unsafe.ReadUnaligned<NoAllocClearDepthTargetEntry>(entryBasePtr);
                         executor.ClearDepthStencil(cdte.Depth, cdte.Stencil);
                         currentOffset += ClearDepthTargetEntrySize;
                         break;
+
                     case DrawEntryID:
-                        NoAllocDrawEntry de = Unsafe.ReadUnaligned<NoAllocDrawEntry>(entryBasePtr);
+                        var de = Unsafe.ReadUnaligned<NoAllocDrawEntry>(entryBasePtr);
                         executor.Draw(de.VertexCount, de.InstanceCount, de.VertexStart, de.InstanceStart);
                         currentOffset += DrawEntrySize;
                         break;
+
                     case DrawIndexedEntryID:
-                        NoAllocDrawIndexedEntry die = Unsafe.ReadUnaligned<NoAllocDrawIndexedEntry>(entryBasePtr);
+                        var die = Unsafe.ReadUnaligned<NoAllocDrawIndexedEntry>(entryBasePtr);
                         executor.DrawIndexed(die.IndexCount, die.InstanceCount, die.IndexStart, die.VertexOffset, die.InstanceStart);
                         currentOffset += DrawIndexedEntrySize;
                         break;
+
                     case DrawIndirectEntryID:
-                        NoAllocDrawIndirectEntry drawIndirectEntry = Unsafe.ReadUnaligned<NoAllocDrawIndirectEntry>(entryBasePtr);
+                        var drawIndirectEntry = Unsafe.ReadUnaligned<NoAllocDrawIndirectEntry>(entryBasePtr);
                         executor.DrawIndirect(
                             drawIndirectEntry.IndirectBuffer.Get(_resourceList),
                             drawIndirectEntry.Offset,
@@ -252,46 +248,55 @@ namespace Veldrid.OpenGL.NoAllocEntryList
                             drawIndirectEntry.Stride);
                         currentOffset += DrawIndirectEntrySize;
                         break;
+
                     case DrawIndexedIndirectEntryID:
-                        NoAllocDrawIndexedIndirectEntry diie = Unsafe.ReadUnaligned<NoAllocDrawIndexedIndirectEntry>(entryBasePtr);
+                        var diie = Unsafe.ReadUnaligned<NoAllocDrawIndexedIndirectEntry>(entryBasePtr);
                         executor.DrawIndexedIndirect(diie.IndirectBuffer.Get(_resourceList), diie.Offset, diie.DrawCount, diie.Stride);
                         currentOffset += DrawIndexedIndirectEntrySize;
                         break;
+
                     case DispatchEntryID:
-                        NoAllocDispatchEntry dispatchEntry = Unsafe.ReadUnaligned<NoAllocDispatchEntry>(entryBasePtr);
+                        var dispatchEntry = Unsafe.ReadUnaligned<NoAllocDispatchEntry>(entryBasePtr);
                         executor.Dispatch(dispatchEntry.GroupCountX, dispatchEntry.GroupCountY, dispatchEntry.GroupCountZ);
                         currentOffset += DispatchEntrySize;
                         break;
+
                     case DispatchIndirectEntryID:
-                        NoAllocDispatchIndirectEntry dispatchIndir = Unsafe.ReadUnaligned<NoAllocDispatchIndirectEntry>(entryBasePtr);
+                        var dispatchIndir = Unsafe.ReadUnaligned<NoAllocDispatchIndirectEntry>(entryBasePtr);
                         executor.DispatchIndirect(dispatchIndir.IndirectBuffer.Get(_resourceList), dispatchIndir.Offset);
                         currentOffset += DispatchIndirectEntrySize;
                         break;
+
                     case EndEntryID:
                         executor.End();
                         currentOffset += EndEntrySize;
                         break;
+
                     case SetFramebufferEntryID:
-                        NoAllocSetFramebufferEntry sfbe = Unsafe.ReadUnaligned<NoAllocSetFramebufferEntry>(entryBasePtr);
+                        var sfbe = Unsafe.ReadUnaligned<NoAllocSetFramebufferEntry>(entryBasePtr);
                         executor.SetFramebuffer(sfbe.Framebuffer.Get(_resourceList));
                         currentOffset += SetFramebufferEntrySize;
                         break;
+
                     case SetIndexBufferEntryID:
-                        NoAllocSetIndexBufferEntry sibe = Unsafe.ReadUnaligned<NoAllocSetIndexBufferEntry>(entryBasePtr);
+                        var sibe = Unsafe.ReadUnaligned<NoAllocSetIndexBufferEntry>(entryBasePtr);
                         executor.SetIndexBuffer(sibe.Buffer.Get(_resourceList), sibe.Format, sibe.Offset);
                         currentOffset += SetIndexBufferEntrySize;
                         break;
+
                     case SetPipelineEntryID:
-                        NoAllocSetPipelineEntry spe = Unsafe.ReadUnaligned<NoAllocSetPipelineEntry>(entryBasePtr);
+                        var spe = Unsafe.ReadUnaligned<NoAllocSetPipelineEntry>(entryBasePtr);
                         executor.SetPipeline(spe.Pipeline.Get(_resourceList));
                         currentOffset += SetPipelineEntrySize;
                         break;
+
                     case SetResourceSetEntryID:
-                        NoAllocSetResourceSetEntry srse = Unsafe.ReadUnaligned<NoAllocSetResourceSetEntry>(entryBasePtr);
-                        ResourceSet rs = srse.ResourceSet.Get(_resourceList);
+                        var srse = Unsafe.ReadUnaligned<NoAllocSetResourceSetEntry>(entryBasePtr);
+                        var rs = srse.ResourceSet.Get(_resourceList);
                         uint* dynamicOffsetsPtr = srse.DynamicOffsetCount > NoAllocSetResourceSetEntry.MaxInlineDynamicOffsets
                             ? (uint*)srse.DynamicOffsets_Block.Data
                             : srse.DynamicOffsets_Inline;
+
                         if (srse.IsGraphics)
                         {
                             executor.SetGraphicsResourceSet(
@@ -308,25 +313,30 @@ namespace Veldrid.OpenGL.NoAllocEntryList
                                 srse.DynamicOffsetCount,
                                 ref Unsafe.AsRef<uint>(dynamicOffsetsPtr));
                         }
+
                         currentOffset += SetResourceSetEntrySize;
                         break;
+
                     case SetScissorRectEntryID:
-                        NoAllocSetScissorRectEntry ssre = Unsafe.ReadUnaligned<NoAllocSetScissorRectEntry>(entryBasePtr);
+                        var ssre = Unsafe.ReadUnaligned<NoAllocSetScissorRectEntry>(entryBasePtr);
                         executor.SetScissorRect(ssre.Index, ssre.X, ssre.Y, ssre.Width, ssre.Height);
                         currentOffset += SetScissorRectEntrySize;
                         break;
+
                     case SetVertexBufferEntryID:
-                        NoAllocSetVertexBufferEntry svbe = Unsafe.ReadUnaligned<NoAllocSetVertexBufferEntry>(entryBasePtr);
+                        var svbe = Unsafe.ReadUnaligned<NoAllocSetVertexBufferEntry>(entryBasePtr);
                         executor.SetVertexBuffer(svbe.Index, svbe.Buffer.Get(_resourceList), svbe.Offset);
                         currentOffset += SetVertexBufferEntrySize;
                         break;
+
                     case SetViewportEntryID:
-                        NoAllocSetViewportEntry svpe = Unsafe.ReadUnaligned<NoAllocSetViewportEntry>(entryBasePtr);
+                        var svpe = Unsafe.ReadUnaligned<NoAllocSetViewportEntry>(entryBasePtr);
                         executor.SetViewport(svpe.Index, ref svpe.Viewport);
                         currentOffset += SetViewportEntrySize;
                         break;
+
                     case UpdateBufferEntryID:
-                        NoAllocUpdateBufferEntry ube = Unsafe.ReadUnaligned<NoAllocUpdateBufferEntry>(entryBasePtr);
+                        var ube = Unsafe.ReadUnaligned<NoAllocUpdateBufferEntry>(entryBasePtr);
                         byte* dataPtr = (byte*)ube.StagingBlock.Data;
                         executor.UpdateBuffer(
                             ube.Buffer.Get(_resourceList),
@@ -334,8 +344,9 @@ namespace Veldrid.OpenGL.NoAllocEntryList
                             (IntPtr)dataPtr, ube.StagingBlockSize);
                         currentOffset += UpdateBufferEntrySize;
                         break;
+
                     case CopyBufferEntryID:
-                        NoAllocCopyBufferEntry cbe = Unsafe.ReadUnaligned<NoAllocCopyBufferEntry>(entryBasePtr);
+                        var cbe = Unsafe.ReadUnaligned<NoAllocCopyBufferEntry>(entryBasePtr);
                         executor.CopyBuffer(
                             cbe.Source.Get(_resourceList),
                             cbe.SourceOffset,
@@ -344,8 +355,9 @@ namespace Veldrid.OpenGL.NoAllocEntryList
                             cbe.SizeInBytes);
                         currentOffset += CopyBufferEntrySize;
                         break;
+
                     case CopyTextureEntryID:
-                        NoAllocCopyTextureEntry cte = Unsafe.ReadUnaligned<NoAllocCopyTextureEntry>(entryBasePtr);
+                        var cte = Unsafe.ReadUnaligned<NoAllocCopyTextureEntry>(entryBasePtr);
                         executor.CopyTexture(
                             cte.Source.Get(_resourceList),
                             cte.SrcX, cte.SrcY, cte.SrcZ,
@@ -359,30 +371,36 @@ namespace Veldrid.OpenGL.NoAllocEntryList
                             cte.LayerCount);
                         currentOffset += CopyTextureEntrySize;
                         break;
+
                     case ResolveTextureEntryID:
-                        NoAllocResolveTextureEntry rte = Unsafe.ReadUnaligned<NoAllocResolveTextureEntry>(entryBasePtr);
+                        var rte = Unsafe.ReadUnaligned<NoAllocResolveTextureEntry>(entryBasePtr);
                         executor.ResolveTexture(rte.Source.Get(_resourceList), rte.Destination.Get(_resourceList));
                         currentOffset += ResolveTextureEntrySize;
                         break;
+
                     case GenerateMipmapsEntryID:
-                        NoAllocGenerateMipmapsEntry gme = Unsafe.ReadUnaligned<NoAllocGenerateMipmapsEntry>(entryBasePtr);
+                        var gme = Unsafe.ReadUnaligned<NoAllocGenerateMipmapsEntry>(entryBasePtr);
                         executor.GenerateMipmaps(gme.Texture.Get(_resourceList));
                         currentOffset += GenerateMipmapsEntrySize;
                         break;
+
                     case PushDebugGroupEntryID:
-                        NoAllocPushDebugGroupEntry pdge = Unsafe.ReadUnaligned<NoAllocPushDebugGroupEntry>(entryBasePtr);
+                        var pdge = Unsafe.ReadUnaligned<NoAllocPushDebugGroupEntry>(entryBasePtr);
                         executor.PushDebugGroup(pdge.Name.Get(_resourceList));
                         currentOffset += PushDebugGroupEntrySize;
                         break;
+
                     case PopDebugGroupEntryID:
                         executor.PopDebugGroup();
                         currentOffset += PopDebugGroupEntrySize;
                         break;
+
                     case InsertDebugMarkerEntryID:
-                        NoAllocInsertDebugMarkerEntry idme = Unsafe.ReadUnaligned<NoAllocInsertDebugMarkerEntry>(entryBasePtr);
+                        var idme = Unsafe.ReadUnaligned<NoAllocInsertDebugMarkerEntry>(entryBasePtr);
                         executor.InsertDebugMarker(idme.Name.Get(_resourceList));
                         currentOffset += InsertDebugMarkerEntrySize;
                         break;
+
                     default:
                         throw new InvalidOperationException("Invalid entry ID: " + id);
                 }
@@ -391,150 +409,127 @@ namespace Veldrid.OpenGL.NoAllocEntryList
 
         public void Begin()
         {
-            NoAllocBeginEntry entry = new NoAllocBeginEntry();
+            var entry = new NoAllocBeginEntry();
             AddEntry(BeginEntryID, ref entry);
         }
 
         public void ClearColorTarget(uint index, RgbaFloat clearColor)
         {
-            NoAllocClearColorTargetEntry entry = new NoAllocClearColorTargetEntry(index, clearColor);
+            var entry = new NoAllocClearColorTargetEntry(index, clearColor);
             AddEntry(ClearColorTargetID, ref entry);
         }
 
         public void ClearDepthTarget(float depth, byte stencil)
         {
-            NoAllocClearDepthTargetEntry entry = new NoAllocClearDepthTargetEntry(depth, stencil);
+            var entry = new NoAllocClearDepthTargetEntry(depth, stencil);
             AddEntry(ClearDepthTargetID, ref entry);
         }
 
         public void Draw(uint vertexCount, uint instanceCount, uint vertexStart, uint instanceStart)
         {
-            NoAllocDrawEntry entry = new NoAllocDrawEntry(vertexCount, instanceCount, vertexStart, instanceStart);
+            var entry = new NoAllocDrawEntry(vertexCount, instanceCount, vertexStart, instanceStart);
             AddEntry(DrawEntryID, ref entry);
         }
 
         public void DrawIndexed(uint indexCount, uint instanceCount, uint indexStart, int vertexOffset, uint instanceStart)
         {
-            NoAllocDrawIndexedEntry entry = new NoAllocDrawIndexedEntry(indexCount, instanceCount, indexStart, vertexOffset, instanceStart);
+            var entry = new NoAllocDrawIndexedEntry(indexCount, instanceCount, indexStart, vertexOffset, instanceStart);
             AddEntry(DrawIndexedEntryID, ref entry);
         }
 
         public void DrawIndirect(DeviceBuffer indirectBuffer, uint offset, uint drawCount, uint stride)
         {
-            NoAllocDrawIndirectEntry entry = new NoAllocDrawIndirectEntry(Track(indirectBuffer), offset, drawCount, stride);
+            var entry = new NoAllocDrawIndirectEntry(Track(indirectBuffer), offset, drawCount, stride);
             AddEntry(DrawIndirectEntryID, ref entry);
         }
 
         public void DrawIndexedIndirect(DeviceBuffer indirectBuffer, uint offset, uint drawCount, uint stride)
         {
-            NoAllocDrawIndexedIndirectEntry entry = new NoAllocDrawIndexedIndirectEntry(Track(indirectBuffer), offset, drawCount, stride);
+            var entry = new NoAllocDrawIndexedIndirectEntry(Track(indirectBuffer), offset, drawCount, stride);
             AddEntry(DrawIndexedIndirectEntryID, ref entry);
         }
 
         public void Dispatch(uint groupCountX, uint groupCountY, uint groupCountZ)
         {
-            NoAllocDispatchEntry entry = new NoAllocDispatchEntry(groupCountX, groupCountY, groupCountZ);
+            var entry = new NoAllocDispatchEntry(groupCountX, groupCountY, groupCountZ);
             AddEntry(DispatchEntryID, ref entry);
         }
 
         public void DispatchIndirect(DeviceBuffer indirectBuffer, uint offset)
         {
-            NoAllocDispatchIndirectEntry entry = new NoAllocDispatchIndirectEntry(Track(indirectBuffer), offset);
+            var entry = new NoAllocDispatchIndirectEntry(Track(indirectBuffer), offset);
             AddEntry(DispatchIndirectEntryID, ref entry);
         }
 
         public void End()
         {
-            NoAllocEndEntry entry = new NoAllocEndEntry();
+            var entry = new NoAllocEndEntry();
             AddEntry(EndEntryID, ref entry);
         }
 
         public void SetFramebuffer(Framebuffer fb)
         {
-            NoAllocSetFramebufferEntry entry = new NoAllocSetFramebufferEntry(Track(fb));
+            var entry = new NoAllocSetFramebufferEntry(Track(fb));
             AddEntry(SetFramebufferEntryID, ref entry);
         }
 
         public void SetIndexBuffer(DeviceBuffer buffer, IndexFormat format, uint offset)
         {
-            NoAllocSetIndexBufferEntry entry = new NoAllocSetIndexBufferEntry(Track(buffer), format, offset);
+            var entry = new NoAllocSetIndexBufferEntry(Track(buffer), format, offset);
             AddEntry(SetIndexBufferEntryID, ref entry);
         }
 
         public void SetPipeline(Pipeline pipeline)
         {
-            NoAllocSetPipelineEntry entry = new NoAllocSetPipelineEntry(Track(pipeline));
+            var entry = new NoAllocSetPipelineEntry(Track(pipeline));
             AddEntry(SetPipelineEntryID, ref entry);
         }
 
         public void SetGraphicsResourceSet(uint slot, ResourceSet rs, uint dynamicOffsetCount, ref uint dynamicOffsets)
         {
-            SetResourceSet(slot, rs, dynamicOffsetCount, ref dynamicOffsets, isGraphics: true);
-        }
-
-        private void SetResourceSet(uint slot, ResourceSet rs, uint dynamicOffsetCount, ref uint dynamicOffsets, bool isGraphics)
-        {
-            NoAllocSetResourceSetEntry entry;
-
-            if (dynamicOffsetCount > NoAllocSetResourceSetEntry.MaxInlineDynamicOffsets)
-            {
-                StagingBlock block = _memoryPool.GetStagingBlock(dynamicOffsetCount * sizeof(uint));
-                _stagingBlocks.Add(block);
-                for (uint i = 0; i < dynamicOffsetCount; i++)
-                {
-                    *((uint*)block.Data + i) = Unsafe.Add(ref dynamicOffsets, (int)i);
-                }
-
-                entry = new NoAllocSetResourceSetEntry(slot, Track(rs), isGraphics, block);
-            }
-            else
-            {
-                entry = new NoAllocSetResourceSetEntry(slot, Track(rs), isGraphics, dynamicOffsetCount, ref dynamicOffsets);
-            }
-
-            AddEntry(SetResourceSetEntryID, ref entry);
+            SetResourceSet(slot, rs, dynamicOffsetCount, ref dynamicOffsets, true);
         }
 
         public void SetComputeResourceSet(uint slot, ResourceSet rs, uint dynamicOffsetCount, ref uint dynamicOffsets)
         {
-            SetResourceSet(slot, rs, dynamicOffsetCount, ref dynamicOffsets, isGraphics: false);
+            SetResourceSet(slot, rs, dynamicOffsetCount, ref dynamicOffsets, false);
         }
 
         public void SetScissorRect(uint index, uint x, uint y, uint width, uint height)
         {
-            NoAllocSetScissorRectEntry entry = new NoAllocSetScissorRectEntry(index, x, y, width, height);
+            var entry = new NoAllocSetScissorRectEntry(index, x, y, width, height);
             AddEntry(SetScissorRectEntryID, ref entry);
         }
 
         public void SetVertexBuffer(uint index, DeviceBuffer buffer, uint offset)
         {
-            NoAllocSetVertexBufferEntry entry = new NoAllocSetVertexBufferEntry(index, Track(buffer), offset);
+            var entry = new NoAllocSetVertexBufferEntry(index, Track(buffer), offset);
             AddEntry(SetVertexBufferEntryID, ref entry);
         }
 
         public void SetViewport(uint index, ref Viewport viewport)
         {
-            NoAllocSetViewportEntry entry = new NoAllocSetViewportEntry(index, ref viewport);
+            var entry = new NoAllocSetViewportEntry(index, ref viewport);
             AddEntry(SetViewportEntryID, ref entry);
         }
 
         public void ResolveTexture(Texture source, Texture destination)
         {
-            NoAllocResolveTextureEntry entry = new NoAllocResolveTextureEntry(Track(source), Track(destination));
+            var entry = new NoAllocResolveTextureEntry(Track(source), Track(destination));
             AddEntry(ResolveTextureEntryID, ref entry);
         }
 
         public void UpdateBuffer(DeviceBuffer buffer, uint bufferOffsetInBytes, IntPtr source, uint sizeInBytes)
         {
-            StagingBlock stagingBlock = _memoryPool.Stage(source, sizeInBytes);
+            var stagingBlock = _memoryPool.Stage(source, sizeInBytes);
             _stagingBlocks.Add(stagingBlock);
-            NoAllocUpdateBufferEntry entry = new NoAllocUpdateBufferEntry(Track(buffer), bufferOffsetInBytes, stagingBlock, sizeInBytes);
+            var entry = new NoAllocUpdateBufferEntry(Track(buffer), bufferOffsetInBytes, stagingBlock, sizeInBytes);
             AddEntry(UpdateBufferEntryID, ref entry);
         }
 
         public void CopyBuffer(DeviceBuffer source, uint sourceOffset, DeviceBuffer destination, uint destinationOffset, uint sizeInBytes)
         {
-            NoAllocCopyBufferEntry entry = new NoAllocCopyBufferEntry(
+            var entry = new NoAllocCopyBufferEntry(
                 Track(source),
                 sourceOffset,
                 Track(destination),
@@ -555,7 +550,7 @@ namespace Veldrid.OpenGL.NoAllocEntryList
             uint width, uint height, uint depth,
             uint layerCount)
         {
-            NoAllocCopyTextureEntry entry = new NoAllocCopyTextureEntry(
+            var entry = new NoAllocCopyTextureEntry(
                 Track(source),
                 srcX, srcY, srcZ,
                 srcMipLevel,
@@ -571,26 +566,52 @@ namespace Veldrid.OpenGL.NoAllocEntryList
 
         public void GenerateMipmaps(Texture texture)
         {
-            NoAllocGenerateMipmapsEntry entry = new NoAllocGenerateMipmapsEntry(Track(texture));
+            var entry = new NoAllocGenerateMipmapsEntry(Track(texture));
             AddEntry(GenerateMipmapsEntryID, ref entry);
         }
 
         public void PushDebugGroup(string name)
         {
-            NoAllocPushDebugGroupEntry entry = new NoAllocPushDebugGroupEntry(Track(name));
+            var entry = new NoAllocPushDebugGroupEntry(Track(name));
             AddEntry(PushDebugGroupEntryID, ref entry);
         }
 
         public void PopDebugGroup()
         {
-            NoAllocPopDebugGroupEntry entry = new NoAllocPopDebugGroupEntry();
+            var entry = new NoAllocPopDebugGroupEntry();
             AddEntry(PopDebugGroupEntryID, ref entry);
         }
 
         public void InsertDebugMarker(string name)
         {
-            NoAllocInsertDebugMarkerEntry entry = new NoAllocInsertDebugMarkerEntry(Track(name));
+            var entry = new NoAllocInsertDebugMarkerEntry(Track(name));
             AddEntry(InsertDebugMarkerEntryID, ref entry);
+        }
+
+        private void FlushStagingBlocks()
+        {
+            var pool = _memoryPool;
+            foreach (var block in _stagingBlocks) pool.Free(block);
+
+            _stagingBlocks.Clear();
+        }
+
+        private void SetResourceSet(uint slot, ResourceSet rs, uint dynamicOffsetCount, ref uint dynamicOffsets, bool isGraphics)
+        {
+            NoAllocSetResourceSetEntry entry;
+
+            if (dynamicOffsetCount > NoAllocSetResourceSetEntry.MaxInlineDynamicOffsets)
+            {
+                var block = _memoryPool.GetStagingBlock(dynamicOffsetCount * sizeof(uint));
+                _stagingBlocks.Add(block);
+                for (uint i = 0; i < dynamicOffsetCount; i++) *((uint*)block.Data + i) = Unsafe.Add(ref dynamicOffsets, (int)i);
+
+                entry = new NoAllocSetResourceSetEntry(slot, Track(rs), isGraphics, block);
+            }
+            else
+                entry = new NoAllocSetResourceSetEntry(slot, Track(rs), isGraphics, dynamicOffsetCount, ref dynamicOffsets);
+
+            AddEntry(SetResourceSetEntryID, ref entry);
         }
 
         private Tracked<T> Track<T>(T item) where T : class
@@ -617,12 +638,10 @@ namespace Veldrid.OpenGL.NoAllocEntryList
                     ptr = null;
                     return false;
                 }
-                else
-                {
-                    ptr = (BasePtr + _unusedStart);
-                    _unusedStart += size;
-                    return true;
-                }
+
+                ptr = BasePtr + _unusedStart;
+                _unusedStart += size;
+                return true;
             }
 
             private EntryStorageBlock(int storageBlockSize)
@@ -657,14 +676,17 @@ namespace Veldrid.OpenGL.NoAllocEntryList
     }
 
     /// <summary>
-    /// A handle for an object stored in some List.
+    ///     A handle for an object stored in some List.
     /// </summary>
     /// <typeparam name="T">The type of object to track.</typeparam>
     internal struct Tracked<T> where T : class
     {
         private readonly int _index;
 
-        public T Get(List<object> list) => (T)list[_index];
+        public T Get(List<object> list)
+        {
+            return (T)list[_index];
+        }
 
         public Tracked(List<object> list, T item)
         {

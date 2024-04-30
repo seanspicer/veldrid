@@ -5,6 +5,17 @@ namespace Veldrid.Vk
 {
     internal abstract class VkFramebufferBase : Framebuffer
     {
+        public ResourceRefCount RefCount { get; }
+
+        public abstract uint RenderableWidth { get; }
+        public abstract uint RenderableHeight { get; }
+
+        public abstract Vulkan.VkFramebuffer CurrentFramebuffer { get; }
+        public abstract VkRenderPass RenderPassNoClear_Init { get; }
+        public abstract VkRenderPass RenderPassNoClear_Load { get; }
+        public abstract VkRenderPass RenderPassClear { get; }
+        public abstract uint AttachmentCount { get; }
+
         public VkFramebufferBase(
             FramebufferAttachmentDescription? depthTexture,
             IReadOnlyList<FramebufferAttachmentDescription> colorTextures)
@@ -18,24 +29,18 @@ namespace Veldrid.Vk
             RefCount = new ResourceRefCount(DisposeCore);
         }
 
-        public ResourceRefCount RefCount { get; }
-
-        public abstract uint RenderableWidth { get; }
-        public abstract uint RenderableHeight { get; }
+        #region Disposal
 
         public override void Dispose()
         {
             RefCount.Decrement();
         }
 
-        protected abstract void DisposeCore();
+        #endregion
 
-        public abstract Vulkan.VkFramebuffer CurrentFramebuffer { get; }
-        public abstract VkRenderPass RenderPassNoClear_Init { get; }
-        public abstract VkRenderPass RenderPassNoClear_Load { get; }
-        public abstract VkRenderPass RenderPassClear { get; }
-        public abstract uint AttachmentCount { get; }
         public abstract void TransitionToIntermediateLayout(VkCommandBuffer cb);
         public abstract void TransitionToFinalLayout(VkCommandBuffer cb);
+
+        protected abstract void DisposeCore();
     }
 }

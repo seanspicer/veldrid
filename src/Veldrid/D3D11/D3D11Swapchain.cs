@@ -1,72 +1,18 @@
-﻿using Vortice;
-using Vortice.Direct3D11;
-using Vortice.DXGI;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Threading;
 using Microsoft.Win32.SafeHandles;
 using SharpGen.Runtime;
+using Vortice;
+using Vortice.Direct3D11;
+using Vortice.DXGI;
 
 namespace Veldrid.D3D11
 {
     internal class D3D11Swapchain : Swapchain
     {
-        private readonly D3D11GraphicsDevice _gd;
-        private readonly SwapchainDescription _description;
-        private readonly PixelFormat? _depthFormat;
-        private IDXGISwapChain _dxgiSwapChain;
-        private bool _vsync;
-        private int _syncInterval;
-        private D3D11Framebuffer _framebuffer;
-        private D3D11Texture _depthTexture;
-        private float _pixelScale = 1f;
-        private SwapChainFlags _flags;
-        private bool _disposed;
-        private FrameLatencyWaitHandle _frameLatencyWaitHandle;
-
-        private readonly object _referencedCLsLock = new object();
-        private HashSet<D3D11CommandList> _referencedCLs = new HashSet<D3D11CommandList>();
-
         public override Framebuffer Framebuffer => _framebuffer;
-
-        public override string Name
-        {
-            get
-            {
-                unsafe
-                {
-                    byte* pname = stackalloc byte[1024];
-                    int size = 1024 - 1;
-                    _dxgiSwapChain.GetPrivateData(CommonGuid.DebugObjectName, ref size, new IntPtr(pname));
-                    pname[size] = 0;
-                    return Marshal.PtrToStringAnsi(new IntPtr(pname));
-                }
-            }
-            set
-            {
-                if (string.IsNullOrEmpty(value))
-                {
-                    _dxgiSwapChain.SetPrivateData(CommonGuid.DebugObjectName, 0, IntPtr.Zero);
-                }
-                else
-                {
-                    var namePtr = Marshal.StringToHGlobalAnsi(value);
-                    _dxgiSwapChain.SetPrivateData(CommonGuid.DebugObjectName, value.Length, namePtr);
-                    Marshal.FreeHGlobal(namePtr);
-                }
-            }
-        }
-
-        public override bool SyncToVerticalBlank
-        {
-            get => _vsync;
-            set
-            {
-                _vsync = value;
-                _syncInterval = D3D11Util.GetSyncInterval(value);
-            }
-        }
 
         public PresentFlags PresentFlags
         {
@@ -79,7 +25,47 @@ namespace Veldrid.D3D11
             }
         }
 
-        private bool _allowTearing;
+        public IDXGISwapChain DxgiSwapChain { get; private set; }
+
+        public int SyncInterval { get; private set; }
+
+        public override bool IsDisposed => _disposed;
+
+        public override string Name
+        {
+            get
+            {
+                unsafe
+                {
+                    byte* pname = stackalloc byte[1024];
+                    int size = 1024 - 1;
+                    DxgiSwapChain.GetPrivateData(CommonGuid.DebugObjectName, ref size, new IntPtr(pname));
+                    pname[size] = 0;
+                    return Marshal.PtrToStringAnsi(new IntPtr(pname));
+                }
+            }
+            set
+            {
+                if (string.IsNullOrEmpty(value))
+                    DxgiSwapChain.SetPrivateData(CommonGuid.DebugObjectName, 0, IntPtr.Zero);
+                else
+                {
+                    IntPtr namePtr = Marshal.StringToHGlobalAnsi(value);
+                    DxgiSwapChain.SetPrivateData(CommonGuid.DebugObjectName, value.Length, namePtr);
+                    Marshal.FreeHGlobal(namePtr);
+                }
+            }
+        }
+
+        public override bool SyncToVerticalBlank
+        {
+            get => _vsync;
+            set
+            {
+                _vsync = value;
+                SyncInterval = D3D11Util.GetSyncInterval(value);
+            }
+        }
 
         public bool AllowTearing
         {
@@ -98,16 +84,30 @@ namespace Veldrid.D3D11
             }
         }
 
-        private uint _width;
-        private uint _height;
+        private readonly D3D11GraphicsDevice _gd;
+        private readonly SwapchainDescription _description;
+        private readonly PixelFormat? _depthFormat;
+
+        private readonly object _referencedCLsLock = new object();
 
         private readonly bool _canTear;
         private readonly bool _canCreateFrameLatencyWaitableObject;
         private readonly Format _colorFormat;
+        private bool _vsync;
+        private D3D11Framebuffer _framebuffer;
+        private D3D11Texture _depthTexture;
+        private float _pixelScale = 1f;
+        private SwapChainFlags _flags;
+        private bool _disposed;
+        private FrameLatencyWaitHandle _frameLatencyWaitHandle;
+        private readonly HashSet<D3D11CommandList> _referencedCLs = new HashSet<D3D11CommandList>();
 
-        public IDXGISwapChain DxgiSwapChain => _dxgiSwapChain;
+        private bool _allowTearing;
 
-        public int SyncInterval => _syncInterval;
+        private uint _width;
+        private uint _height;
+
+        private ID3D11Texture2D backBufferTexture;
 
         public D3D11Swapchain(D3D11GraphicsDevice gd, ref SwapchainDescription description)
         {
@@ -122,12 +122,12 @@ namespace Veldrid.D3D11
 
             // previously we had an extension method ("GetParentOrNull") which makes this read a lot better,
             // but it resulted in AOT compilation crashes on iOS, therefore we can only do this inline.
-            using (IDXGIFactory5 dxgiFactory5 = (_gd.Adapter.GetParent(out IDXGIFactory5 f).Success ? f : null))
+            using (var dxgiFactory5 = _gd.Adapter.GetParent(out IDXGIFactory5 f).Success ? f : null)
                 _canTear = dxgiFactory5?.PresentAllowTearing == true;
 
             // previously we had an extension method ("GetParentOrNull") which makes this read a lot better,
             // but it resulted in AOT compilation crashes on iOS, therefore we can only do this inline.
-            using (IDXGIFactory3 dxgiFactory3 = (_gd.Adapter.GetParent(out IDXGIFactory3 f).Success ? f : null))
+            using (var dxgiFactory3 = _gd.Adapter.GetParent(out IDXGIFactory3 f).Success ? f : null)
                 _canCreateFrameLatencyWaitableObject = dxgiFactory3 != null;
 
             _width = description.Width;
@@ -136,11 +136,94 @@ namespace Veldrid.D3D11
             recreateSwapchain();
         }
 
+        #region Disposal
+
+        public override void Dispose()
+        {
+            if (!_disposed)
+            {
+                _depthTexture?.Dispose();
+                _framebuffer.Dispose();
+                DxgiSwapChain.Dispose();
+
+                _disposed = true;
+            }
+        }
+
+        #endregion
+
+        public override void Resize(uint width, uint height)
+        {
+            _width = width;
+            _height = height;
+
+            lock (_referencedCLsLock)
+            {
+                foreach (var cl in _referencedCLs) cl.Reset();
+
+                _referencedCLs.Clear();
+            }
+
+            bool resizeBuffers = false;
+
+            if (_framebuffer != null)
+            {
+                resizeBuffers = true;
+                if (_depthTexture != null) _depthTexture.Dispose();
+
+                backBufferTexture.Dispose();
+                _framebuffer.Dispose();
+            }
+
+            uint actualWidth = (uint)(width * _pixelScale);
+            uint actualHeight = (uint)(height * _pixelScale);
+            if (resizeBuffers) DxgiSwapChain.ResizeBuffers(2, (int)actualWidth, (int)actualHeight, _colorFormat, _flags).CheckError();
+
+            // Get the backbuffer from the swapchain
+            backBufferTexture = DxgiSwapChain.GetBuffer<ID3D11Texture2D>(0);
+
+            if (_depthFormat != null)
+            {
+                var depthDesc = new TextureDescription(
+                    actualWidth, actualHeight, 1, 1, 1,
+                    _depthFormat.Value,
+                    TextureUsage.DepthStencil,
+                    TextureType.Texture2D);
+                _depthTexture = new D3D11Texture(_gd.Device, ref depthDesc);
+            }
+
+            var backBufferVdTexture = new D3D11Texture(
+                backBufferTexture,
+                TextureType.Texture2D,
+                D3D11Formats.ToVdFormat(_colorFormat));
+
+            var desc = new FramebufferDescription(_depthTexture, backBufferVdTexture);
+            _framebuffer = new D3D11Framebuffer(_gd.Device, ref desc)
+            {
+                Swapchain = this
+            };
+        }
+
+        public void WaitForNextFrameReady()
+        {
+            _frameLatencyWaitHandle?.WaitOne(1000);
+        }
+
+        public void AddCommandListReference(D3D11CommandList cl)
+        {
+            lock (_referencedCLsLock) _referencedCLs.Add(cl);
+        }
+
+        public void RemoveCommandListReference(D3D11CommandList cl)
+        {
+            lock (_referencedCLsLock) _referencedCLs.Remove(cl);
+        }
+
         private void recreateSwapchain()
         {
-            _dxgiSwapChain?.Release();
-            _dxgiSwapChain?.Dispose();
-            _dxgiSwapChain = null;
+            DxgiSwapChain?.Release();
+            DxgiSwapChain?.Dispose();
+            DxgiSwapChain = null;
 
             _framebuffer?.Dispose();
             _framebuffer = null;
@@ -156,10 +239,10 @@ namespace Veldrid.D3D11
 
             // previously we had an extension method ("GetParentOrNull") which makes this read a lot better,
             // but it resulted in AOT compilation crashes on iOS, therefore we can only do this inline.
-            using (IDXGIFactory4 dxgiFactory4 = (_gd.Adapter.GetParent(out IDXGIFactory4 f).Success ? f : null))
+            using (var dxgiFactory4 = _gd.Adapter.GetParent(out IDXGIFactory4 f).Success ? f : null)
                 canUseFlipDiscard = dxgiFactory4 != null;
 
-            SwapEffect swapEffect = canUseFlipDiscard ? SwapEffect.FlipDiscard : SwapEffect.Discard;
+            var swapEffect = canUseFlipDiscard ? SwapEffect.FlipDiscard : SwapEffect.Discard;
 
             _flags = SwapChainFlags.None;
 
@@ -170,7 +253,7 @@ namespace Veldrid.D3D11
 
             if (_description.Source is Win32SwapchainSource win32Source)
             {
-                SwapChainDescription dxgiSCDesc = new SwapChainDescription
+                var dxgiSCDesc = new SwapChainDescription
                 {
                     BufferCount = 2,
                     Windowed = true,
@@ -183,9 +266,9 @@ namespace Veldrid.D3D11
                     Flags = _flags
                 };
 
-                using (IDXGIFactory dxgiFactory = _gd.Adapter.GetParent<IDXGIFactory>())
+                using (var dxgiFactory = _gd.Adapter.GetParent<IDXGIFactory>())
                 {
-                    _dxgiSwapChain = dxgiFactory.CreateSwapChain(_gd.Device, dxgiSCDesc);
+                    DxgiSwapChain = dxgiFactory.CreateSwapChain(_gd.Device, dxgiSCDesc);
                     dxgiFactory.MakeWindowAssociation(win32Source.Hwnd, WindowAssociationFlags.IgnoreAltEnter);
                 }
             }
@@ -194,7 +277,7 @@ namespace Veldrid.D3D11
                 _pixelScale = uwpSource.LogicalDpi / 96.0f;
 
                 // Properties of the swap chain
-                SwapChainDescription1 swapChainDescription = new SwapChainDescription1()
+                var swapChainDescription = new SwapChainDescription1
                 {
                     AlphaMode = AlphaMode.Ignore,
                     BufferCount = 2,
@@ -208,35 +291,28 @@ namespace Veldrid.D3D11
                 };
 
                 // Get the Vortice.DXGI factory automatically created when initializing the Direct3D device.
-                using (IDXGIFactory2 dxgiFactory = _gd.Adapter.GetParent<IDXGIFactory2>())
+                using (var dxgiFactory = _gd.Adapter.GetParent<IDXGIFactory2>())
                 {
                     // Create the swap chain and get the highest version available.
-                    using (IDXGISwapChain1 swapChain1 = dxgiFactory.CreateSwapChainForComposition(_gd.Device, swapChainDescription))
-                    {
-                        _dxgiSwapChain = swapChain1.QueryInterface<IDXGISwapChain2>();
-                    }
+                    using (var swapChain1 = dxgiFactory.CreateSwapChainForComposition(_gd.Device, swapChainDescription)) DxgiSwapChain = swapChain1.QueryInterface<IDXGISwapChain2>();
                 }
 
-                ComObject co = new ComObject(uwpSource.SwapChainPanelNative);
+                var co = new ComObject(uwpSource.SwapChainPanelNative);
 
-                ISwapChainPanelNative swapchainPanelNative = co.QueryInterfaceOrNull<ISwapChainPanelNative>();
+                var swapchainPanelNative = co.QueryInterfaceOrNull<ISwapChainPanelNative>();
+
                 if (swapchainPanelNative != null)
-                {
-                    swapchainPanelNative.SetSwapChain(_dxgiSwapChain);
-                }
+                    swapchainPanelNative.SetSwapChain(DxgiSwapChain);
                 else
                 {
-                    ISwapChainBackgroundPanelNative bgPanelNative = co.QueryInterfaceOrNull<ISwapChainBackgroundPanelNative>();
-                    if (bgPanelNative != null)
-                    {
-                        bgPanelNative.SetSwapChain(_dxgiSwapChain);
-                    }
+                    var bgPanelNative = co.QueryInterfaceOrNull<ISwapChainBackgroundPanelNative>();
+                    if (bgPanelNative != null) bgPanelNative.SetSwapChain(DxgiSwapChain);
                 }
             }
 
             if ((_flags & SwapChainFlags.FrameLatencyWaitableObject) > 0)
             {
-                using (IDXGISwapChain2 swapChain2 = _dxgiSwapChain.QueryInterfaceOrNull<IDXGISwapChain2>())
+                using (var swapChain2 = DxgiSwapChain.QueryInterfaceOrNull<IDXGISwapChain2>())
                 {
                     if (swapChain2 != null)
                     {
@@ -247,104 +323,6 @@ namespace Veldrid.D3D11
             }
 
             Resize(_width, _height);
-        }
-
-        private ID3D11Texture2D backBufferTexture;
-
-        public override void Resize(uint width, uint height)
-        {
-            _width = width;
-            _height = height;
-
-            lock (_referencedCLsLock)
-            {
-                foreach (D3D11CommandList cl in _referencedCLs)
-                {
-                    cl.Reset();
-                }
-
-                _referencedCLs.Clear();
-            }
-
-            bool resizeBuffers = false;
-
-            if (_framebuffer != null)
-            {
-                resizeBuffers = true;
-                if (_depthTexture != null)
-                {
-                    _depthTexture.Dispose();
-                }
-
-                backBufferTexture.Dispose();
-                _framebuffer.Dispose();
-            }
-
-            uint actualWidth = (uint)(width * _pixelScale);
-            uint actualHeight = (uint)(height * _pixelScale);
-            if (resizeBuffers)
-            {
-                _dxgiSwapChain.ResizeBuffers(2, (int)actualWidth, (int)actualHeight, _colorFormat, _flags).CheckError();
-            }
-
-            // Get the backbuffer from the swapchain
-            backBufferTexture = _dxgiSwapChain.GetBuffer<ID3D11Texture2D>(0);
-
-            if (_depthFormat != null)
-            {
-                TextureDescription depthDesc = new TextureDescription(
-                    actualWidth, actualHeight, 1, 1, 1,
-                    _depthFormat.Value,
-                    TextureUsage.DepthStencil,
-                    TextureType.Texture2D);
-                _depthTexture = new D3D11Texture(_gd.Device, ref depthDesc);
-            }
-
-            D3D11Texture backBufferVdTexture = new D3D11Texture(
-                backBufferTexture,
-                TextureType.Texture2D,
-                D3D11Formats.ToVdFormat(_colorFormat));
-
-            FramebufferDescription desc = new FramebufferDescription(_depthTexture, backBufferVdTexture);
-            _framebuffer = new D3D11Framebuffer(_gd.Device, ref desc)
-            {
-                Swapchain = this
-            };
-        }
-
-        public void WaitForNextFrameReady()
-        {
-            _frameLatencyWaitHandle?.WaitOne(1000);
-        }
-
-        public void AddCommandListReference(D3D11CommandList cl)
-        {
-            lock (_referencedCLsLock)
-            {
-                _referencedCLs.Add(cl);
-            }
-        }
-
-        public void RemoveCommandListReference(D3D11CommandList cl)
-        {
-            lock (_referencedCLsLock)
-            {
-                _referencedCLs.Remove(cl);
-            }
-        }
-
-        public override bool IsDisposed => _disposed;
-
-        public override void Dispose()
-        {
-            if (!_disposed)
-            {
-                _depthTexture?.Dispose();
-                _framebuffer.Dispose();
-                _dxgiSwapChain.Dispose();
-
-                _disposed = true;
-            }
         }
 
         private class FrameLatencyWaitHandle : WaitHandle

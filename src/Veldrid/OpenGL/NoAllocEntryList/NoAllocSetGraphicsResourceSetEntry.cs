@@ -24,10 +24,7 @@ namespace Veldrid.OpenGL.NoAllocEntryList
             ResourceSet = rs;
             IsGraphics = isGraphics;
             DynamicOffsetCount = dynamicOffsetCount;
-            for (int i = 0; i < dynamicOffsetCount; i++)
-            {
-                DynamicOffsets_Inline[i] = Unsafe.Add(ref dynamicOffsets, i);
-            }
+            for (int i = 0; i < dynamicOffsetCount; i++) DynamicOffsets_Inline[i] = Unsafe.Add(ref dynamicOffsets, i);
 
             DynamicOffsets_Block = default;
         }
@@ -41,7 +38,7 @@ namespace Veldrid.OpenGL.NoAllocEntryList
             Slot = slot;
             ResourceSet = rs;
             IsGraphics = isGraphics;
-            DynamicOffsetCount = (uint)dynamicOffsets.SizeInBytes / sizeof(uint);
+            DynamicOffsetCount = dynamicOffsets.SizeInBytes / sizeof(uint);
             DynamicOffsets_Block = dynamicOffsets;
         }
     }

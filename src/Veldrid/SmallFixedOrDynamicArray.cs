@@ -12,20 +12,18 @@ namespace Veldrid
         private fixed uint FixedData[MaxFixedValues];
         public readonly uint[] Data;
 
-        public uint Get(uint i) => Count > MaxFixedValues ? Data[i] : FixedData[i];
+        public uint Get(uint i)
+        {
+            return Count > MaxFixedValues ? Data[i] : FixedData[i];
+        }
 
         public SmallFixedOrDynamicArray(uint count, ref uint data)
         {
             if (count > MaxFixedValues)
-            {
                 Data = ArrayPool<uint>.Shared.Rent((int)count);
-            }
             else
             {
-                for (int i = 0; i < count; i++)
-                {
-                    FixedData[i] = Unsafe.Add(ref data, i);
-                }
+                for (int i = 0; i < count; i++) FixedData[i] = Unsafe.Add(ref data, i);
 
                 Data = null;
             }
@@ -35,7 +33,7 @@ namespace Veldrid
 
         public void Dispose()
         {
-            if (Data != null) { ArrayPool<uint>.Shared.Return(Data); }
+            if (Data != null) ArrayPool<uint>.Shared.Return(Data);
         }
     }
 }

@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Veldrid.OpenGL.ManagedEntryList
+﻿namespace Veldrid.OpenGL.ManagedEntryList
 {
     internal class UpdateBufferEntry : OpenGLCommandEntry
     {

@@ -5,23 +5,33 @@ namespace Veldrid.Vk
 {
     internal unsafe class VkSampler : Sampler
     {
-        private readonly VkGraphicsDevice _gd;
-        private readonly Vulkan.VkSampler _sampler;
-        private bool _disposed;
-        private string _name;
-
         public Vulkan.VkSampler DeviceSampler => _sampler;
 
         public ResourceRefCount RefCount { get; }
 
         public override bool IsDisposed => _disposed;
 
+        public override string Name
+        {
+            get => _name;
+            set
+            {
+                _name = value;
+                _gd.SetResourceName(this, value);
+            }
+        }
+
+        private readonly VkGraphicsDevice _gd;
+        private readonly Vulkan.VkSampler _sampler;
+        private bool _disposed;
+        private string _name;
+
         public VkSampler(VkGraphicsDevice gd, ref SamplerDescription description)
         {
             _gd = gd;
-            VkFormats.GetFilterParams(description.Filter, out VkFilter minFilter, out VkFilter magFilter, out VkSamplerMipmapMode mipmapMode);
+            VkFormats.GetFilterParams(description.Filter, out var minFilter, out var magFilter, out var mipmapMode);
 
-            VkSamplerCreateInfo samplerCI = new VkSamplerCreateInfo
+            var samplerCI = new VkSamplerCreateInfo
             {
                 sType = VkStructureType.SamplerCreateInfo,
                 addressModeU = VkFormats.VdToVkSamplerAddressMode(description.AddressModeU),
@@ -46,20 +56,14 @@ namespace Veldrid.Vk
             RefCount = new ResourceRefCount(DisposeCore);
         }
 
-        public override string Name
-        {
-            get => _name;
-            set
-            {
-                _name = value;
-                _gd.SetResourceName(this, value);
-            }
-        }
+        #region Disposal
 
         public override void Dispose()
         {
             RefCount.Decrement();
         }
+
+        #endregion
 
         private void DisposeCore()
         {

@@ -1,30 +1,28 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Veldrid.OpenGL
 {
     internal class OpenGLSwapchainFramebuffer : Framebuffer
     {
-        private readonly PixelFormat? _depthFormat;
-        private bool _disposed;
-
         public override uint Width => _colorTexture.Width;
         public override uint Height => _colorTexture.Height;
 
         public override OutputDescription OutputDescription { get; }
-        public override string Name { get; set; }
         public override bool IsDisposed => _disposed;
+
+        public override IReadOnlyList<FramebufferAttachment> ColorTargets => _colorTargets;
+        public override FramebufferAttachment? DepthTarget => _depthTarget;
+
+        public bool DisableSrgbConversion { get; }
+        public override string Name { get; set; }
+        private readonly PixelFormat? _depthFormat;
 
         private readonly OpenGLPlaceholderTexture _colorTexture;
         private readonly OpenGLPlaceholderTexture _depthTexture;
 
         private readonly FramebufferAttachment[] _colorTargets;
         private readonly FramebufferAttachment? _depthTarget;
-
-        public override IReadOnlyList<FramebufferAttachment> ColorTargets => _colorTargets;
-        public override FramebufferAttachment? DepthTarget => _depthTarget;
-
-        public bool DisableSrgbConversion { get; }
+        private bool _disposed;
 
         internal OpenGLSwapchainFramebuffer(
             uint width, uint height,
@@ -34,7 +32,7 @@ namespace Veldrid.OpenGL
         {
             _depthFormat = depthFormat;
             // This is wrong, but it's not really used.
-            OutputAttachmentDescription? depthDesc = _depthFormat != null
+            var depthDesc = _depthFormat != null
                 ? new OutputAttachmentDescription(_depthFormat.Value)
                 : (OutputAttachmentDescription?)null;
             OutputDescription = new OutputDescription(
@@ -65,15 +63,19 @@ namespace Veldrid.OpenGL
             DisableSrgbConversion = disableSrgbConversion;
         }
 
-        public void Resize(uint width, uint height)
-        {
-            _colorTexture.Resize(width, height);
-            _depthTexture?.Resize(width, height);
-        }
+        #region Disposal
 
         public override void Dispose()
         {
             _disposed = true;
+        }
+
+        #endregion
+
+        public void Resize(uint width, uint height)
+        {
+            _colorTexture.Resize(width, height);
+            _depthTexture?.Resize(width, height);
         }
     }
 }

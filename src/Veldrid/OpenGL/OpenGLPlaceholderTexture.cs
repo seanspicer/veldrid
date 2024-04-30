@@ -2,6 +2,27 @@
 {
     internal class OpenGLPlaceholderTexture : Texture
     {
+        public override PixelFormat Format { get; }
+
+        public override uint Width => _width;
+
+        public override uint Height => _height;
+
+        public override uint Depth => 1;
+
+        public override uint MipLevels => 1;
+
+        public override uint ArrayLayers => 1;
+
+        public override TextureUsage Usage { get; }
+
+        public override TextureSampleCount SampleCount { get; }
+
+        public override TextureType Type => TextureType.Texture2D;
+
+        public override bool IsDisposed => _disposed;
+
+        public override string Name { get; set; }
         private uint _height;
         private uint _width;
         private bool _disposed;
@@ -25,28 +46,6 @@
             _width = width;
             _height = height;
         }
-
-        public override PixelFormat Format { get; }
-
-        public override uint Width => _width;
-
-        public override uint Height => _height;
-
-        public override uint Depth => 1;
-
-        public override uint MipLevels => 1;
-
-        public override uint ArrayLayers => 1;
-
-        public override TextureUsage Usage { get; }
-
-        public override TextureSampleCount SampleCount { get; }
-
-        public override TextureType Type => TextureType.Texture2D;
-
-        public override string Name { get; set; }
-
-        public override bool IsDisposed => _disposed;
 
         private protected override void DisposeCore()
         {

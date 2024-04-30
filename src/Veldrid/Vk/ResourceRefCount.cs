@@ -18,10 +18,7 @@ namespace Veldrid.Vk
         {
             int ret = Interlocked.Increment(ref _refCount);
 #if VALIDATE_USAGE
-            if (ret == 0)
-            {
-                throw new VeldridException("An attempt was made to reference a disposed resource.");
-            }
+            if (ret == 0) throw new VeldridException("An attempt was made to reference a disposed resource.");
 #endif
             return ret;
         }
@@ -29,10 +26,7 @@ namespace Veldrid.Vk
         public int Decrement()
         {
             int ret = Interlocked.Decrement(ref _refCount);
-            if (ret == 0)
-            {
-                _disposeAction();
-            }
+            if (ret == 0) _disposeAction();
 
             return ret;
         }

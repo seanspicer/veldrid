@@ -4,17 +4,16 @@ namespace Veldrid.Vk
 {
     internal class VkResourceFactory : ResourceFactory
     {
+        public override GraphicsBackend BackendType => GraphicsBackend.Vulkan;
         private readonly VkGraphicsDevice _gd;
         private readonly VkDevice _device;
 
         public VkResourceFactory(VkGraphicsDevice vkGraphicsDevice)
-            : base (vkGraphicsDevice.Features)
+            : base(vkGraphicsDevice.Features)
         {
             _gd = vkGraphicsDevice;
             _device = vkGraphicsDevice.Device;
         }
-
-        public override GraphicsBackend BackendType => GraphicsBackend.Vulkan;
 
         public override CommandList CreateCommandList(ref CommandListDescription description)
         {
@@ -24,11 +23,6 @@ namespace Veldrid.Vk
         public override Framebuffer CreateFramebuffer(ref FramebufferDescription description)
         {
             return new VkFramebuffer(_gd, ref description, false);
-        }
-
-        protected override Pipeline CreateGraphicsPipelineCore(ref GraphicsPipelineDescription description)
-        {
-            return new VkPipeline(_gd, ref description);
         }
 
         public override Pipeline CreateComputePipeline(ref ComputePipelineDescription description)
@@ -45,6 +39,21 @@ namespace Veldrid.Vk
         {
             ValidationHelpers.ValidateResourceSet(_gd, ref description);
             return new VkResourceSet(_gd, ref description);
+        }
+
+        public override Fence CreateFence(bool signaled)
+        {
+            return new VkFence(_gd, signaled);
+        }
+
+        public override Swapchain CreateSwapchain(ref SwapchainDescription description)
+        {
+            return new VkSwapchain(_gd, ref description);
+        }
+
+        protected override Pipeline CreateGraphicsPipelineCore(ref GraphicsPipelineDescription description)
+        {
+            return new VkPipeline(_gd, ref description);
         }
 
         protected override Sampler CreateSamplerCore(ref SamplerDescription description)
@@ -82,16 +91,6 @@ namespace Veldrid.Vk
         protected override DeviceBuffer CreateBufferCore(ref BufferDescription description)
         {
             return new VkBuffer(_gd, description.SizeInBytes, description.Usage);
-        }
-
-        public override Fence CreateFence(bool signaled)
-        {
-            return new VkFence(_gd, signaled);
-        }
-
-        public override Swapchain CreateSwapchain(ref SwapchainDescription description)
-        {
-            return new VkSwapchain(_gd, ref description);
         }
     }
 }

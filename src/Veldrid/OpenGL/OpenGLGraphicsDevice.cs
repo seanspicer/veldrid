@@ -1,71 +1,23 @@
-﻿using static Veldrid.OpenGLBinding.OpenGLNative;
-using static Veldrid.OpenGL.OpenGLUtil;
-using System;
-using Veldrid.OpenGLBinding;
+﻿using System;
 using System.Collections.Concurrent;
-using System.Runtime.InteropServices;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Threading;
+using Veldrid.Android;
+using Veldrid.MetalBindings;
 using Veldrid.OpenGL.EAGL;
+using Veldrid.OpenGLBinding;
+using static Veldrid.OpenGLBinding.OpenGLNative;
+using static Veldrid.OpenGL.OpenGLUtil;
 using static Veldrid.OpenGL.EGL.EGLNative;
 using NativeLibrary = NativeLibraryLoader.NativeLibrary;
-using System.Runtime.CompilerServices;
 
 namespace Veldrid.OpenGL
 {
     internal unsafe class OpenGLGraphicsDevice : GraphicsDevice
     {
-        private ResourceFactory _resourceFactory;
-        private string _deviceName;
-        private string _vendorName;
-        private string _version;
-        private string _shadingLanguageVersion;
-        private GraphicsApiVersion _apiVersion;
-        private GraphicsBackend _backendType;
-        private GraphicsDeviceFeatures _features;
-        private uint _vao;
-        private readonly ConcurrentQueue<OpenGLDeferredResource> _resourcesToDispose
-            = new ConcurrentQueue<OpenGLDeferredResource>();
-        private IntPtr _glContext;
-        private Action<IntPtr> _makeCurrent;
-        private Func<IntPtr> _getCurrentContext;
-        private Action<IntPtr> _deleteContext;
-        private Action _swapBuffers;
-        private Action<bool> _setSyncToVBlank;
-        private OpenGLSwapchainFramebuffer _swapchainFramebuffer;
-        private OpenGLTextureSamplerManager _textureSamplerManager;
-        private OpenGLCommandExecutor _commandExecutor;
-        private DebugProc _debugMessageCallback;
-        private OpenGLExtensions _extensions;
-        private bool _isDepthRangeZeroToOne;
-        private BackendInfoOpenGL _openglInfo;
-
-        private TextureSampleCount _maxColorTextureSamples;
-        private uint _maxTextureSize;
-        private uint _maxTexDepth;
-        private uint _maxTexArrayLayers;
-        private uint _minUboOffsetAlignment;
-        private uint _minSsboOffsetAlignment;
-
-        private readonly StagingMemoryPool _stagingMemoryPool = new StagingMemoryPool();
-        private BlockingCollection<ExecutionThreadWorkItem> _workItems;
-        private ExecutionThread _executionThread;
-        private readonly object _commandListDisposalLock = new object();
-        private readonly Dictionary<OpenGLCommandList, int> _submittedCommandListCounts
-            = new Dictionary<OpenGLCommandList, int>();
-        private readonly HashSet<OpenGLCommandList> _commandListsToDispose = new HashSet<OpenGLCommandList>();
-
-        private readonly object _mappedResourceLock = new object();
-        private readonly Dictionary<MappedResourceCacheKey, MappedResourceInfoWithStaging> _mappedResources
-            = new Dictionary<MappedResourceCacheKey, MappedResourceInfoWithStaging>();
-
-        private readonly object _resetEventsLock = new object();
-        private readonly List<ManualResetEvent[]> _resetEvents = new List<ManualResetEvent[]>();
-        private Swapchain _mainSwapchain;
-
-        private bool _syncToVBlank;
-
         public override string DeviceName => _deviceName;
 
         public override string VendorName => _vendorName;
@@ -82,9 +34,19 @@ namespace Veldrid.OpenGL
 
         public override ResourceFactory ResourceFactory => _resourceFactory;
 
-        public OpenGLExtensions Extensions => _extensions;
+        public OpenGLExtensions Extensions { get; private set; }
 
         public override Swapchain MainSwapchain => _mainSwapchain;
+
+        public string Version { get; private set; }
+
+        public string ShadingLanguageVersion { get; private set; }
+
+        public OpenGLTextureSamplerManager TextureSamplerManager { get; private set; }
+
+        public override GraphicsDeviceFeatures Features => _features;
+
+        public StagingMemoryPool StagingMemoryPool { get; } = new StagingMemoryPool();
 
         public override bool SyncToVerticalBlank
         {
@@ -99,15 +61,55 @@ namespace Veldrid.OpenGL
             }
         }
 
-        public string Version => _version;
+        private readonly ConcurrentQueue<OpenGLDeferredResource> _resourcesToDispose
+            = new ConcurrentQueue<OpenGLDeferredResource>();
 
-        public string ShadingLanguageVersion => _shadingLanguageVersion;
+        private readonly object _commandListDisposalLock = new object();
 
-        public OpenGLTextureSamplerManager TextureSamplerManager => _textureSamplerManager;
+        private readonly Dictionary<OpenGLCommandList, int> _submittedCommandListCounts
+            = new Dictionary<OpenGLCommandList, int>();
 
-        public override GraphicsDeviceFeatures Features => _features;
+        private readonly HashSet<OpenGLCommandList> _commandListsToDispose = new HashSet<OpenGLCommandList>();
 
-        public StagingMemoryPool StagingMemoryPool => _stagingMemoryPool;
+        private readonly object _mappedResourceLock = new object();
+
+        private readonly Dictionary<MappedResourceCacheKey, MappedResourceInfoWithStaging> _mappedResources
+            = new Dictionary<MappedResourceCacheKey, MappedResourceInfoWithStaging>();
+
+        private readonly object _resetEventsLock = new object();
+        private readonly List<ManualResetEvent[]> _resetEvents = new List<ManualResetEvent[]>();
+
+        private static readonly uint UpdateTextureArgsSize = (uint)Unsafe.SizeOf<UpdateTextureArgs>();
+        private ResourceFactory _resourceFactory;
+        private string _deviceName;
+        private string _vendorName;
+        private GraphicsApiVersion _apiVersion;
+        private GraphicsBackend _backendType;
+        private GraphicsDeviceFeatures _features;
+        private uint _vao;
+        private IntPtr _glContext;
+        private Action<IntPtr> _makeCurrent;
+        private Func<IntPtr> _getCurrentContext;
+        private Action<IntPtr> _deleteContext;
+        private Action _swapBuffers;
+        private Action<bool> _setSyncToVBlank;
+        private OpenGLSwapchainFramebuffer _swapchainFramebuffer;
+        private OpenGLCommandExecutor _commandExecutor;
+        private DebugProc _debugMessageCallback;
+        private bool _isDepthRangeZeroToOne;
+        private BackendInfoOpenGL _openglInfo;
+
+        private TextureSampleCount _maxColorTextureSamples;
+        private uint _maxTextureSize;
+        private uint _maxTexDepth;
+        private uint _maxTexArrayLayers;
+        private uint _minUboOffsetAlignment;
+        private uint _minSsboOffsetAlignment;
+        private BlockingCollection<ExecutionThreadWorkItem> _workItems;
+        private ExecutionThread _executionThread;
+        private Swapchain _mainSwapchain;
+
+        private bool _syncToVBlank;
 
         public OpenGLGraphicsDevice(
             GraphicsDeviceOptions options,
@@ -116,6 +118,203 @@ namespace Veldrid.OpenGL
             uint height)
         {
             Init(options, platformInfo, width, height, true);
+        }
+
+        public OpenGLGraphicsDevice(GraphicsDeviceOptions options, SwapchainDescription swapchainDescription)
+        {
+            options.SwapchainDepthFormat = swapchainDescription.DepthFormat;
+            options.SwapchainSrgbFormat = swapchainDescription.ColorSrgb;
+            options.SyncToVerticalBlank = swapchainDescription.SyncToVerticalBlank;
+
+            var source = swapchainDescription.Source;
+
+            if (source is UIViewSwapchainSource uiViewSource)
+                InitializeUIView(options, uiViewSource.UIView);
+            else if (source is AndroidSurfaceSwapchainSource androidSource)
+            {
+                IntPtr aNativeWindow = AndroidRuntime.ANativeWindow_fromSurface(
+                    androidSource.JniEnv,
+                    androidSource.Surface);
+                InitializeANativeWindow(options, aNativeWindow, swapchainDescription);
+            }
+            else
+            {
+                throw new VeldridException(
+                    "This function does not support creating an OpenGLES GraphicsDevice with the given SwapchainSource.");
+            }
+        }
+
+        public override TextureSampleCount GetSampleCountLimit(PixelFormat format, bool depthFormat)
+        {
+            return _maxColorTextureSamples;
+        }
+
+        public override bool WaitForFence(Fence fence, ulong nanosecondTimeout)
+        {
+            return Util.AssertSubtype<Fence, OpenGLFence>(fence).Wait(nanosecondTimeout);
+        }
+
+        public override bool WaitForFences(Fence[] fences, bool waitAll, ulong nanosecondTimeout)
+        {
+            int msTimeout;
+            if (nanosecondTimeout == ulong.MaxValue)
+                msTimeout = -1;
+            else
+                msTimeout = (int)Math.Min(nanosecondTimeout / 1_000_000, int.MaxValue);
+
+            var events = GetResetEventArray(fences.Length);
+            for (int i = 0; i < fences.Length; i++) events[i] = Util.AssertSubtype<Fence, OpenGLFence>(fences[i]).ResetEvent;
+            bool result;
+
+            if (waitAll)
+                result = WaitHandle.WaitAll(events, msTimeout);
+            else
+            {
+                int index = WaitHandle.WaitAny(events, msTimeout);
+                result = index != WaitHandle.WaitTimeout;
+            }
+
+            ReturnResetEventArray(events);
+
+            return result;
+        }
+
+        public override void ResetFence(Fence fence)
+        {
+            Util.AssertSubtype<Fence, OpenGLFence>(fence).Reset();
+        }
+
+        public void EnableDebugCallback()
+        {
+            EnableDebugCallback(DebugSeverity.DebugSeverityNotification);
+        }
+
+        public void EnableDebugCallback(DebugSeverity minimumSeverity)
+        {
+            EnableDebugCallback(DefaultDebugCallback(minimumSeverity));
+        }
+
+        public void EnableDebugCallback(DebugProc callback)
+        {
+            glEnable(EnableCap.DebugOutput);
+            CheckLastError();
+            // The debug callback delegate must be persisted, otherwise errors will occur
+            // when the OpenGL drivers attempt to call it after it has been collected.
+            _debugMessageCallback = callback;
+            glDebugMessageCallback(_debugMessageCallback, null);
+            CheckLastError();
+        }
+
+        public override bool GetOpenGLInfo(out BackendInfoOpenGL info)
+        {
+            info = _openglInfo;
+            return true;
+        }
+
+        internal void EnqueueDisposal(OpenGLDeferredResource resource)
+        {
+            _resourcesToDispose.Enqueue(resource);
+        }
+
+        internal void EnqueueDisposal(OpenGLCommandList commandList)
+        {
+            lock (_commandListDisposalLock)
+            {
+                if (GetCount(commandList) > 0)
+                    _commandListsToDispose.Add(commandList);
+                else
+                    commandList.DestroyResources();
+            }
+        }
+
+        internal bool CheckCommandListDisposal(OpenGLCommandList commandList)
+        {
+            lock (_commandListDisposalLock)
+            {
+                int count = DecrementCount(commandList);
+
+                if (count == 0)
+                {
+                    if (_commandListsToDispose.Remove(commandList))
+                    {
+                        commandList.DestroyResources();
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+        }
+
+        internal void ExecuteOnGLThread(Action action)
+        {
+            _executionThread.Run(action);
+            _executionThread.WaitForIdle();
+        }
+
+        internal void FlushAndFinish()
+        {
+            _executionThread.FlushAndFinish();
+        }
+
+        internal void EnsureResourceInitialized(OpenGLDeferredResource deferredResource)
+        {
+            _executionThread.InitializeResource(deferredResource);
+        }
+
+        internal override uint GetUniformBufferMinOffsetAlignmentCore()
+        {
+            return _minUboOffsetAlignment;
+        }
+
+        internal override uint GetStructuredBufferMinOffsetAlignmentCore()
+        {
+            return _minSsboOffsetAlignment;
+        }
+
+        protected override MappedResource MapCore(MappableResource resource, MapMode mode, uint subresource)
+        {
+            var key = new MappedResourceCacheKey(resource, subresource);
+
+            lock (_mappedResourceLock)
+            {
+                if (_mappedResources.TryGetValue(key, out var info))
+                {
+                    if (info.Mode != mode) throw new VeldridException("The given resource was already mapped with a different MapMode.");
+
+                    info.RefCount += 1;
+                    _mappedResources[key] = info;
+                    return info.MappedResource;
+                }
+            }
+
+            return _executionThread.Map(resource, mode, subresource);
+        }
+
+        protected override void UnmapCore(MappableResource resource, uint subresource)
+        {
+            _executionThread.Unmap(resource, subresource);
+        }
+
+        protected override void PlatformDispose()
+        {
+            FlushAndFinish();
+            _executionThread.Terminate();
+        }
+
+        private static int GetDepthBits(PixelFormat value)
+        {
+            switch (value)
+            {
+                case PixelFormat.R16_UNorm:
+                    return 16;
+
+                case PixelFormat.R32_Float:
+                    return 32;
+
+                default:
+                    throw new VeldridException($"Unsupported depth format: {value}");
+            }
         }
 
         private void Init(
@@ -133,11 +332,11 @@ namespace Veldrid.OpenGL
             _swapBuffers = platformInfo.SwapBuffers;
             _setSyncToVBlank = platformInfo.SetSyncToVerticalBlank;
             LoadGetString(_glContext, platformInfo.GetProcAddress);
-            _version = Util.GetString(glGetString(StringName.Version));
-            _shadingLanguageVersion = Util.GetString(glGetString(StringName.ShadingLanguageVersion));
+            Version = Util.GetString(glGetString(StringName.Version));
+            ShadingLanguageVersion = Util.GetString(glGetString(StringName.ShadingLanguageVersion));
             _vendorName = Util.GetString(glGetString(StringName.Vendor));
             _deviceName = Util.GetString(glGetString(StringName.Renderer));
-            _backendType = _version.StartsWith("OpenGL ES") ? GraphicsBackend.OpenGLES : GraphicsBackend.OpenGL;
+            _backendType = Version.StartsWith("OpenGL ES") ? GraphicsBackend.OpenGLES : GraphicsBackend.OpenGL;
 
             LoadAllFunctions(_glContext, platformInfo.GetProcAddress, _backendType == GraphicsBackend.OpenGLES);
 
@@ -147,7 +346,8 @@ namespace Veldrid.OpenGL
             glGetIntegerv(GetPName.MinorVersion, &minorVersion);
             CheckLastError();
 
-            GraphicsApiVersion.TryParseGLVersion(_version, out _apiVersion);
+            GraphicsApiVersion.TryParseGLVersion(Version, out _apiVersion);
+
             if (_apiVersion.Major != majorVersion ||
                 _apiVersion.Minor != minorVersion)
             {
@@ -159,11 +359,13 @@ namespace Veldrid.OpenGL
             glGetIntegerv(GetPName.NumExtensions, &extensionCount);
             CheckLastError();
 
-            HashSet<string> extensions = new HashSet<string>();
+            var extensions = new HashSet<string>();
+
             for (uint i = 0; i < extensionCount; i++)
             {
                 byte* extensionNamePtr = glGetStringi(StringNameIndexed.Extensions, i);
                 CheckLastError();
+
                 if (extensionNamePtr != null)
                 {
                     string extensionName = Util.GetString(extensionNamePtr);
@@ -171,29 +373,29 @@ namespace Veldrid.OpenGL
                 }
             }
 
-            _extensions = new OpenGLExtensions(extensions, _backendType, majorVersion, minorVersion);
+            Extensions = new OpenGLExtensions(extensions, _backendType, majorVersion, minorVersion);
 
-            bool drawIndirect = _extensions.DrawIndirect || _extensions.MultiDrawIndirect;
+            bool drawIndirect = Extensions.DrawIndirect || Extensions.MultiDrawIndirect;
             _features = new GraphicsDeviceFeatures(
-                computeShader: _extensions.ComputeShaders,
-                geometryShader: _extensions.GeometryShader,
-                tessellationShaders: _extensions.TessellationShader,
-                multipleViewports: _extensions.ARB_ViewportArray,
-                samplerLodBias: _backendType == GraphicsBackend.OpenGL,
-                drawBaseVertex: _extensions.DrawElementsBaseVertex,
-                drawBaseInstance: _extensions.GLVersion(4, 2),
-                drawIndirect: drawIndirect,
-                drawIndirectBaseInstance: drawIndirect,
-                fillModeWireframe: _backendType == GraphicsBackend.OpenGL,
-                samplerAnisotropy: _extensions.AnisotropicFilter,
-                depthClipDisable: _backendType == GraphicsBackend.OpenGL,
-                texture1D: _backendType == GraphicsBackend.OpenGL,
-                independentBlend: _extensions.IndependentBlend,
-                structuredBuffer: _extensions.StorageBuffers,
-                subsetTextureView: _extensions.ARB_TextureView,
-                commandListDebugMarkers: _extensions.KHR_Debug || _extensions.EXT_DebugMarker,
-                bufferRangeBinding: _extensions.ARB_uniform_buffer_object,
-                shaderFloat64: _extensions.ARB_GpuShaderFp64);
+                Extensions.ComputeShaders,
+                Extensions.GeometryShader,
+                Extensions.TessellationShader,
+                Extensions.ARB_ViewportArray,
+                _backendType == GraphicsBackend.OpenGL,
+                Extensions.DrawElementsBaseVertex,
+                Extensions.GLVersion(4, 2),
+                drawIndirect,
+                drawIndirect,
+                _backendType == GraphicsBackend.OpenGL,
+                Extensions.AnisotropicFilter,
+                _backendType == GraphicsBackend.OpenGL,
+                _backendType == GraphicsBackend.OpenGL,
+                Extensions.IndependentBlend,
+                Extensions.StorageBuffers,
+                Extensions.ARB_TextureView,
+                Extensions.KHR_Debug || Extensions.EXT_DebugMarker,
+                Extensions.ARB_uniform_buffer_object,
+                Extensions.ARB_GpuShaderFp64);
 
             int uboAlignment;
             glGetIntegerv(GetPName.UniformBufferOffsetAlignment, &uboAlignment);
@@ -216,22 +418,15 @@ namespace Veldrid.OpenGL
             glBindVertexArray(_vao);
             CheckLastError();
 
-            if (options.Debug && (_extensions.KHR_Debug || _extensions.ARB_DebugOutput))
-            {
-                EnableDebugCallback();
-            }
+            if (options.Debug && (Extensions.KHR_Debug || Extensions.ARB_DebugOutput)) EnableDebugCallback();
 
             bool backbufferIsSrgb = ManualSrgbBackbufferQuery();
 
             PixelFormat swapchainFormat;
             if (options.SwapchainSrgbFormat && (backbufferIsSrgb || RuntimeInformation.IsOSPlatform(OSPlatform.OSX)))
-            {
                 swapchainFormat = PixelFormat.B8_G8_R8_A8_UNorm_SRgb;
-            }
             else
-            {
                 swapchainFormat = PixelFormat.B8_G8_R8_A8_UNorm;
-            }
 
             _swapchainFramebuffer = new OpenGLSwapchainFramebuffer(
                 width,
@@ -247,10 +442,11 @@ namespace Veldrid.OpenGL
                 CheckLastError();
             }
 
-            _textureSamplerManager = new OpenGLTextureSamplerManager(_extensions);
+            TextureSamplerManager = new OpenGLTextureSamplerManager(Extensions);
             _commandExecutor = new OpenGLCommandExecutor(this, platformInfo);
 
             int maxColorTextureSamples;
+
             if (_backendType == GraphicsBackend.OpenGL)
             {
                 glGetIntegerv(GetPName.MaxColorTextureSamples, &maxColorTextureSamples);
@@ -261,30 +457,19 @@ namespace Veldrid.OpenGL
                 glGetIntegerv(GetPName.MaxSamples, &maxColorTextureSamples);
                 CheckLastError();
             }
+
             if (maxColorTextureSamples >= 32)
-            {
                 _maxColorTextureSamples = TextureSampleCount.Count32;
-            }
             else if (maxColorTextureSamples >= 16)
-            {
                 _maxColorTextureSamples = TextureSampleCount.Count16;
-            }
             else if (maxColorTextureSamples >= 8)
-            {
                 _maxColorTextureSamples = TextureSampleCount.Count8;
-            }
             else if (maxColorTextureSamples >= 4)
-            {
                 _maxColorTextureSamples = TextureSampleCount.Count4;
-            }
             else if (maxColorTextureSamples >= 2)
-            {
                 _maxColorTextureSamples = TextureSampleCount.Count2;
-            }
             else
-            {
                 _maxColorTextureSamples = TextureSampleCount.Count1;
-            }
 
             int maxTexSize;
 
@@ -299,7 +484,7 @@ namespace Veldrid.OpenGL
             glGetIntegerv(GetPName.MaxArrayTextureLayers, &maxTexArrayLayers);
             CheckLastError();
 
-            if (options.PreferDepthRangeZeroToOne && _extensions.ARB_ClipControl)
+            if (options.PreferDepthRangeZeroToOne && Extensions.ARB_ClipControl)
             {
                 glClipControl(ClipControlOrigin.LowerLeft, ClipControlDepthRange.ZeroToOne);
                 CheckLastError();
@@ -325,10 +510,7 @@ namespace Veldrid.OpenGL
 
         private bool ManualSrgbBackbufferQuery()
         {
-            if (_backendType == GraphicsBackend.OpenGLES && !_extensions.EXT_sRGBWriteControl)
-            {
-                return false;
-            }
+            if (_backendType == GraphicsBackend.OpenGLES && !Extensions.EXT_sRGBWriteControl) return false;
 
             glGenTextures(1, out uint copySrc);
             CheckLastError();
@@ -375,6 +557,7 @@ namespace Veldrid.OpenGL
                 ClearBufferMask.ColorBufferBit,
                 BlitFramebufferFilter.Nearest);
             CheckLastError();
+
             if (_backendType == GraphicsBackend.OpenGLES)
             {
                 glBindFramebuffer(FramebufferTarget.ReadFramebuffer, copySrc);
@@ -398,47 +581,19 @@ namespace Veldrid.OpenGL
             return data[0] > 0.6f;
         }
 
-        public OpenGLGraphicsDevice(GraphicsDeviceOptions options, SwapchainDescription swapchainDescription)
-        {
-            options.SwapchainDepthFormat = swapchainDescription.DepthFormat;
-            options.SwapchainSrgbFormat = swapchainDescription.ColorSrgb;
-            options.SyncToVerticalBlank = swapchainDescription.SyncToVerticalBlank;
-
-            SwapchainSource source = swapchainDescription.Source;
-            if (source is UIViewSwapchainSource uiViewSource)
-            {
-                InitializeUIView(options, uiViewSource.UIView);
-            }
-            else if (source is AndroidSurfaceSwapchainSource androidSource)
-            {
-                IntPtr aNativeWindow = Android.AndroidRuntime.ANativeWindow_fromSurface(
-                    androidSource.JniEnv,
-                    androidSource.Surface);
-                InitializeANativeWindow(options, aNativeWindow, swapchainDescription);
-            }
-            else
-            {
-                throw new VeldridException(
-                    "This function does not support creating an OpenGLES GraphicsDevice with the given SwapchainSource.");
-            }
-        }
-
         private void InitializeUIView(GraphicsDeviceOptions options, IntPtr uIViewPtr)
         {
-            EAGLContext eaglContext = EAGLContext.Create(EAGLRenderingAPI.OpenGLES3);
-            if (!EAGLContext.setCurrentContext(eaglContext.NativePtr))
-            {
-                throw new VeldridException("Unable to make newly-created EAGLContext current.");
-            }
+            var eaglContext = EAGLContext.Create(EAGLRenderingAPI.OpenGLES3);
+            if (!EAGLContext.setCurrentContext(eaglContext.NativePtr)) throw new VeldridException("Unable to make newly-created EAGLContext current.");
 
-            MetalBindings.UIView uiView = new MetalBindings.UIView(uIViewPtr);
+            var uiView = new UIView(uIViewPtr);
 
-            CAEAGLLayer eaglLayer = CAEAGLLayer.New();
+            var eaglLayer = CAEAGLLayer.New();
             eaglLayer.opaque = true;
             eaglLayer.frame = uiView.frame;
             uiView.layer.addSublayer(eaglLayer.NativePtr);
 
-            NativeLibrary glesLibrary = new NativeLibrary("/System/Library/Frameworks/OpenGLES.framework/OpenGLES");
+            var glesLibrary = new NativeLibrary("/System/Library/Frameworks/OpenGLES.framework/OpenGLES");
 
             Func<string, IntPtr> getProcAddress = name => glesLibrary.LoadFunction(name);
 
@@ -456,10 +611,7 @@ namespace Veldrid.OpenGL
             CheckLastError();
 
             bool result = eaglContext.renderBufferStorage((UIntPtr)RenderbufferTarget.Renderbuffer, eaglLayer.NativePtr);
-            if (!result)
-            {
-                throw new VeldridException($"Failed to associate OpenGLES Renderbuffer with CAEAGLLayer.");
-            }
+            if (!result) throw new VeldridException("Failed to associate OpenGLES Renderbuffer with CAEAGLLayer.");
 
             glGetRenderbufferParameteriv(
                 RenderbufferTarget.Renderbuffer,
@@ -482,6 +634,7 @@ namespace Veldrid.OpenGL
 
             uint depthRB = 0;
             bool hasDepth = options.SwapchainDepthFormat != null;
+
             if (hasDepth)
             {
                 glGenRenderbuffers(1, out depthRB);
@@ -505,22 +658,16 @@ namespace Veldrid.OpenGL
                 CheckLastError();
             }
 
-            FramebufferErrorCode status = glCheckFramebufferStatus(FramebufferTarget.Framebuffer);
+            var status = glCheckFramebufferStatus(FramebufferTarget.Framebuffer);
             CheckLastError();
-            if (status != FramebufferErrorCode.FramebufferComplete)
-            {
-                throw new VeldridException($"The OpenGLES main Swapchain Framebuffer was incomplete after initialization.");
-            }
+            if (status != FramebufferErrorCode.FramebufferComplete) throw new VeldridException("The OpenGLES main Swapchain Framebuffer was incomplete after initialization.");
 
             glBindFramebuffer(FramebufferTarget.Framebuffer, fb);
             CheckLastError();
 
             Action<IntPtr> setCurrentContext = ctx =>
             {
-                if (!EAGLContext.setCurrentContext(ctx))
-                {
-                    throw new VeldridException($"Unable to set the thread's current GL context.");
-                }
+                if (!EAGLContext.setCurrentContext(ctx)) throw new VeldridException("Unable to set the thread's current GL context.");
             };
 
             Action swapBuffers = () =>
@@ -530,10 +677,7 @@ namespace Veldrid.OpenGL
 
                 bool presentResult = eaglContext.presentRenderBuffer((UIntPtr)RenderbufferTarget.Renderbuffer);
                 CheckLastError();
-                if (!presentResult)
-                {
-                    throw new VeldridException($"Failed to present the EAGL RenderBuffer.");
-                }
+                if (!presentResult) throw new VeldridException("Failed to present the EAGL RenderBuffer.");
             };
 
             Action setSwapchainFramebuffer = () =>
@@ -554,10 +698,7 @@ namespace Veldrid.OpenGL
                     bool rbStorageResult = eaglContext.renderBufferStorage(
                         (UIntPtr)RenderbufferTarget.Renderbuffer,
                         eaglLayer.NativePtr);
-                    if (!rbStorageResult)
-                    {
-                        throw new VeldridException($"Failed to associate OpenGLES Renderbuffer with CAEAGLLayer.");
-                    }
+                    if (!rbStorageResult) throw new VeldridException("Failed to associate OpenGLES Renderbuffer with CAEAGLLayer.");
 
                     glGetRenderbufferParameteriv(
                         RenderbufferTarget.Renderbuffer,
@@ -595,7 +736,7 @@ namespace Veldrid.OpenGL
                 glesLibrary.Dispose();
             };
 
-            OpenGLPlatformInfo platformInfo = new OpenGLPlatformInfo(
+            var platformInfo = new OpenGLPlatformInfo(
                 eaglContext.NativePtr,
                 getProcAddress,
                 setCurrentContext,
@@ -616,16 +757,10 @@ namespace Veldrid.OpenGL
             SwapchainDescription swapchainDescription)
         {
             IntPtr display = eglGetDisplay(0);
-            if (display == IntPtr.Zero)
-            {
-                throw new VeldridException($"Failed to get the default Android EGLDisplay: {eglGetError()}");
-            }
+            if (display == IntPtr.Zero) throw new VeldridException($"Failed to get the default Android EGLDisplay: {eglGetError()}");
 
             int major, minor;
-            if (eglInitialize(display, &major, &minor) == 0)
-            {
-                throw new VeldridException($"Failed to initialize EGL: {eglGetError()}");
-            }
+            if (eglInitialize(display, &major, &minor) == 0) throw new VeldridException($"Failed to initialize EGL: {eglGetError()}");
 
             int[] attribs =
             {
@@ -639,7 +774,7 @@ namespace Veldrid.OpenGL
                     : 0,
                 EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
                 EGL_RENDERABLE_TYPE, EGL_OPENGL_ES3_BIT,
-                EGL_NONE,
+                EGL_NONE
             };
 
             IntPtr* configs = stackalloc IntPtr[50];
@@ -647,23 +782,18 @@ namespace Veldrid.OpenGL
             fixed (int* attribsPtr = attribs)
             {
                 int num_config;
-                if (eglChooseConfig(display, attribsPtr, configs, 50, &num_config) == 0)
-                {
-                    throw new VeldridException($"Failed to select a valid EGLConfig: {eglGetError()}");
-                }
+                if (eglChooseConfig(display, attribsPtr, configs, 50, &num_config) == 0) throw new VeldridException($"Failed to select a valid EGLConfig: {eglGetError()}");
             }
 
             IntPtr bestConfig = configs[0];
 
             int format;
-            if (eglGetConfigAttrib(display, bestConfig, EGL_NATIVE_VISUAL_ID, &format) == 0)
-            {
-                throw new VeldridException($"Failed to get the EGLConfig's format: {eglGetError()}");
-            }
+            if (eglGetConfigAttrib(display, bestConfig, EGL_NATIVE_VISUAL_ID, &format) == 0) throw new VeldridException($"Failed to get the EGLConfig's format: {eglGetError()}");
 
-            Android.AndroidRuntime.ANativeWindow_setBuffersGeometry(aNativeWindow, 0, 0, format);
+            AndroidRuntime.ANativeWindow_setBuffersGeometry(aNativeWindow, 0, 0, format);
 
             IntPtr eglWindowSurface = eglCreateWindowSurface(display, bestConfig, aNativeWindow, null);
+
             if (eglWindowSurface == IntPtr.Zero)
             {
                 throw new VeldridException(
@@ -675,43 +805,28 @@ namespace Veldrid.OpenGL
             contextAttribs[1] = 2;
             contextAttribs[2] = EGL_NONE;
             IntPtr context = eglCreateContext(display, bestConfig, IntPtr.Zero, contextAttribs);
-            if (context == IntPtr.Zero)
-            {
-                throw new VeldridException($"Failed to create an EGLContext: " + eglGetError());
-            }
+            if (context == IntPtr.Zero) throw new VeldridException("Failed to create an EGLContext: " + eglGetError());
 
             Action<IntPtr> makeCurrent = ctx =>
             {
-                if (eglMakeCurrent(display, eglWindowSurface, eglWindowSurface, ctx) == 0)
-                {
-                    throw new VeldridException($"Failed to make the EGLContext {ctx} current: {eglGetError()}");
-                }
+                if (eglMakeCurrent(display, eglWindowSurface, eglWindowSurface, ctx) == 0) throw new VeldridException($"Failed to make the EGLContext {ctx} current: {eglGetError()}");
             };
 
             makeCurrent(context);
 
             Action clearContext = () =>
             {
-                if (eglMakeCurrent(display, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero) == 0)
-                {
-                    throw new VeldridException("Failed to clear the current EGLContext: " + eglGetError());
-                }
+                if (eglMakeCurrent(display, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero) == 0) throw new VeldridException("Failed to clear the current EGLContext: " + eglGetError());
             };
 
             Action swapBuffers = () =>
             {
-                if (eglSwapBuffers(display, eglWindowSurface) == 0)
-                {
-                    throw new VeldridException("Failed to swap buffers: " + eglGetError());
-                }
+                if (eglSwapBuffers(display, eglWindowSurface) == 0) throw new VeldridException("Failed to swap buffers: " + eglGetError());
             };
 
             Action<bool> setSync = vsync =>
             {
-                if (eglSwapInterval(display, vsync ? 1 : 0) == 0)
-                {
-                    throw new VeldridException($"Failed to set the swap interval: " + eglGetError());
-                }
+                if (eglSwapInterval(display, vsync ? 1 : 0) == 0) throw new VeldridException("Failed to set the swap interval: " + eglGetError());
             };
 
             // Set the desired initial state.
@@ -719,13 +834,10 @@ namespace Veldrid.OpenGL
 
             Action<IntPtr> destroyContext = ctx =>
             {
-                if (eglDestroyContext(display, ctx) == 0)
-                {
-                    throw new VeldridException($"Failed to destroy EGLContext {ctx}: {eglGetError()}");
-                }
+                if (eglDestroyContext(display, ctx) == 0) throw new VeldridException($"Failed to destroy EGLContext {ctx}: {eglGetError()}");
             };
 
-            OpenGLPlatformInfo platformInfo = new OpenGLPlatformInfo(
+            var platformInfo = new OpenGLPlatformInfo(
                 context,
                 eglGetProcAddress,
                 makeCurrent,
@@ -738,46 +850,12 @@ namespace Veldrid.OpenGL
             Init(options, platformInfo, swapchainDescription.Width, swapchainDescription.Height, true);
         }
 
-        private static int GetDepthBits(PixelFormat value)
-        {
-            switch (value)
-            {
-                case PixelFormat.R16_UNorm:
-                    return 16;
-                case PixelFormat.R32_Float:
-                    return 32;
-                default:
-                    throw new VeldridException($"Unsupported depth format: {value}");
-            }
-        }
-
-        private protected override void SubmitCommandsCore(
-            CommandList cl,
-            Fence fence)
-        {
-            lock (_commandListDisposalLock)
-            {
-                OpenGLCommandList glCommandList = Util.AssertSubtype<CommandList, OpenGLCommandList>(cl);
-                OpenGLCommandEntryList entryList = glCommandList.CurrentCommands;
-                IncrementCount(glCommandList);
-                _executionThread.ExecuteCommands(entryList);
-                if (fence is OpenGLFence glFence)
-                {
-                    glFence.Set();
-                }
-            }
-        }
-
         private int IncrementCount(OpenGLCommandList glCommandList)
         {
             if (_submittedCommandListCounts.TryGetValue(glCommandList, out int count))
-            {
                 count += 1;
-            }
             else
-            {
                 count = 1;
-            }
 
             _submittedCommandListCounts[glCommandList] = count;
             return count;
@@ -786,28 +864,79 @@ namespace Veldrid.OpenGL
         private int DecrementCount(OpenGLCommandList glCommandList)
         {
             if (_submittedCommandListCounts.TryGetValue(glCommandList, out int count))
-            {
                 count -= 1;
-            }
             else
-            {
                 count = -1;
-            }
 
             if (count == 0)
-            {
                 _submittedCommandListCounts.Remove(glCommandList);
-            }
             else
-            {
                 _submittedCommandListCounts[glCommandList] = count;
-            }
             return count;
         }
 
         private int GetCount(OpenGLCommandList glCommandList)
         {
             return _submittedCommandListCounts.TryGetValue(glCommandList, out int count) ? count : 0;
+        }
+
+        private ManualResetEvent[] GetResetEventArray(int length)
+        {
+            lock (_resetEventsLock)
+            {
+                for (int i = _resetEvents.Count - 1; i > 0; i--)
+                {
+                    var array = _resetEvents[i];
+
+                    if (array.Length == length)
+                    {
+                        _resetEvents.RemoveAt(i);
+                        return array;
+                    }
+                }
+            }
+
+            var newArray = new ManualResetEvent[length];
+            return newArray;
+        }
+
+        private void ReturnResetEventArray(ManualResetEvent[] array)
+        {
+            lock (_resetEventsLock) _resetEvents.Add(array);
+        }
+
+        private void FlushDisposables()
+        {
+            while (_resourcesToDispose.TryDequeue(out var resource)) resource.DestroyGLResources();
+        }
+
+        private DebugProc DefaultDebugCallback(DebugSeverity minimumSeverity)
+        {
+            return (source, type, id, severity, length, message, userParam) =>
+            {
+                if (severity >= minimumSeverity
+                    && type != DebugType.DebugTypeMarker
+                    && type != DebugType.DebugTypePushGroup
+                    && type != DebugType.DebugTypePopGroup)
+                {
+                    string messageString = Marshal.PtrToStringAnsi((IntPtr)message, (int)length);
+                    Debug.WriteLine($"GL DEBUG MESSAGE: {source}, {type}, {id}. {severity}: {messageString}");
+                }
+            };
+        }
+
+        private protected override void SubmitCommandsCore(
+            CommandList cl,
+            Fence fence)
+        {
+            lock (_commandListDisposalLock)
+            {
+                var glCommandList = Util.AssertSubtype<CommandList, OpenGLCommandList>(cl);
+                var entryList = glCommandList.CurrentCommands;
+                IncrementCount(glCommandList);
+                _executionThread.ExecuteCommands(entryList);
+                if (fence is OpenGLFence glFence) glFence.Set();
+            }
         }
 
         private protected override void SwapBuffersCore(Swapchain swapchain)
@@ -826,30 +955,22 @@ namespace Veldrid.OpenGL
         {
         }
 
-        public override TextureSampleCount GetSampleCountLimit(PixelFormat format, bool depthFormat)
-        {
-            return _maxColorTextureSamples;
-        }
-
         private protected override bool GetPixelFormatSupportCore(
             PixelFormat format,
             TextureType type,
             TextureUsage usage,
             out PixelFormatProperties properties)
         {
-            if (type == TextureType.Texture1D && !_features.Texture1D
-                || !OpenGLFormats.IsFormatSupported(_extensions, format, _backendType))
+            if ((type == TextureType.Texture1D && !_features.Texture1D)
+                || !OpenGLFormats.IsFormatSupported(Extensions, format, _backendType))
             {
-                properties = default(PixelFormatProperties);
+                properties = default;
                 return false;
             }
 
             uint sampleCounts = 0;
             int max = (int)_maxColorTextureSamples + 1;
-            for (int i = 0; i < max; i++)
-            {
-                sampleCounts |= (uint)(1 << i);
-            }
+            for (int i = 0; i < max; i++) sampleCounts |= (uint)(1 << i);
 
             properties = new PixelFormatProperties(
                 _maxTextureSize,
@@ -861,42 +982,12 @@ namespace Veldrid.OpenGL
             return true;
         }
 
-        protected override MappedResource MapCore(MappableResource resource, MapMode mode, uint subresource)
-        {
-            MappedResourceCacheKey key = new MappedResourceCacheKey(resource, subresource);
-            lock (_mappedResourceLock)
-            {
-                if (_mappedResources.TryGetValue(key, out MappedResourceInfoWithStaging info))
-                {
-                    if (info.Mode != mode)
-                    {
-                        throw new VeldridException("The given resource was already mapped with a different MapMode.");
-                    }
-
-                    info.RefCount += 1;
-                    _mappedResources[key] = info;
-                    return info.MappedResource;
-                }
-            }
-
-            return _executionThread.Map(resource, mode, subresource);
-        }
-
-        protected override void UnmapCore(MappableResource resource, uint subresource)
-        {
-            _executionThread.Unmap(resource, subresource);
-        }
-
         private protected override void UpdateBufferCore(DeviceBuffer buffer, uint bufferOffsetInBytes, IntPtr source, uint sizeInBytes)
         {
             lock (_mappedResourceLock)
-            {
                 if (_mappedResources.ContainsKey(new MappedResourceCacheKey(buffer, 0)))
-                {
                     throw new VeldridException("Cannot call UpdateBuffer on a currently-mapped Buffer.");
-                }
-            }
-            StagingBlock sb = _stagingMemoryPool.Stage(source, sizeInBytes);
+            var sb = StagingMemoryPool.Stage(source, sizeInBytes);
             _executionThread.UpdateBuffer(buffer, bufferOffsetInBytes, sb);
         }
 
@@ -913,9 +1004,9 @@ namespace Veldrid.OpenGL
             uint mipLevel,
             uint arrayLayer)
         {
-            StagingBlock textureData = _stagingMemoryPool.Stage(source, sizeInBytes);
-            StagingBlock argBlock = _stagingMemoryPool.GetStagingBlock(UpdateTextureArgsSize);
-            ref UpdateTextureArgs args = ref Unsafe.AsRef<UpdateTextureArgs>(argBlock.Data);
+            var textureData = StagingMemoryPool.Stage(source, sizeInBytes);
+            var argBlock = StagingMemoryPool.GetStagingBlock(UpdateTextureArgsSize);
+            ref var args = ref Unsafe.AsRef<UpdateTextureArgs>(argBlock.Data);
             args.Data = (IntPtr)textureData.Data;
             args.X = x;
             args.Y = y;
@@ -928,8 +1019,6 @@ namespace Veldrid.OpenGL
 
             _executionThread.UpdateTexture(texture, argBlock.Id, textureData.Id);
         }
-
-        private static readonly uint UpdateTextureArgsSize = (uint)Unsafe.SizeOf<UpdateTextureArgs>();
 
         private struct UpdateTextureArgs
         {
@@ -944,192 +1033,15 @@ namespace Veldrid.OpenGL
             public uint ArrayLayer;
         }
 
-        public override bool WaitForFence(Fence fence, ulong nanosecondTimeout)
-        {
-            return Util.AssertSubtype<Fence, OpenGLFence>(fence).Wait(nanosecondTimeout);
-        }
-
-        public override bool WaitForFences(Fence[] fences, bool waitAll, ulong nanosecondTimeout)
-        {
-            int msTimeout;
-            if (nanosecondTimeout == ulong.MaxValue)
-            {
-                msTimeout = -1;
-            }
-            else
-            {
-                msTimeout = (int)Math.Min(nanosecondTimeout / 1_000_000, int.MaxValue);
-            }
-
-            ManualResetEvent[] events = GetResetEventArray(fences.Length);
-            for (int i = 0; i < fences.Length; i++)
-            {
-                events[i] = Util.AssertSubtype<Fence, OpenGLFence>(fences[i]).ResetEvent;
-            }
-            bool result;
-            if (waitAll)
-            {
-                result = WaitHandle.WaitAll(events, msTimeout);
-            }
-            else
-            {
-                int index = WaitHandle.WaitAny(events, msTimeout);
-                result = index != WaitHandle.WaitTimeout;
-            }
-
-            ReturnResetEventArray(events);
-
-            return result;
-        }
-
-        private ManualResetEvent[] GetResetEventArray(int length)
-        {
-            lock (_resetEventsLock)
-            {
-                for (int i = _resetEvents.Count - 1; i > 0; i--)
-                {
-                    ManualResetEvent[] array = _resetEvents[i];
-                    if (array.Length == length)
-                    {
-                        _resetEvents.RemoveAt(i);
-                        return array;
-                    }
-                }
-            }
-
-            ManualResetEvent[] newArray = new ManualResetEvent[length];
-            return newArray;
-        }
-
-        private void ReturnResetEventArray(ManualResetEvent[] array)
-        {
-            lock (_resetEventsLock)
-            {
-                _resetEvents.Add(array);
-            }
-        }
-
-        public override void ResetFence(Fence fence)
-        {
-            Util.AssertSubtype<Fence, OpenGLFence>(fence).Reset();
-        }
-
-        internal void EnqueueDisposal(OpenGLDeferredResource resource)
-        {
-            _resourcesToDispose.Enqueue(resource);
-        }
-
-        internal void EnqueueDisposal(OpenGLCommandList commandList)
-        {
-            lock (_commandListDisposalLock)
-            {
-                if (GetCount(commandList) > 0)
-                {
-                    _commandListsToDispose.Add(commandList);
-                }
-                else
-                {
-                    commandList.DestroyResources();
-                }
-            }
-        }
-
-        internal bool CheckCommandListDisposal(OpenGLCommandList commandList)
-        {
-
-            lock (_commandListDisposalLock)
-            {
-                int count = DecrementCount(commandList);
-                if (count == 0)
-                {
-                    if (_commandListsToDispose.Remove(commandList))
-                    {
-                        commandList.DestroyResources();
-                        return true;
-                    }
-                }
-
-                return false;
-            }
-        }
-
-        private void FlushDisposables()
-        {
-            while (_resourcesToDispose.TryDequeue(out OpenGLDeferredResource resource))
-            {
-                resource.DestroyGLResources();
-            }
-        }
-
-        public void EnableDebugCallback() => EnableDebugCallback(DebugSeverity.DebugSeverityNotification);
-        public void EnableDebugCallback(DebugSeverity minimumSeverity) => EnableDebugCallback(DefaultDebugCallback(minimumSeverity));
-        public void EnableDebugCallback(DebugProc callback)
-        {
-            glEnable(EnableCap.DebugOutput);
-            CheckLastError();
-            // The debug callback delegate must be persisted, otherwise errors will occur
-            // when the OpenGL drivers attempt to call it after it has been collected.
-            _debugMessageCallback = callback;
-            glDebugMessageCallback(_debugMessageCallback, null);
-            CheckLastError();
-        }
-
-        private DebugProc DefaultDebugCallback(DebugSeverity minimumSeverity)
-        {
-            return (source, type, id, severity, length, message, userParam) =>
-            {
-                if (severity >= minimumSeverity
-                    && type != DebugType.DebugTypeMarker
-                    && type != DebugType.DebugTypePushGroup
-                    && type != DebugType.DebugTypePopGroup)
-                {
-                    string messageString = Marshal.PtrToStringAnsi((IntPtr)message, (int)length);
-                    Debug.WriteLine($"GL DEBUG MESSAGE: {source}, {type}, {id}. {severity}: {messageString}");
-                }
-            };
-        }
-
-        protected override void PlatformDispose()
-        {
-            FlushAndFinish();
-            _executionThread.Terminate();
-        }
-
-        public override bool GetOpenGLInfo(out BackendInfoOpenGL info)
-        {
-            info = _openglInfo;
-            return true;
-        }
-
-        internal void ExecuteOnGLThread(Action action)
-        {
-            _executionThread.Run(action);
-            _executionThread.WaitForIdle();
-        }
-
-        internal void FlushAndFinish()
-        {
-            _executionThread.FlushAndFinish();
-        }
-
-        internal void EnsureResourceInitialized(OpenGLDeferredResource deferredResource)
-        {
-            _executionThread.InitializeResource(deferredResource);
-        }
-
-        internal override uint GetUniformBufferMinOffsetAlignmentCore() => _minUboOffsetAlignment;
-
-        internal override uint GetStructuredBufferMinOffsetAlignmentCore() => _minSsboOffsetAlignment;
-
         private class ExecutionThread
         {
             private readonly OpenGLGraphicsDevice _gd;
             private readonly BlockingCollection<ExecutionThreadWorkItem> _workItems;
             private readonly Action<IntPtr> _makeCurrent;
             private readonly IntPtr _context;
-            private bool _terminated;
             private readonly List<Exception> _exceptions = new List<Exception>();
             private readonly object _exceptionsLock = new object();
+            private bool _terminated;
 
             public ExecutionThread(
                 OpenGLGraphicsDevice gd,
@@ -1141,17 +1053,126 @@ namespace Veldrid.OpenGL
                 _workItems = workItems;
                 _makeCurrent = makeCurrent;
                 _context = context;
-                Thread thread = new Thread(Run);
+                var thread = new Thread(Run);
                 thread.IsBackground = true;
                 thread.Start();
+            }
+
+            public MappedResource Map(MappableResource resource, MapMode mode, uint subresource)
+            {
+                CheckExceptions();
+
+                var mrp = new MapParams();
+                mrp.Map = true;
+                mrp.Subresource = subresource;
+                mrp.MapMode = mode;
+
+                var mre = new ManualResetEventSlim(false);
+                _workItems.Add(new ExecutionThreadWorkItem(resource, &mrp, mre));
+                mre.Wait();
+                if (!mrp.Succeeded) throw new VeldridException("Failed to map OpenGL resource.");
+
+                mre.Dispose();
+
+                return new MappedResource(resource, mode, mrp.Data, mrp.DataSize, mrp.Subresource, mrp.RowPitch, mrp.DepthPitch);
+            }
+
+            public void ExecuteCommands(OpenGLCommandEntryList entryList)
+            {
+                CheckExceptions();
+                entryList.Parent.OnSubmitted(entryList);
+                _workItems.Add(new ExecutionThreadWorkItem(entryList));
+            }
+
+            internal void Unmap(MappableResource resource, uint subresource)
+            {
+                CheckExceptions();
+
+                var mrp = new MapParams();
+                mrp.Map = false;
+                mrp.Subresource = subresource;
+
+                var mre = new ManualResetEventSlim(false);
+                _workItems.Add(new ExecutionThreadWorkItem(resource, &mrp, mre));
+                mre.Wait();
+                mre.Dispose();
+            }
+
+            internal void UpdateBuffer(DeviceBuffer buffer, uint offsetInBytes, StagingBlock stagingBlock)
+            {
+                CheckExceptions();
+
+                _workItems.Add(new ExecutionThreadWorkItem(buffer, offsetInBytes, stagingBlock));
+            }
+
+            internal void UpdateTexture(Texture texture, uint argBlockId, uint dataBlockId)
+            {
+                CheckExceptions();
+
+                _workItems.Add(new ExecutionThreadWorkItem(texture, argBlockId, dataBlockId));
+            }
+
+            internal void Run(Action a)
+            {
+                CheckExceptions();
+
+                _workItems.Add(new ExecutionThreadWorkItem(a));
+            }
+
+            internal void Terminate()
+            {
+                CheckExceptions();
+
+                _workItems.Add(new ExecutionThreadWorkItem(WorkItemType.TerminateAction));
+            }
+
+            internal void WaitForIdle()
+            {
+                var mre = new ManualResetEventSlim();
+                _workItems.Add(new ExecutionThreadWorkItem(mre, false));
+                mre.Wait();
+                mre.Dispose();
+
+                CheckExceptions();
+            }
+
+            internal void SetSyncToVerticalBlank(bool value)
+            {
+                _workItems.Add(new ExecutionThreadWorkItem(value));
+            }
+
+            internal void SwapBuffers()
+            {
+                _workItems.Add(new ExecutionThreadWorkItem(WorkItemType.SwapBuffers));
+            }
+
+            internal void FlushAndFinish()
+            {
+                var mre = new ManualResetEventSlim();
+                _workItems.Add(new ExecutionThreadWorkItem(mre, true));
+                mre.Wait();
+                mre.Dispose();
+
+                CheckExceptions();
+            }
+
+            internal void InitializeResource(OpenGLDeferredResource deferredResource)
+            {
+                var info = new InitializeResourceInfo(deferredResource, new ManualResetEventSlim());
+                _workItems.Add(new ExecutionThreadWorkItem(info));
+                info.ResetEvent.Wait();
+                info.ResetEvent.Dispose();
+
+                if (info.Exception != null) throw info.Exception;
             }
 
             private void Run()
             {
                 _makeCurrent(_context);
+
                 while (!_terminated)
                 {
-                    ExecutionThreadWorkItem workItem = _workItems.Take();
+                    var workItem = _workItems.Take();
                     ExecuteWorkItem(workItem);
                 }
             }
@@ -1164,26 +1185,25 @@ namespace Veldrid.OpenGL
                     {
                         case WorkItemType.ExecuteList:
                         {
-                            OpenGLCommandEntryList list = (OpenGLCommandEntryList)workItem.Object0;
+                            var list = (OpenGLCommandEntryList)workItem.Object0;
+
                             try
                             {
                                 list.ExecuteAll(_gd._commandExecutor);
                             }
                             finally
                             {
-                                if (!_gd.CheckCommandListDisposal(list.Parent))
-                                {
-                                    list.Parent.OnCompleted(list);
-                                }
+                                if (!_gd.CheckCommandListDisposal(list.Parent)) list.Parent.OnCompleted(list);
                             }
                         }
-                        break;
+                            break;
+
                         case WorkItemType.Map:
                         {
-                            MappableResource resourceToMap = (MappableResource)workItem.Object0;
-                            ManualResetEventSlim mre = (ManualResetEventSlim)workItem.Object1;
+                            var resourceToMap = (MappableResource)workItem.Object0;
+                            var mre = (ManualResetEventSlim)workItem.Object1;
 
-                            MapParams* resultPtr = (MapParams*)Util.UnpackIntPtr(workItem.UInt0, workItem.UInt1);
+                            var resultPtr = (MapParams*)Util.UnpackIntPtr(workItem.UInt0, workItem.UInt1);
 
                             if (resultPtr->Map)
                             {
@@ -1193,16 +1213,15 @@ namespace Veldrid.OpenGL
                                     resultPtr);
                             }
                             else
-                            {
                                 ExecuteUnmapResource(resourceToMap, resultPtr->Subresource, mre);
-                            }
                         }
-                        break;
+                            break;
+
                         case WorkItemType.UpdateBuffer:
                         {
-                            DeviceBuffer updateBuffer = (DeviceBuffer)workItem.Object0;
+                            var updateBuffer = (DeviceBuffer)workItem.Object0;
                             uint offsetInBytes = workItem.UInt0;
-                            StagingBlock stagingBlock = _gd.StagingMemoryPool.RetrieveById(workItem.UInt1);
+                            var stagingBlock = _gd.StagingMemoryPool.RetrieveById(workItem.UInt1);
 
                             _gd._commandExecutor.UpdateBuffer(
                                 updateBuffer,
@@ -1212,13 +1231,14 @@ namespace Veldrid.OpenGL
 
                             _gd.StagingMemoryPool.Free(stagingBlock);
                         }
-                        break;
+                            break;
+
                         case WorkItemType.UpdateTexture:
-                            Texture texture = (Texture)workItem.Object0;
-                            StagingMemoryPool pool = _gd.StagingMemoryPool;
-                            StagingBlock argBlock = pool.RetrieveById(workItem.UInt0);
-                            StagingBlock textureData = pool.RetrieveById(workItem.UInt1);
-                            ref UpdateTextureArgs args = ref Unsafe.AsRef<UpdateTextureArgs>(argBlock.Data);
+                            var texture = (Texture)workItem.Object0;
+                            var pool = _gd.StagingMemoryPool;
+                            var argBlock = pool.RetrieveById(workItem.UInt0);
+                            var textureData = pool.RetrieveById(workItem.UInt1);
+                            ref var args = ref Unsafe.AsRef<UpdateTextureArgs>(argBlock.Data);
 
                             _gd._commandExecutor.UpdateTexture(
                                 texture, args.Data, args.X, args.Y, args.Z,
@@ -1227,19 +1247,18 @@ namespace Veldrid.OpenGL
                             pool.Free(argBlock);
                             pool.Free(textureData);
                             break;
+
                         case WorkItemType.GenericAction:
                         {
                             ((Action)workItem.Object0)();
                         }
-                        break;
+                            break;
+
                         case WorkItemType.TerminateAction:
                         {
                             // Check if the OpenGL context has already been destroyed by the OS. If so, just exit out.
                             uint error = glGetError();
-                            if (error == (uint)ErrorCode.InvalidOperation)
-                            {
-                                return;
-                            }
+                            if (error == (uint)ErrorCode.InvalidOperation) return;
                             _makeCurrent(_gd._glContext);
 
                             _gd.FlushDisposables();
@@ -1247,34 +1266,41 @@ namespace Veldrid.OpenGL
                             _gd.StagingMemoryPool.Dispose();
                             _terminated = true;
                         }
-                        break;
+                            break;
+
                         case WorkItemType.SetSyncToVerticalBlank:
                         {
                             bool value = workItem.UInt0 == 1 ? true : false;
                             _gd._setSyncToVBlank(value);
                         }
-                        break;
+                            break;
+
                         case WorkItemType.SwapBuffers:
                         {
                             _gd._swapBuffers();
                             _gd.FlushDisposables();
                         }
-                        break;
+                            break;
+
                         case WorkItemType.WaitForIdle:
                         {
                             _gd.FlushDisposables();
                             bool isFullFlush = workItem.UInt0 != 0;
+
                             if (isFullFlush)
                             {
                                 glFlush();
                                 glFinish();
                             }
+
                             ((ManualResetEventSlim)workItem.Object0).Set();
                         }
-                        break;
+                            break;
+
                         case WorkItemType.InitializeResource:
                         {
-                            InitializeResourceInfo info = (InitializeResourceInfo)workItem.Object0;
+                            var info = (InitializeResourceInfo)workItem.Object0;
+
                             try
                             {
                                 info.DeferredResource.EnsureResourcesCreated();
@@ -1288,17 +1314,15 @@ namespace Veldrid.OpenGL
                                 info.ResetEvent.Set();
                             }
                         }
-                        break;
+                            break;
+
                         default:
                             throw new InvalidOperationException("Invalid command type: " + workItem.Type);
                     }
                 }
                 catch (Exception e) when (!Debugger.IsAttached)
                 {
-                    lock (_exceptionsLock)
-                    {
-                        _exceptions.Add(e);
-                    }
+                    lock (_exceptionsLock) _exceptions.Add(e);
                 }
             }
 
@@ -1308,19 +1332,22 @@ namespace Veldrid.OpenGL
                 MapParams* result)
             {
                 uint subresource = result->Subresource;
-                MapMode mode = result->MapMode;
+                var mode = result->MapMode;
 
-                MappedResourceCacheKey key = new MappedResourceCacheKey(resource, subresource);
+                var key = new MappedResourceCacheKey(resource, subresource);
+
                 try
                 {
                     lock (_gd._mappedResourceLock)
                     {
                         Debug.Assert(!_gd._mappedResources.ContainsKey(key));
+
                         if (resource is OpenGLBuffer buffer)
                         {
                             buffer.EnsureResourcesCreated();
                             void* mappedPtr;
-                            BufferAccessMask accessMask = OpenGLFormats.VdToGLMapMode(mode);
+                            var accessMask = OpenGLFormats.VdToGLMapMode(mode);
+
                             if (_gd.Extensions.ARB_DirectStateAccess)
                             {
                                 mappedPtr = glMapNamedBufferRange(buffer.Buffer, IntPtr.Zero, buffer.SizeInBytes, accessMask);
@@ -1335,7 +1362,7 @@ namespace Veldrid.OpenGL
                                 CheckLastError();
                             }
 
-                            MappedResourceInfoWithStaging info = new MappedResourceInfoWithStaging();
+                            var info = new MappedResourceInfoWithStaging();
                             info.MappedResource = new MappedResource(
                                 resource,
                                 mode,
@@ -1352,7 +1379,7 @@ namespace Veldrid.OpenGL
                         }
                         else
                         {
-                            OpenGLTexture texture = Util.AssertSubtype<MappableResource, OpenGLTexture>(resource);
+                            var texture = Util.AssertSubtype<MappableResource, OpenGLTexture>(resource);
                             texture.EnsureResourcesCreated();
 
                             Util.GetMipLevelAndArrayLayer(texture, subresource, out uint mipLevel, out uint arrayLayer);
@@ -1366,6 +1393,7 @@ namespace Veldrid.OpenGL
                             int compressedSize = 0;
 
                             bool isCompressed = FormatHelpers.IsCompressedFormat(texture.Format);
+
                             if (isCompressed)
                             {
                                 glGetTexLevelParameteriv(
@@ -1376,13 +1404,10 @@ namespace Veldrid.OpenGL
                                 CheckLastError();
                             }
 
-                            StagingBlock block = _gd._stagingMemoryPool.GetStagingBlock(subresourceSize);
+                            var block = _gd.StagingMemoryPool.GetStagingBlock(subresourceSize);
 
                             uint packAlignment = 4;
-                            if (!isCompressed)
-                            {
-                                packAlignment = FormatSizeHelpers.GetSizeInBytes(texture.Format);
-                            }
+                            if (!isCompressed) packAlignment = FormatSizeHelpers.GetSizeInBytes(texture.Format);
 
                             if (packAlignment < 4)
                             {
@@ -1473,7 +1498,7 @@ namespace Veldrid.OpenGL
                                         // a subsection of the downloaded data into our staging block.
 
                                         uint fullDataSize = (uint)compressedSize;
-                                        StagingBlock fullBlock = _gd._stagingMemoryPool.GetStagingBlock(fullDataSize);
+                                        var fullBlock = _gd.StagingMemoryPool.GetStagingBlock(fullDataSize);
 
                                         if (_gd.Extensions.ARB_DirectStateAccess)
                                         {
@@ -1492,9 +1517,10 @@ namespace Veldrid.OpenGL
                                             glGetCompressedTexImage(texture.TextureTarget, (int)mipLevel, fullBlock.Data);
                                             CheckLastError();
                                         }
-                                        byte* sliceStart = (byte*)fullBlock.Data + (arrayLayer * subresourceSize);
+
+                                        byte* sliceStart = (byte*)fullBlock.Data + arrayLayer * subresourceSize;
                                         Buffer.MemoryCopy(sliceStart, block.Data, subresourceSize, subresourceSize);
-                                        _gd._stagingMemoryPool.Free(fullBlock);
+                                        _gd.StagingMemoryPool.Free(fullBlock);
                                     }
                                     else
                                     {
@@ -1527,7 +1553,7 @@ namespace Veldrid.OpenGL
 
                             uint rowPitch = FormatHelpers.GetRowPitch(mipWidth, texture.Format);
                             uint depthPitch = FormatHelpers.GetDepthPitch(rowPitch, mipHeight, texture.Format);
-                            MappedResourceInfoWithStaging info = new MappedResourceInfoWithStaging();
+                            var info = new MappedResourceInfoWithStaging();
                             info.MappedResource = new MappedResource(
                                 resource,
                                 mode,
@@ -1561,10 +1587,12 @@ namespace Veldrid.OpenGL
 
             private void ExecuteUnmapResource(MappableResource resource, uint subresource, ManualResetEventSlim mre)
             {
-                MappedResourceCacheKey key = new MappedResourceCacheKey(resource, subresource);
+                var key = new MappedResourceCacheKey(resource, subresource);
+
                 lock (_gd._mappedResourceLock)
                 {
-                    MappedResourceInfoWithStaging info = _gd._mappedResources[key];
+                    var info = _gd._mappedResources[key];
+
                     if (info.RefCount == 1)
                     {
                         if (resource is OpenGLBuffer buffer)
@@ -1585,7 +1613,7 @@ namespace Veldrid.OpenGL
                         }
                         else
                         {
-                            OpenGLTexture texture = Util.AssertSubtype<MappableResource, OpenGLTexture>(resource);
+                            var texture = Util.AssertSubtype<MappableResource, OpenGLTexture>(resource);
 
                             if (info.Mode == MapMode.Write || info.Mode == MapMode.ReadWrite)
                             {
@@ -1619,129 +1647,14 @@ namespace Veldrid.OpenGL
                 {
                     if (_exceptions.Count > 0)
                     {
-                        Exception innerException = _exceptions.Count == 1
+                        var innerException = _exceptions.Count == 1
                             ? _exceptions[0]
                             : new AggregateException(_exceptions.ToArray());
                         _exceptions.Clear();
                         throw new VeldridException(
                             "Error(s) were encountered during the execution of OpenGL commands. See InnerException for more information.",
                             innerException);
-
                     }
-                }
-            }
-
-            public MappedResource Map(MappableResource resource, MapMode mode, uint subresource)
-            {
-                CheckExceptions();
-
-                MapParams mrp = new MapParams();
-                mrp.Map = true;
-                mrp.Subresource = subresource;
-                mrp.MapMode = mode;
-
-                ManualResetEventSlim mre = new ManualResetEventSlim(false);
-                _workItems.Add(new ExecutionThreadWorkItem(resource, &mrp, mre));
-                mre.Wait();
-                if (!mrp.Succeeded)
-                {
-                    throw new VeldridException("Failed to map OpenGL resource.");
-                }
-
-                mre.Dispose();
-
-                return new MappedResource(resource, mode, mrp.Data, mrp.DataSize, mrp.Subresource, mrp.RowPitch, mrp.DepthPitch);
-            }
-
-            internal void Unmap(MappableResource resource, uint subresource)
-            {
-                CheckExceptions();
-
-                MapParams mrp = new MapParams();
-                mrp.Map = false;
-                mrp.Subresource = subresource;
-
-                ManualResetEventSlim mre = new ManualResetEventSlim(false);
-                _workItems.Add(new ExecutionThreadWorkItem(resource, &mrp, mre));
-                mre.Wait();
-                mre.Dispose();
-            }
-
-            public void ExecuteCommands(OpenGLCommandEntryList entryList)
-            {
-                CheckExceptions();
-                entryList.Parent.OnSubmitted(entryList);
-                _workItems.Add(new ExecutionThreadWorkItem(entryList));
-            }
-
-            internal void UpdateBuffer(DeviceBuffer buffer, uint offsetInBytes, StagingBlock stagingBlock)
-            {
-                CheckExceptions();
-
-                _workItems.Add(new ExecutionThreadWorkItem(buffer, offsetInBytes, stagingBlock));
-            }
-
-            internal void UpdateTexture(Texture texture, uint argBlockId, uint dataBlockId)
-            {
-                CheckExceptions();
-
-                _workItems.Add(new ExecutionThreadWorkItem(texture, argBlockId, dataBlockId));
-            }
-
-            internal void Run(Action a)
-            {
-                CheckExceptions();
-
-                _workItems.Add(new ExecutionThreadWorkItem(a));
-            }
-
-            internal void Terminate()
-            {
-                CheckExceptions();
-
-                _workItems.Add(new ExecutionThreadWorkItem(WorkItemType.TerminateAction));
-            }
-
-            internal void WaitForIdle()
-            {
-                ManualResetEventSlim mre = new ManualResetEventSlim();
-                _workItems.Add(new ExecutionThreadWorkItem(mre, isFullFlush: false));
-                mre.Wait();
-                mre.Dispose();
-
-                CheckExceptions();
-            }
-
-            internal void SetSyncToVerticalBlank(bool value)
-            {
-                _workItems.Add(new ExecutionThreadWorkItem(value));
-            }
-
-            internal void SwapBuffers()
-            {
-                _workItems.Add(new ExecutionThreadWorkItem(WorkItemType.SwapBuffers));
-            }
-
-            internal void FlushAndFinish()
-            {
-                ManualResetEventSlim mre = new ManualResetEventSlim();
-                _workItems.Add(new ExecutionThreadWorkItem(mre, isFullFlush: true));
-                mre.Wait();
-                mre.Dispose();
-
-                CheckExceptions();
-            }
-
-            internal void InitializeResource(OpenGLDeferredResource deferredResource)
-            {
-                InitializeResourceInfo info = new InitializeResourceInfo(deferredResource, new ManualResetEventSlim());
-                _workItems.Add(new ExecutionThreadWorkItem(info));
-                info.ResetEvent.Wait();
-                info.ResetEvent.Dispose();
-
-                if (info.Exception != null)
-                {
-                    throw info.Exception;
                 }
             }
         }
@@ -1758,10 +1671,10 @@ namespace Veldrid.OpenGL
             SetSyncToVerticalBlank,
             SwapBuffers,
             WaitForIdle,
-            InitializeResource,
+            InitializeResource
         }
 
-        private unsafe struct ExecutionThreadWorkItem
+        private struct ExecutionThreadWorkItem
         {
             public readonly WorkItemType Type;
             public readonly object Object0;
@@ -1894,8 +1807,8 @@ namespace Veldrid.OpenGL
 
         private class InitializeResourceInfo
         {
-            public OpenGLDeferredResource DeferredResource;
-            public ManualResetEventSlim ResetEvent;
+            public readonly OpenGLDeferredResource DeferredResource;
+            public readonly ManualResetEventSlim ResetEvent;
             public Exception Exception;
 
             public InitializeResourceInfo(OpenGLDeferredResource deferredResource, ManualResetEventSlim mre)

@@ -7,17 +7,13 @@ namespace Veldrid.Vk
 {
     internal unsafe class FixedUtf8String : IDisposable
     {
-        private GCHandle _handle;
-        private uint _numBytes;
-
         public byte* StringPtr => (byte*)_handle.AddrOfPinnedObject().ToPointer();
+        private GCHandle _handle;
+        private readonly uint _numBytes;
 
         public FixedUtf8String(string s)
         {
-            if (s == null)
-            {
-                throw new ArgumentNullException(nameof(s));
-            }
+            if (s == null) throw new ArgumentNullException(nameof(s));
 
             int byteCount = Encoding.UTF8.GetByteCount(s);
             byte[] text = new byte[byteCount + 1];
@@ -27,21 +23,43 @@ namespace Veldrid.Vk
             Debug.Assert(encodedCount == byteCount);
         }
 
-        private string GetString()
-        {
-            return Encoding.UTF8.GetString(StringPtr, (int)_numBytes);
-        }
+        #region Disposal
 
         public void Dispose()
         {
             _handle.Free();
         }
 
-        public override string ToString() => GetString();
+        #endregion
 
-        public static implicit operator byte* (FixedUtf8String utf8String) => utf8String.StringPtr;
-        public static implicit operator IntPtr(FixedUtf8String utf8String) => new IntPtr(utf8String.StringPtr);
-        public static implicit operator FixedUtf8String(string s) => new FixedUtf8String(s);
-        public static implicit operator string(FixedUtf8String utf8String) => utf8String.GetString();
+        public static implicit operator byte*(FixedUtf8String utf8String)
+        {
+            return utf8String.StringPtr;
+        }
+
+        public static implicit operator IntPtr(FixedUtf8String utf8String)
+        {
+            return new IntPtr(utf8String.StringPtr);
+        }
+
+        public static implicit operator FixedUtf8String(string s)
+        {
+            return new FixedUtf8String(s);
+        }
+
+        public static implicit operator string(FixedUtf8String utf8String)
+        {
+            return utf8String.GetString();
+        }
+
+        public override string ToString()
+        {
+            return GetString();
+        }
+
+        private string GetString()
+        {
+            return Encoding.UTF8.GetString(StringPtr, (int)_numBytes);
+        }
     }
 }

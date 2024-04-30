@@ -5,35 +5,46 @@ namespace Veldrid.OpenGL
 {
     internal class OpenGLFence : Fence
     {
-        private readonly ManualResetEvent _mre;
+        public ManualResetEvent ResetEvent { get; }
+
+        public override bool Signaled => ResetEvent.WaitOne(0);
+        public override bool IsDisposed => _disposed;
+
+        public override string Name { get; set; }
         private bool _disposed;
 
         public OpenGLFence(bool signaled)
         {
-            _mre = new ManualResetEvent(signaled);
+            ResetEvent = new ManualResetEvent(signaled);
         }
 
-        public override string Name { get; set; }
-        public ManualResetEvent ResetEvent => _mre;
-
-        public void Set() => _mre.Set();
-        public override void Reset() => _mre.Reset();
-        public override bool Signaled => _mre.WaitOne(0);
-        public override bool IsDisposed => _disposed;
+        #region Disposal
 
         public override void Dispose()
         {
             if (!_disposed)
             {
-                _mre.Dispose();
+                ResetEvent.Dispose();
                 _disposed = true;
             }
+        }
+
+        #endregion
+
+        public void Set()
+        {
+            ResetEvent.Set();
+        }
+
+        public override void Reset()
+        {
+            ResetEvent.Reset();
         }
 
         internal bool Wait(ulong nanosecondTimeout)
         {
             ulong timeout = Math.Min(int.MaxValue, nanosecondTimeout / 1_000_000);
-            return _mre.WaitOne((int)timeout);
+            return ResetEvent.WaitOne((int)timeout);
         }
     }
 }

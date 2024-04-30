@@ -1,6 +1,4 @@
-﻿using System.Diagnostics;
-
-namespace Veldrid
+﻿namespace Veldrid
 {
     internal static class HashHelper
     {
@@ -52,16 +50,10 @@ namespace Veldrid
 
         public static int Array<T>(T[] items)
         {
-            if (items == null || items.Length == 0)
-            {
-                return 0;
-            }
+            if (items == null || items.Length == 0) return 0;
 
             int hash = items[0].GetHashCode();
-            for (int i = 1; i < items.Length; i++)
-            {
-                hash = Combine(hash, items[i]?.GetHashCode() ?? i);
-            }
+            for (int i = 1; i < items.Length; i++) hash = Combine(hash, items[i]?.GetHashCode() ?? i);
 
             return hash;
         }

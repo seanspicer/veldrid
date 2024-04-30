@@ -1,5 +1,5 @@
 using System;
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Text;
 using Veldrid.OpenGLBinding;
 using static Veldrid.OpenGLBinding.OpenGLNative;
@@ -15,12 +15,10 @@ namespace Veldrid.OpenGL
         internal static void CheckLastError()
         {
             uint error = glGetError();
+
             if (error != 0)
             {
-                if (Debugger.IsAttached)
-                {
-                    Debugger.Break();
-                }
+                if (Debugger.IsAttached) Debugger.Break();
 
                 throw new VeldridException("glGetError indicated an error: " + (ErrorCode)error);
             }
@@ -31,6 +29,7 @@ namespace Veldrid.OpenGL
             if (HasGlObjectLabel)
             {
                 int byteCount = Encoding.UTF8.GetByteCount(name);
+
                 if (MaxLabelLength == null)
                 {
                     int maxLabelLength = -1;
@@ -38,6 +37,7 @@ namespace Veldrid.OpenGL
                     CheckLastError();
                     MaxLabelLength = maxLabelLength;
                 }
+
                 if (byteCount >= MaxLabelLength)
                 {
                     name = name.Substring(0, MaxLabelLength.Value - 4) + "...";
@@ -45,7 +45,7 @@ namespace Veldrid.OpenGL
                 }
 
                 Span<byte> utf8bytes = stackalloc byte[128];
-                if(byteCount + 1 > 128) utf8bytes = new byte[byteCount + 1];
+                if (byteCount + 1 > 128) utf8bytes = new byte[byteCount + 1];
 
                 fixed (char* namePtr = name)
                 fixed (byte* utf8bytePtr = utf8bytes)
@@ -66,14 +66,19 @@ namespace Veldrid.OpenGL
                 {
                     case 0:
                         return TextureTarget.TextureCubeMapPositiveX;
+
                     case 1:
                         return TextureTarget.TextureCubeMapNegativeX;
+
                     case 2:
                         return TextureTarget.TextureCubeMapPositiveY;
+
                     case 3:
                         return TextureTarget.TextureCubeMapNegativeY;
+
                     case 4:
                         return TextureTarget.TextureCubeMapPositiveZ;
+
                     case 5:
                         return TextureTarget.TextureCubeMapNegativeZ;
                 }

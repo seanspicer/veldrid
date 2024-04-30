@@ -8,10 +8,8 @@ namespace Veldrid.MTL
 {
     internal unsafe class MTLCVDisplayLink : IMTLDisplayLink
     {
-        public event Action Callback;
-
         private CVDisplayLink _displayLink;
-        private CVDisplayLinkOutputCallbackDelegate _cvDisplayLinkCallbackHandler;
+        private readonly CVDisplayLinkOutputCallbackDelegate _cvDisplayLinkCallbackHandler;
 
         public MTLCVDisplayLink()
         {
@@ -20,6 +18,15 @@ namespace Veldrid.MTL
             _displayLink.SetOutputCallback(_cvDisplayLinkCallbackHandler, IntPtr.Zero);
             _displayLink.Start();
         }
+
+        #region Disposal
+
+        public void Dispose()
+        {
+            _displayLink.Release();
+        }
+
+        #endregion
 
         public void UpdateActiveDisplay(int x, int y, int w, int h)
         {
@@ -37,9 +44,6 @@ namespace Veldrid.MTL
             return 0;
         }
 
-        public void Dispose()
-        {
-            _displayLink.Release();
-        }
+        public event Action Callback;
     }
 }

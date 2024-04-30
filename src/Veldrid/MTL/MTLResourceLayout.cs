@@ -10,7 +10,10 @@ namespace Veldrid.MTL
 #if !VALIDATE_USAGE
         public ResourceKind[] ResourceKinds { get; }
 #endif
-        public ResourceBindingInfo GetBindingInfo(int index) => _bindingInfosByVdIndex[index];
+        public ResourceBindingInfo GetBindingInfo(int index)
+        {
+            return _bindingInfosByVdIndex[index];
+        }
 
 #if !VALIDATE_USAGE
         public ResourceLayoutDescription Description { get; }
@@ -23,7 +26,7 @@ namespace Veldrid.MTL
             Description = description;
 #endif
 
-            ResourceLayoutElementDescription[] elements = description.Elements;
+            var elements = description.Elements;
 #if !VALIDATE_USAGE
             ResourceKinds = new ResourceKind[elements.Length];
             for (int i = 0; i < elements.Length; i++)
@@ -41,26 +44,33 @@ namespace Veldrid.MTL
             for (int i = 0; i < _bindingInfosByVdIndex.Length; i++)
             {
                 uint slot;
+
                 switch (elements[i].Kind)
                 {
                     case ResourceKind.UniformBuffer:
                         slot = bufferIndex++;
                         break;
+
                     case ResourceKind.StructuredBufferReadOnly:
                         slot = bufferIndex++;
                         break;
+
                     case ResourceKind.StructuredBufferReadWrite:
                         slot = bufferIndex++;
                         break;
+
                     case ResourceKind.TextureReadOnly:
                         slot = texIndex++;
                         break;
+
                     case ResourceKind.TextureReadWrite:
                         slot = texIndex++;
                         break;
+
                     case ResourceKind.Sampler:
                         slot = samplerIndex++;
                         break;
+
                     default: throw Illegal.Value<ResourceKind>();
                 }
 

@@ -5,18 +5,15 @@ namespace Veldrid.MTL
 {
     internal class MTLTexture : Texture
     {
-        private bool _disposed;
-
         /// <summary>
-        /// The native MTLTexture object. This property is only valid for non-staging Textures.
+        ///     The native MTLTexture object. This property is only valid for non-staging Textures.
         /// </summary>
         public MetalBindings.MTLTexture DeviceTexture { get; }
+
         /// <summary>
-        /// The staging MTLBuffer object. This property is only valid for staging Textures.
+        ///     The staging MTLBuffer object. This property is only valid for staging Textures.
         /// </summary>
         public MetalBindings.MTLBuffer StagingBuffer { get; }
-
-        public unsafe void* StagingBufferPointer { get; private set; }
 
         public override PixelFormat Format { get; }
 
@@ -35,11 +32,14 @@ namespace Veldrid.MTL
         public override TextureType Type { get; }
 
         public override TextureSampleCount SampleCount { get; }
-        public override string Name { get; set; }
         public override bool IsDisposed => _disposed;
         public MTLPixelFormat MTLPixelFormat { get; }
         public MTLTextureType MTLTextureType { get; }
         public MTLStorageMode MTLStorageMode { get; }
+
+        public unsafe void* StagingBufferPointer { get; private set; }
+        public override string Name { get; set; }
+        private bool _disposed;
 
         public MTLTexture(ref TextureDescription description, MTLGraphicsDevice _gd)
         {
@@ -56,22 +56,22 @@ namespace Veldrid.MTL
 
             MTLPixelFormat = MTLFormats.VdToMTLPixelFormat(Format, isDepth);
             MTLTextureType = MTLFormats.VdToMTLTextureType(
-                    Type,
-                    ArrayLayers,
-                    SampleCount != TextureSampleCount.Count1,
-                    (Usage & TextureUsage.Cubemap) != 0);
+                Type,
+                ArrayLayers,
+                SampleCount != TextureSampleCount.Count1,
+                (Usage & TextureUsage.Cubemap) != 0);
 
             if (Usage != TextureUsage.Staging)
             {
                 MTLStorageMode = isDepth && _gd.PreferMemorylessDepthTargets ? MTLStorageMode.Memoryless : MTLStorageMode.Private;
 
-                MTLTextureDescriptor texDescriptor = MTLTextureDescriptor.New();
-                texDescriptor.width = (UIntPtr)Width;
-                texDescriptor.height = (UIntPtr)Height;
-                texDescriptor.depth = (UIntPtr)Depth;
-                texDescriptor.mipmapLevelCount = (UIntPtr)MipLevels;
-                texDescriptor.arrayLength = (UIntPtr)ArrayLayers;
-                texDescriptor.sampleCount = (UIntPtr)FormatHelpers.GetSampleCountUInt32(SampleCount);
+                var texDescriptor = MTLTextureDescriptor.New();
+                texDescriptor.width = Width;
+                texDescriptor.height = Height;
+                texDescriptor.depth = Depth;
+                texDescriptor.mipmapLevelCount = MipLevels;
+                texDescriptor.arrayLength = ArrayLayers;
+                texDescriptor.sampleCount = FormatHelpers.GetSampleCountUInt32(SampleCount);
                 texDescriptor.textureType = MTLTextureType;
                 texDescriptor.pixelFormat = MTLPixelFormat;
                 texDescriptor.textureUsage = MTLFormats.VdToMTLTextureUsage(Usage);
@@ -84,6 +84,7 @@ namespace Veldrid.MTL
             {
                 uint blockSize = FormatHelpers.IsCompressedFormat(Format) ? 4u : 1u;
                 uint totalStorageSize = 0;
+
                 for (uint level = 0; level < MipLevels; level++)
                 {
                     Util.GetMipDimensions(this, level, out uint levelWidth, out uint levelHeight, out uint levelDepth);
@@ -94,10 +95,11 @@ namespace Veldrid.MTL
                         levelHeight,
                         Format);
                 }
+
                 totalStorageSize *= ArrayLayers;
 
                 StagingBuffer = _gd.Device.newBufferWithLengthOptions(
-                    (UIntPtr)totalStorageSize,
+                    totalStorageSize,
                     MTLResourceOptions.StorageModeShared);
 
                 unsafe
@@ -123,10 +125,10 @@ namespace Veldrid.MTL
 
             MTLPixelFormat = MTLFormats.VdToMTLPixelFormat(Format, isDepth);
             MTLTextureType = MTLFormats.VdToMTLTextureType(
-                    Type,
-                    ArrayLayers,
-                    SampleCount != TextureSampleCount.Count1,
-                    (Usage & TextureUsage.Cubemap) != 0);
+                Type,
+                ArrayLayers,
+                SampleCount != TextureSampleCount.Count1,
+                (Usage & TextureUsage.Cubemap) != 0);
         }
 
         public MTLTexture(CAMetalDrawable drawable, CGSize size, PixelFormat format)
@@ -174,13 +176,9 @@ namespace Veldrid.MTL
             {
                 _disposed = true;
                 if (!StagingBuffer.IsNull)
-                {
                     ObjectiveCRuntime.release(StagingBuffer.NativePtr);
-                }
                 else
-                {
                     ObjectiveCRuntime.release(DeviceTexture.NativePtr);
-                }
             }
         }
     }

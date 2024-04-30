@@ -1,18 +1,14 @@
-﻿using static Veldrid.OpenGLBinding.OpenGLNative;
-using Veldrid.OpenGL;
-using Veldrid.OpenGLBinding;
-using System;
+﻿using System;
 
 namespace Veldrid.OpenGL
 {
     internal class OpenGLResourceFactory : ResourceFactory
     {
+        public override GraphicsBackend BackendType => _gd.BackendType;
         private readonly OpenGLGraphicsDevice _gd;
         private readonly StagingMemoryPool _pool;
 
-        public override GraphicsBackend BackendType => _gd.BackendType;
-
-        public unsafe OpenGLResourceFactory(OpenGLGraphicsDevice gd)
+        public OpenGLResourceFactory(OpenGLGraphicsDevice gd)
             : base(gd.Features)
         {
             _gd = gd;
@@ -29,14 +25,9 @@ namespace Veldrid.OpenGL
             return new OpenGLFramebuffer(_gd, ref description);
         }
 
-        protected override Pipeline CreateGraphicsPipelineCore(ref GraphicsPipelineDescription description)
-        {
-            return new OpenGLPipeline(_gd, ref description);
-        }
-
         public override Pipeline CreateComputePipeline(ref ComputePipelineDescription description)
         {
-            OpenGLPipeline pipeline = new OpenGLPipeline(_gd, ref description);
+            var pipeline = new OpenGLPipeline(_gd, ref description);
             _gd.EnsureResourceInitialized(pipeline);
             return pipeline;
         }
@@ -52,6 +43,21 @@ namespace Veldrid.OpenGL
             return new OpenGLResourceSet(ref description);
         }
 
+        public override Fence CreateFence(bool signaled)
+        {
+            return new OpenGLFence(signaled);
+        }
+
+        public override Swapchain CreateSwapchain(ref SwapchainDescription description)
+        {
+            throw new NotSupportedException("OpenGL does not support creating Swapchain objects.");
+        }
+
+        protected override Pipeline CreateGraphicsPipelineCore(ref GraphicsPipelineDescription description)
+        {
+            return new OpenGLPipeline(_gd, ref description);
+        }
+
         protected override Sampler CreateSamplerCore(ref SamplerDescription description)
         {
             return new OpenGLSampler(_gd, ref description);
@@ -59,8 +65,8 @@ namespace Veldrid.OpenGL
 
         protected override Shader CreateShaderCore(ref ShaderDescription description)
         {
-            StagingBlock stagingBlock = _pool.Stage(description.ShaderBytes);
-            OpenGLShader shader = new OpenGLShader(_gd, description.Stage, stagingBlock, description.EntryPoint);
+            var stagingBlock = _pool.Stage(description.ShaderBytes);
+            var shader = new OpenGLShader(_gd, description.Stage, stagingBlock, description.EntryPoint);
             _gd.EnsureResourceInitialized(shader);
             return shader;
         }
@@ -86,16 +92,6 @@ namespace Veldrid.OpenGL
                 _gd,
                 description.SizeInBytes,
                 description.Usage);
-        }
-
-        public override Fence CreateFence(bool signaled)
-        {
-            return new OpenGLFence(signaled);
-        }
-
-        public override Swapchain CreateSwapchain(ref SwapchainDescription description)
-        {
-            throw new NotSupportedException("OpenGL does not support creating Swapchain objects.");
         }
     }
 }

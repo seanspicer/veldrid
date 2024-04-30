@@ -1,11 +1,27 @@
-﻿using static Veldrid.OpenGLBinding.OpenGLNative;
+﻿using Veldrid.OpenGLBinding;
+using static Veldrid.OpenGLBinding.OpenGLNative;
 using static Veldrid.OpenGL.OpenGLUtil;
-using Veldrid.OpenGLBinding;
 
 namespace Veldrid.OpenGL
 {
     internal unsafe class OpenGLSampler : Sampler, OpenGLDeferredResource
     {
+        public override bool IsDisposed => _disposeRequested;
+
+        public uint NoMipmapSampler => _noMipmapState.Sampler;
+        public uint MipmapSampler => _mipmapState.Sampler;
+
+        public override string Name
+        {
+            get => _name;
+            set
+            {
+                _name = value;
+                _nameChanged = true;
+            }
+        }
+
+        public bool Created { get; private set; }
         private readonly OpenGLGraphicsDevice _gd;
         private readonly SamplerDescription _description;
         private readonly InternalSamplerState _noMipmapState;
@@ -14,12 +30,6 @@ namespace Veldrid.OpenGL
 
         private string _name;
         private bool _nameChanged;
-        public override string Name { get => _name; set { _name = value; _nameChanged = true; } }
-
-        public override bool IsDisposed => _disposeRequested;
-
-        public uint NoMipmapSampler => _noMipmapState.Sampler;
-        public uint MipmapSampler => _mipmapState.Sampler;
 
         public OpenGLSampler(OpenGLGraphicsDevice gd, ref SamplerDescription description)
         {
@@ -30,32 +40,7 @@ namespace Veldrid.OpenGL
             _noMipmapState = new InternalSamplerState();
         }
 
-        public bool Created { get; private set; }
-
-        public void EnsureResourcesCreated()
-        {
-            if (!Created)
-            {
-                CreateGLResources();
-            }
-            if (_nameChanged)
-            {
-                _nameChanged = false;
-                if (_gd.Extensions.KHR_Debug)
-                {
-                    SetObjectLabel(ObjectLabelIdentifier.Sampler, _noMipmapState.Sampler, string.Format("{0}_WithoutMipmapping", _name));
-                    SetObjectLabel(ObjectLabelIdentifier.Sampler, _mipmapState.Sampler, string.Format("{0}_WithMipmapping", _name));
-                }
-            }
-        }
-
-        private void CreateGLResources()
-        {
-            GraphicsBackend backendType = _gd.BackendType;
-            _noMipmapState.CreateGLResources(_description, false, backendType);
-            _mipmapState.CreateGLResources(_description, true, backendType);
-            Created = true;
-        }
+        #region Disposal
 
         public override void Dispose()
         {
@@ -66,17 +51,42 @@ namespace Veldrid.OpenGL
             }
         }
 
+        #endregion
+
+        public void EnsureResourcesCreated()
+        {
+            if (!Created) CreateGLResources();
+
+            if (_nameChanged)
+            {
+                _nameChanged = false;
+
+                if (_gd.Extensions.KHR_Debug)
+                {
+                    SetObjectLabel(ObjectLabelIdentifier.Sampler, _noMipmapState.Sampler, string.Format("{0}_WithoutMipmapping", _name));
+                    SetObjectLabel(ObjectLabelIdentifier.Sampler, _mipmapState.Sampler, string.Format("{0}_WithMipmapping", _name));
+                }
+            }
+        }
+
         public void DestroyGLResources()
         {
             _mipmapState.DestroyGLResources();
             _noMipmapState.DestroyGLResources();
         }
 
+        private void CreateGLResources()
+        {
+            var backendType = _gd.BackendType;
+            _noMipmapState.CreateGLResources(_description, false, backendType);
+            _mipmapState.CreateGLResources(_description, true, backendType);
+            Created = true;
+        }
+
         private class InternalSamplerState
         {
-            private uint _sampler;
-
             public uint Sampler => _sampler;
+            private uint _sampler;
 
             public void CreateGLResources(SamplerDescription description, bool mipmapped, GraphicsBackend backend)
             {
@@ -94,7 +104,7 @@ namespace Veldrid.OpenGL
                     || description.AddressModeV == SamplerAddressMode.Border
                     || description.AddressModeW == SamplerAddressMode.Border)
                 {
-                    RgbaFloat borderColor = ToRgbaFloat(description.BorderColor);
+                    var borderColor = ToRgbaFloat(description.BorderColor);
                     glSamplerParameterfv(_sampler, SamplerParameterName.TextureBorderColor, (float*)&borderColor);
                     CheckLastError();
                 }
@@ -103,6 +113,7 @@ namespace Veldrid.OpenGL
                 CheckLastError();
                 glSamplerParameterf(_sampler, SamplerParameterName.TextureMaxLod, description.MaximumLod);
                 CheckLastError();
+
                 if (backend == GraphicsBackend.OpenGL && description.LodBias != 0)
                 {
                     glSamplerParameterf(_sampler, SamplerParameterName.TextureLodBias, description.LodBias);
@@ -120,7 +131,7 @@ namespace Veldrid.OpenGL
                 }
                 else
                 {
-                    OpenGLFormats.VdToGLTextureMinMagFilter(description.Filter, mipmapped, out TextureMinFilter min, out TextureMagFilter mag);
+                    OpenGLFormats.VdToGLTextureMinMagFilter(description.Filter, mipmapped, out var min, out var mag);
                     glSamplerParameteri(_sampler, SamplerParameterName.TextureMinFilter, (int)min);
                     CheckLastError();
                     glSamplerParameteri(_sampler, SamplerParameterName.TextureMagFilter, (int)mag);
@@ -148,10 +159,13 @@ namespace Veldrid.OpenGL
                 {
                     case SamplerBorderColor.TransparentBlack:
                         return new RgbaFloat(0, 0, 0, 0);
+
                     case SamplerBorderColor.OpaqueBlack:
                         return new RgbaFloat(0, 0, 0, 1);
+
                     case SamplerBorderColor.OpaqueWhite:
                         return new RgbaFloat(1, 1, 1, 1);
+
                     default:
                         throw Illegal.Value<SamplerBorderColor>();
                 }

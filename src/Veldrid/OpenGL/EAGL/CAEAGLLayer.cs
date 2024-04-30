@@ -27,9 +27,15 @@ namespace Veldrid.OpenGL.EAGL
             set => objc_msgSend(NativePtr, sel_setOpaque, value);
         }
 
-        public void removeFromSuperlayer() => objc_msgSend(NativePtr, sel_removeFromSuperlayer);
+        public void removeFromSuperlayer()
+        {
+            objc_msgSend(NativePtr, sel_removeFromSuperlayer);
+        }
 
-        public void Release() => release(NativePtr);
+        public void Release()
+        {
+            release(NativePtr);
+        }
 
         private static readonly Selector sel_frame = "frame";
         private static readonly Selector sel_setFrame = "setFrame:";

@@ -1,9 +1,8 @@
-using Veldrid.MetalBindings;
-
 namespace Veldrid.MTL
 {
     internal class MTLResourceFactory : ResourceFactory
     {
+        public override GraphicsBackend BackendType => GraphicsBackend.Metal;
         private readonly MTLGraphicsDevice _gd;
 
         public MTLResourceFactory(MTLGraphicsDevice gd)
@@ -11,8 +10,6 @@ namespace Veldrid.MTL
         {
             _gd = gd;
         }
-
-        public override GraphicsBackend BackendType => GraphicsBackend.Metal;
 
         public override CommandList CreateCommandList(ref CommandListDescription description)
         {
@@ -29,11 +26,6 @@ namespace Veldrid.MTL
             return new MTLFramebuffer(_gd, ref description);
         }
 
-        protected override Pipeline CreateGraphicsPipelineCore(ref GraphicsPipelineDescription description)
-        {
-            return new MTLPipeline(ref description, _gd);
-        }
-
         public override ResourceLayout CreateResourceLayout(ref ResourceLayoutDescription description)
         {
             return new MTLResourceLayout(ref description, _gd);
@@ -43,6 +35,21 @@ namespace Veldrid.MTL
         {
             ValidationHelpers.ValidateResourceSet(_gd, ref description);
             return new MTLResourceSet(ref description, _gd);
+        }
+
+        public override Fence CreateFence(bool signaled)
+        {
+            return new MTLFence(signaled);
+        }
+
+        public override Swapchain CreateSwapchain(ref SwapchainDescription description)
+        {
+            return new MTLSwapchain(_gd, ref description);
+        }
+
+        protected override Pipeline CreateGraphicsPipelineCore(ref GraphicsPipelineDescription description)
+        {
+            return new MTLPipeline(ref description, _gd);
         }
 
         protected override Sampler CreateSamplerCore(ref SamplerDescription description)
@@ -73,16 +80,6 @@ namespace Veldrid.MTL
         protected override TextureView CreateTextureViewCore(ref TextureViewDescription description)
         {
             return new MTLTextureView(ref description, _gd);
-        }
-
-        public override Fence CreateFence(bool signaled)
-        {
-            return new MTLFence(signaled);
-        }
-
-        public override Swapchain CreateSwapchain(ref SwapchainDescription description)
-        {
-            return new MTLSwapchain(_gd, ref description);
         }
     }
 }

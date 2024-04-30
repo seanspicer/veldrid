@@ -1,22 +1,36 @@
-﻿using Vortice.Direct3D11;
-using System;
+﻿using System;
+using Vortice.Direct3D11;
 
 namespace Veldrid.D3D11
 {
     internal class D3D11TextureView : TextureView
     {
-        private string _name;
-        private bool _disposed;
-
         public ID3D11ShaderResourceView ShaderResourceView { get; }
         public ID3D11UnorderedAccessView UnorderedAccessView { get; }
+
+        public override bool IsDisposed => _disposed;
+
+        public override string Name
+        {
+            get => _name;
+            set
+            {
+                _name = value;
+                if (ShaderResourceView != null) ShaderResourceView.DebugName = value + "_SRV";
+
+                if (UnorderedAccessView != null) UnorderedAccessView.DebugName = value + "_UAV";
+            }
+        }
+
+        private string _name;
+        private bool _disposed;
 
         public D3D11TextureView(D3D11GraphicsDevice gd, ref TextureViewDescription description)
             : base(ref description)
         {
-            ID3D11Device device = gd.Device;
-            D3D11Texture d3dTex = Util.AssertSubtype<Texture, D3D11Texture>(description.Target);
-            ShaderResourceViewDescription srvDesc = D3D11Util.GetSrvDesc(
+            var device = gd.Device;
+            var d3dTex = Util.AssertSubtype<Texture, D3D11Texture>(description.Target);
+            var srvDesc = D3D11Util.GetSrvDesc(
                 d3dTex,
                 description.BaseMipLevel,
                 description.MipLevels,
@@ -27,14 +41,13 @@ namespace Veldrid.D3D11
 
             if ((d3dTex.Usage & TextureUsage.Storage) == TextureUsage.Storage)
             {
-                UnorderedAccessViewDescription uavDesc = new UnorderedAccessViewDescription();
+                var uavDesc = new UnorderedAccessViewDescription();
                 uavDesc.Format = D3D11Formats.GetViewFormat(d3dTex.DxgiFormat);
 
                 if ((d3dTex.Usage & TextureUsage.Cubemap) == TextureUsage.Cubemap)
-                {
                     throw new NotSupportedException();
-                }
-                else if (d3dTex.Depth == 1)
+
+                if (d3dTex.Depth == 1)
                 {
                     if (d3dTex.ArrayLayers == 1)
                     {
@@ -81,24 +94,7 @@ namespace Veldrid.D3D11
             }
         }
 
-        public override string Name
-        {
-            get => _name;
-            set
-            {
-                _name = value;
-                if (ShaderResourceView != null)
-                {
-                    ShaderResourceView.DebugName = value + "_SRV";
-                }
-                if (UnorderedAccessView != null)
-                {
-                    UnorderedAccessView.DebugName = value + "_UAV";
-                }
-            }
-        }
-
-        public override bool IsDisposed => _disposed;
+        #region Disposal
 
         public override void Dispose()
         {
@@ -109,5 +105,7 @@ namespace Veldrid.D3D11
                 _disposed = true;
             }
         }
+
+        #endregion
     }
 }

@@ -5,8 +5,6 @@ namespace Veldrid.OpenGL.EGL
 {
     internal static unsafe class EGLNative
     {
-        private const string LibName = "libEGL.so";
-
         public const int EGL_DRAW = 0x3059;
         public const int EGL_READ = 0x305A;
         public const int EGL_RED_SIZE = 0x3024;
@@ -23,42 +21,57 @@ namespace Veldrid.OpenGL.EGL
         public const int EGL_NONE = 0x3038;
         public const int EGL_NATIVE_VISUAL_ID = 0x302E;
         public const int EGL_CONTEXT_CLIENT_VERSION = 0x3098;
+        private const string LibName = "libEGL.so";
 
         [DllImport(LibName)]
         public static extern EGLError eglGetError();
+
         [DllImport(LibName)]
         public static extern IntPtr eglGetCurrentContext();
+
         [DllImport(LibName)]
         public static extern int eglDestroyContext(IntPtr display, IntPtr context);
+
         [DllImport(LibName)]
         public static extern int eglMakeCurrent(IntPtr display, IntPtr draw, IntPtr read, IntPtr context);
+
         [DllImport(LibName)]
         public static extern int eglChooseConfig(IntPtr display, int* attrib_list, IntPtr* configs, int config_size, int* num_config);
+
         [DllImport(LibName)]
         public static extern IntPtr eglGetProcAddress(string name);
+
         [DllImport(LibName)]
         public static extern IntPtr eglGetCurrentDisplay();
+
         [DllImport(LibName)]
         public static extern IntPtr eglGetDisplay(int native_display);
+
         [DllImport(LibName)]
         public static extern IntPtr eglGetCurrentSurface(int readdraw);
+
         [DllImport(LibName)]
         public static extern int eglInitialize(IntPtr display, int* major, int* minor);
+
         [DllImport(LibName)]
         public static extern IntPtr eglCreateWindowSurface(
             IntPtr display,
             IntPtr config,
             IntPtr native_window,
             int* attrib_list);
+
         [DllImport(LibName)]
         public static extern IntPtr eglCreateContext(IntPtr display,
-            IntPtr config,
-            IntPtr share_context,
-            int* attrib_list);
+                                                     IntPtr config,
+                                                     IntPtr share_context,
+                                                     int* attrib_list);
+
         [DllImport(LibName)]
         public static extern int eglSwapBuffers(IntPtr display, IntPtr surface);
+
         [DllImport(LibName)]
         public static extern int eglSwapInterval(IntPtr display, int value);
+
         [DllImport(LibName)]
         public static extern int eglGetConfigAttrib(IntPtr display, IntPtr config, int attribute, int* value);
     }
@@ -79,6 +92,6 @@ namespace Veldrid.OpenGL.EGL
         BadNativeWindow = 0x300B,
         BadParameter = 0x300C,
         BadSurface = 0x300D,
-        ContextLost = 0x300E,
+        ContextLost = 0x300E
     }
 }

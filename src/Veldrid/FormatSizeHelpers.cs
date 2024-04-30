@@ -5,10 +5,10 @@ namespace Veldrid
     public static class FormatSizeHelpers
     {
         /// <summary>
-        /// Given a pixel format, returns the number of bytes required to store
-        /// a single pixel.
-        /// Compressed formats may not be used with this method as the number of
-        /// bytes per pixel is variable.
+        ///     Given a pixel format, returns the number of bytes required to store
+        ///     a single pixel.
+        ///     Compressed formats may not be used with this method as the number of
+        ///     bytes per pixel is variable.
         /// </summary>
         /// <param name="format">An uncompressed pixel format</param>
         /// <returns>The number of bytes required to store a single pixel in the given format</returns>
@@ -91,13 +91,14 @@ namespace Veldrid
                 case PixelFormat.ETC2_R8_G8_B8_A8_UNorm:
                     Debug.Fail("GetSizeInBytes should not be used on a compressed format.");
                     throw Illegal.Value<PixelFormat>();
+
                 default: throw Illegal.Value<PixelFormat>();
             }
         }
 
         /// <summary>
-        /// Given a vertex element format, returns the number of bytes required
-        /// to store an element in that format.
+        ///     Given a vertex element format, returns the number of bytes required
+        ///     to store an element in that format.
         /// </summary>
         /// <param name="format">A vertex element format</param>
         /// <returns>The number of bytes required to store an element in the given format</returns>
@@ -111,6 +112,7 @@ namespace Veldrid
                 case VertexElementFormat.SByte2:
                 case VertexElementFormat.Half1:
                     return 2;
+
                 case VertexElementFormat.Float1:
                 case VertexElementFormat.UInt1:
                 case VertexElementFormat.Int1:
@@ -124,6 +126,7 @@ namespace Veldrid
                 case VertexElementFormat.Short2:
                 case VertexElementFormat.Half2:
                     return 4;
+
                 case VertexElementFormat.Float2:
                 case VertexElementFormat.UInt2:
                 case VertexElementFormat.Int2:
@@ -133,14 +136,17 @@ namespace Veldrid
                 case VertexElementFormat.Short4:
                 case VertexElementFormat.Half4:
                     return 8;
+
                 case VertexElementFormat.Float3:
                 case VertexElementFormat.UInt3:
                 case VertexElementFormat.Int3:
                     return 12;
+
                 case VertexElementFormat.Float4:
                 case VertexElementFormat.UInt4:
                 case VertexElementFormat.Int4:
                     return 16;
+
                 default:
                     throw Illegal.Value<VertexElementFormat>();
             }

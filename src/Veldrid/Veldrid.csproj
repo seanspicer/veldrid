@@ -21,22 +21,22 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="NativeLibraryLoader" Version="$(NativeLibraryLoaderVersion)" />
+    <PackageReference Include="NativeLibraryLoader" Version="$(NativeLibraryLoaderVersion)"/>
 
-    <PackageReference Include="ppy.Vk" Version="1.0.26" Condition="'$(ExcludeVulkan)' != 'true'" />
+    <PackageReference Include="ppy.Vk" Version="1.0.26" Condition="'$(ExcludeVulkan)' != 'true'"/>
 
-    <PackageReference Include="Vortice.D3DCompiler" Version="$(VorticeWindowsVersion)" Condition="'$(ExcludeD3D11)' != 'true'" />
-    <PackageReference Include="Vortice.Direct3D11" Version="$(VorticeWindowsVersion)" Condition="'$(ExcludeD3D11)' != 'true'" />
+    <PackageReference Include="Vortice.D3DCompiler" Version="$(VorticeWindowsVersion)" Condition="'$(ExcludeD3D11)' != 'true'"/>
+    <PackageReference Include="Vortice.Direct3D11" Version="$(VorticeWindowsVersion)" Condition="'$(ExcludeD3D11)' != 'true'"/>
 
-    <ProjectReference Include="..\Veldrid.MetalBindings\Veldrid.MetalBindings.csproj" Condition="'$(ExcludeMetal)' != 'true'" />
-    <ProjectReference Include="..\Veldrid.OpenGLBindings\Veldrid.OpenGLBindings.csproj" Condition="'$(ExcludeOpenGL)' != 'true'" />
+    <ProjectReference Include="..\Veldrid.MetalBindings\Veldrid.MetalBindings.csproj" Condition="'$(ExcludeMetal)' != 'true'"/>
+    <ProjectReference Include="..\Veldrid.OpenGLBindings\Veldrid.OpenGLBindings.csproj" Condition="'$(ExcludeOpenGL)' != 'true'"/>
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Remove="D3D11/**/*" Condition="'$(ExcludeD3D11)' == 'true'" />
-    <Compile Remove="Vk/**/*" Condition="'$(ExcludeVulkan)' == 'true'" />
-    <Compile Remove="MTL/**/*" Condition="'$(ExcludeMetal)' == 'true'" />
-    <Compile Remove="OpenGL/**/*" Condition="'$(ExcludeOpenGL)' == 'true'" />
+    <Compile Remove="D3D11/**/*" Condition="'$(ExcludeD3D11)' == 'true'"/>
+    <Compile Remove="Vk/**/*" Condition="'$(ExcludeVulkan)' == 'true'"/>
+    <Compile Remove="MTL/**/*" Condition="'$(ExcludeMetal)' == 'true'"/>
+    <Compile Remove="OpenGL/**/*" Condition="'$(ExcludeOpenGL)' == 'true'"/>
   </ItemGroup>
 
   <ItemGroup Condition="'$(ExcludeMetal)' != 'true'">

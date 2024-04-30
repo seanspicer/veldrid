@@ -6,7 +6,7 @@
 
         public VkVersion(uint major, uint minor, uint patch)
         {
-            value = major << 22 | minor << 12 | patch;
+            value = (major << 22) | (minor << 12) | patch;
         }
 
         public uint Major => value >> 22;
