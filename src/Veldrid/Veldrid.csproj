@@ -13,7 +13,7 @@
     <DocumentationFile>$(BinDir)\$(AssemblyName).xml</DocumentationFile>
     <NoWarn Condition="'$(Configuration)' == 'Debug'">1591</NoWarn>
     <DefineConstants>$(DefineConstants);VALIDATE_USAGE</DefineConstants>
-    <LangVersion>8.0</LangVersion>
+    <LangVersion>12.0</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
