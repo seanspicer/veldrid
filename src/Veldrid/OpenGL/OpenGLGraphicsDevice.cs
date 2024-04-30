@@ -985,8 +985,11 @@ namespace Veldrid.OpenGL
         private protected override void UpdateBufferCore(DeviceBuffer buffer, uint bufferOffsetInBytes, IntPtr source, uint sizeInBytes)
         {
             lock (mappedResourceLock)
+            {
                 if (mappedResources.ContainsKey(new MappedResourceCacheKey(buffer, 0)))
                     throw new VeldridException("Cannot call UpdateBuffer on a currently-mapped Buffer.");
+            }
+
             var sb = StagingMemoryPool.Stage(source, sizeInBytes);
             executionThread.UpdateBuffer(buffer, bufferOffsetInBytes, sb);
         }

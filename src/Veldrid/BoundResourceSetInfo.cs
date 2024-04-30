@@ -19,8 +19,10 @@ namespace Veldrid
             if (set != Set || offsetsCount != Offsets.Count) return false;
 
             for (uint i = 0; i < Offsets.Count; i++)
+            {
                 if (Unsafe.Add(ref offsets, (int)i) != Offsets.Get(i))
                     return false;
+            }
 
             return true;
         }

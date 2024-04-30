@@ -222,8 +222,10 @@ namespace Veldrid.Vk
             public bool Allocate(ulong size, ulong alignment, out VkMemoryBlock block)
             {
                 foreach (var allocator in allocators)
+                {
                     if (allocator.Allocate(size, alignment, out block))
                         return true;
+                }
 
                 var newAllocator = new ChunkAllocator(device, memoryTypeIndex, persistentMapped);
                 allocators.Add(newAllocator);
@@ -233,8 +235,10 @@ namespace Veldrid.Vk
             public void Free(VkMemoryBlock block)
             {
                 foreach (var chunk in allocators)
+                {
                     if (chunk.Memory == block.DeviceMemory)
                         chunk.Free(block);
+                }
             }
         }
 

@@ -146,8 +146,10 @@ namespace Veldrid
             if (left.Length != right.Length) return false;
 
             for (int i = 0; i < left.Length; i++)
+            {
                 if (!ReferenceEquals(left[i], right[i]))
                     return false;
+            }
 
             return true;
         }
@@ -159,8 +161,10 @@ namespace Veldrid
             if (left.Length != right.Length) return false;
 
             for (int i = 0; i < left.Length; i++)
+            {
                 if (!left[i].Equals(right[i]))
                     return false;
+            }
 
             return true;
         }

@@ -233,8 +233,10 @@ namespace Veldrid
             var layoutDesc = rs.Layout.Description;
             int setLength = layoutDesc.Elements.Length;
             if (pipelineLength != setLength)
+            {
                 throw new VeldridException(
                     $"Failed to bind ResourceSet to slot {slot}. The number of resources in the ResourceSet ({setLength}) does not match the number expected by the active Pipeline ({pipelineLength}).");
+            }
 
             for (int i = 0; i < pipelineLength; i++)
             {
@@ -347,8 +349,10 @@ namespace Veldrid
             int pipelineLength = layout.Description.Elements.Length;
             int setLength = rs.Layout.Description.Elements.Length;
             if (pipelineLength != setLength)
+            {
                 throw new VeldridException(
                     $"Failed to bind ResourceSet to slot {slot}. The number of resources in the ResourceSet ({setLength}) does not match the number expected by the active Pipeline ({pipelineLength}).");
+            }
 
             for (int i = 0; i < pipelineLength; i++)
             {

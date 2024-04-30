@@ -38,8 +38,10 @@ namespace Veldrid.Vk
             lock (@lock)
             {
                 foreach (var poolInfo in pools)
+                {
                     if (poolInfo.Pool == token.Pool)
                         poolInfo.Free(gd.Device, token, counts);
+                }
             }
         }
 
@@ -53,8 +55,10 @@ namespace Veldrid.Vk
             lock (@lock)
             {
                 foreach (var poolInfo in pools)
+                {
                     if (poolInfo.Allocate(counts))
                         return poolInfo.Pool;
+                }
 
                 var newPool = createNewPool();
                 pools.Add(newPool);

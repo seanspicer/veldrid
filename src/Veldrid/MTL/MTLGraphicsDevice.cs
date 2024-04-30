@@ -147,8 +147,10 @@ namespace Veldrid.MTL
             blockPtr->descriptor = descriptorPtr;
 
             if (!MetalFeatures.IsMacOS)
+            {
                 lock (s_aot_registered_blocks)
                     s_aot_registered_blocks.Add(completionBlockLiteral, this);
+            }
 
             ResourceFactory = new MtlResourceFactory(this);
             commandQueue = device.newCommandQueue();
@@ -189,8 +191,10 @@ namespace Veldrid.MTL
         public override TextureSampleCount GetSampleCountLimit(PixelFormat format, bool depthFormat)
         {
             for (int i = supportedSampleCounts.Length - 1; i >= 0; i--)
+            {
                 if (supportedSampleCounts[i])
                     return (TextureSampleCount)i;
+            }
 
             return TextureSampleCount.Count1;
         }
@@ -328,8 +332,10 @@ namespace Veldrid.MTL
         private static void OnCommandBufferCompleted_Static(IntPtr block, MTLCommandBuffer cb)
         {
             lock (s_aot_registered_blocks)
+            {
                 if (s_aot_registered_blocks.TryGetValue(block, out var gd))
                     gd.OnCommandBufferCompleted(block, cb);
+            }
         }
 
         private static bool getIsSupported()
@@ -480,8 +486,10 @@ namespace Veldrid.MTL
             uint sampleCounts = 0;
 
             for (int i = 0; i < supportedSampleCounts.Length; i++)
+            {
                 if (supportedSampleCounts[i])
                     sampleCounts |= (uint)(1 << i);
+            }
 
             var maxFeatureSet = MetalFeatures.MaxFeatureSet;
             uint maxArrayLayer = MtlFormats.GetMaxTextureVolume(maxFeatureSet);

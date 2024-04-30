@@ -641,8 +641,10 @@ namespace Veldrid.MTL
         private void flushViewports()
         {
             if (gd.MetalFeatures.IsSupported(MTLFeatureSet.macOS_GPUFamily1_v3))
+            {
                 fixed (MTLViewport* viewportsPtr = &viewports[0])
                     rce.setViewports(viewportsPtr, viewportCount);
+            }
             else
                 rce.setViewport(viewports[0]);
         }

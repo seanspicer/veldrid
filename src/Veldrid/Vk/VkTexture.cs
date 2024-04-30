@@ -302,8 +302,10 @@ namespace Veldrid.Vk
             for (uint level = 0; level < levelCount; level++)
             {
                 for (uint layer = 0; layer < layerCount; layer++)
+                {
                     if (imageLayouts[CalculateSubresource(baseMipLevel + level, baseArrayLayer + layer)] != oldLayout)
                         throw new VeldridException("Unexpected image layout.");
+                }
             }
 #endif
             if (oldLayout != newLayout)
