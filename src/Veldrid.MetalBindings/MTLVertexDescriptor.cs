@@ -3,7 +3,7 @@ using static Veldrid.MetalBindings.ObjectiveCRuntime;
 
 namespace Veldrid.MetalBindings
 {
-    public unsafe struct MTLVertexDescriptor
+    public struct MTLVertexDescriptor
     {
         public readonly IntPtr NativePtr;
 

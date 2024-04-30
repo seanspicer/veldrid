@@ -15,8 +15,8 @@ namespace Veldrid.MetalBindings
 
         public NSRange(uint location, uint length)
         {
-            this.location = (UIntPtr)location;
-            this.length = (UIntPtr)length;
+            this.location = location;
+            this.length = length;
         }
     }
 }

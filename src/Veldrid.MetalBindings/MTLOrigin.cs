@@ -10,9 +10,9 @@ namespace Veldrid.MetalBindings
 
         public MTLOrigin(uint x, uint y, uint z)
         {
-            this.x = (UIntPtr)x;
-            this.y = (UIntPtr)y;
-            this.z = (UIntPtr)z;
+            this.x = x;
+            this.y = y;
+            this.z = z;
         }
     }
 }

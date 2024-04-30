@@ -12,9 +12,9 @@ namespace Veldrid.MetalBindings
 
         public MTLSize(uint width, uint height, uint depth)
         {
-            Width = (UIntPtr)width;
-            Height = (UIntPtr)height;
-            Depth = (UIntPtr)depth;
+            Width = width;
+            Height = height;
+            Depth = depth;
         }
     }
 }

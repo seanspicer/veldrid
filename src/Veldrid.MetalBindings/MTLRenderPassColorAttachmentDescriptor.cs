@@ -36,14 +36,12 @@ namespace Veldrid.MetalBindings
         {
             get
             {
-                if (ObjectiveCRuntime.UseStret<MTLClearColor>())
+                if (UseStret<MTLClearColor>())
                 {
                     return objc_msgSend_stret<MTLClearColor>(NativePtr, sel_clearColor);
                 }
-                else
-                {
-                    return MTLClearColor_objc_msgSend(NativePtr,sel_clearColor);
-                }
+
+                return MTLClearColor_objc_msgSend(NativePtr,sel_clearColor);
             }
             set => objc_msgSend(NativePtr, sel_setClearColor, value);
         }

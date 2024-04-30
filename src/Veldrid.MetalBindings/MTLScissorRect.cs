@@ -11,10 +11,10 @@ namespace Veldrid.MetalBindings
 
         public MTLScissorRect(uint x, uint y, uint width, uint height)
         {
-            this.x = (UIntPtr)x;
-            this.y = (UIntPtr)y;
-            this.width = (UIntPtr)width;
-            this.height = (UIntPtr)height;
+            this.x = x;
+            this.y = y;
+            this.width = width;
+            this.height = height;
         }
 
         public bool Equals(MTLScissorRect other)
