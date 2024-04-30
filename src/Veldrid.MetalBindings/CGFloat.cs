@@ -1,6 +1,3 @@
-using System;
-using System.Runtime.CompilerServices;
-
 namespace Veldrid.MetalBindings
 {
     // TODO: Technically this should be "pointer-sized",
