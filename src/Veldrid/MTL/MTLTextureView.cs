@@ -4,7 +4,7 @@ namespace Veldrid.MTL
 {
     internal class MtlTextureView : TextureView
     {
-        public MetalBindings.MTLTexture TargetDeviceTexture { get; }
+        public MTLTexture TargetDeviceTexture { get; }
 
         public override bool IsDisposed => disposed;
 

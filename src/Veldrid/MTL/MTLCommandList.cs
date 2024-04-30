@@ -23,9 +23,9 @@ namespace Veldrid.MTL
         private readonly Dictionary<UIntPtr, DeviceBufferRange> boundFragmentBuffers = new Dictionary<UIntPtr, DeviceBufferRange>();
         private readonly Dictionary<UIntPtr, DeviceBufferRange> boundComputeBuffers = new Dictionary<UIntPtr, DeviceBufferRange>();
 
-        private readonly Dictionary<UIntPtr, MetalBindings.MTLTexture> boundVertexTextures = new Dictionary<UIntPtr, MetalBindings.MTLTexture>();
-        private readonly Dictionary<UIntPtr, MetalBindings.MTLTexture> boundFragmentTextures = new Dictionary<UIntPtr, MetalBindings.MTLTexture>();
-        private readonly Dictionary<UIntPtr, MetalBindings.MTLTexture> boundComputeTextures = new Dictionary<UIntPtr, MetalBindings.MTLTexture>();
+        private readonly Dictionary<UIntPtr, MTLTexture> boundVertexTextures = new Dictionary<UIntPtr, MTLTexture>();
+        private readonly Dictionary<UIntPtr, MTLTexture> boundFragmentTextures = new Dictionary<UIntPtr, MTLTexture>();
+        private readonly Dictionary<UIntPtr, MTLTexture> boundComputeTextures = new Dictionary<UIntPtr, MTLTexture>();
 
         private readonly Dictionary<UIntPtr, MTLSamplerState> boundVertexSamplers = new Dictionary<UIntPtr, MTLSamplerState>();
         private readonly Dictionary<UIntPtr, MTLSamplerState> boundFragmentSamplers = new Dictionary<UIntPtr, MTLSamplerState>();

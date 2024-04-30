@@ -23,7 +23,7 @@ namespace Veldrid.MTL
             }
         }
 
-        public MetalBindings.MTLBuffer DeviceBuffer { get; }
+        public MTLBuffer DeviceBuffer { get; }
 
         public unsafe void* Pointer { get; private set; }
         private string name;

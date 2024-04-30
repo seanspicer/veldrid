@@ -8,12 +8,12 @@ namespace Veldrid.MTL
         /// <summary>
         ///     The native MTLTexture object. This property is only valid for non-staging Textures.
         /// </summary>
-        public MetalBindings.MTLTexture DeviceTexture { get; }
+        public MTLTexture DeviceTexture { get; }
 
         /// <summary>
         ///     The staging MTLBuffer object. This property is only valid for staging Textures.
         /// </summary>
-        public MetalBindings.MTLBuffer StagingBuffer { get; }
+        public MTLBuffer StagingBuffer { get; }
 
         public override PixelFormat Format { get; }
 
@@ -111,7 +111,7 @@ namespace Veldrid.MTL
 
         public MtlTexture(ulong nativeTexture, ref TextureDescription description)
         {
-            DeviceTexture = new MetalBindings.MTLTexture((IntPtr)nativeTexture);
+            DeviceTexture = new MTLTexture((IntPtr)nativeTexture);
             Width = description.Width;
             Height = description.Height;
             Depth = description.Depth;
