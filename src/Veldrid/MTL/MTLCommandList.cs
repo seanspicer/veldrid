@@ -254,6 +254,7 @@ namespace Veldrid.MTL
                         layer + srcBaseArrayLayer);
                     srcMtlTexture.GetSubresourceLayout(
                         srcMipLevel,
+                        srcBaseArrayLayer + layer,
                         out uint srcRowPitch,
                         out uint srcDepthPitch);
                     ulong sourceOffset = srcSubresourceBase
@@ -295,6 +296,7 @@ namespace Veldrid.MTL
                         layer + srcBaseArrayLayer);
                     srcMtlTexture.GetSubresourceLayout(
                         srcMipLevel,
+                        srcBaseArrayLayer + layer,
                         out uint srcRowPitch,
                         out uint srcDepthPitch);
 
@@ -304,6 +306,7 @@ namespace Veldrid.MTL
                         layer + dstBaseArrayLayer);
                     dstMtlTexture.GetSubresourceLayout(
                         dstMipLevel,
+                        dstBaseArrayLayer + layer,
                         out uint dstRowPitch,
                         out uint dstDepthPitch);
 
@@ -381,6 +384,7 @@ namespace Veldrid.MTL
                 {
                     dstMtlTexture.GetSubresourceLayout(
                         dstMipLevel,
+                        dstBaseArrayLayer + layer,
                         out uint dstBytesPerRow,
                         out uint dstBytesPerImage);
 

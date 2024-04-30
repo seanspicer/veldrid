@@ -419,8 +419,8 @@ namespace Veldrid.MTL
             var data = texture.StagingBufferPointer;
             Util.GetMipLevelAndArrayLayer(texture, subresource, out uint mipLevel, out uint arrayLayer);
             Util.GetMipDimensions(texture, mipLevel, out uint _, out uint _, out uint _);
-            uint subresourceSize = texture.GetSubresourceSize(mipLevel);
-            texture.GetSubresourceLayout(mipLevel, out uint rowPitch, out uint depthPitch);
+            uint subresourceSize = texture.GetSubresourceSize(mipLevel, arrayLayer);
+            texture.GetSubresourceLayout(mipLevel, arrayLayer, out uint rowPitch, out uint depthPitch);
             ulong offset = Util.ComputeSubresourceOffset(texture, mipLevel, arrayLayer);
             byte* offsetPtr = (byte*)data + offset;
             return new MappedResource(texture, mode, (IntPtr)offsetPtr, subresourceSize, subresource, rowPitch, depthPitch);
@@ -608,7 +608,7 @@ namespace Veldrid.MTL
             }
             else
             {
-                mtlTex.GetSubresourceLayout(mipLevel, out uint dstRowPitch, out uint dstDepthPitch);
+                mtlTex.GetSubresourceLayout(mipLevel, arrayLayer, out uint dstRowPitch, out uint dstDepthPitch);
                 ulong dstOffset = Util.ComputeSubresourceOffset(mtlTex, mipLevel, arrayLayer);
                 uint srcRowPitch = FormatHelpers.GetRowPitch(width, texture.Format);
                 uint srcDepthPitch = FormatHelpers.GetDepthPitch(srcRowPitch, height, texture.Format);
