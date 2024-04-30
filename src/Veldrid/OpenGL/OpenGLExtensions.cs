@@ -108,6 +108,7 @@ namespace Veldrid.OpenGL
             {
                 if (this.major > major)
                     return true;
+
                 return this.major == major && this.minor >= minor;
             }
 
@@ -120,6 +121,7 @@ namespace Veldrid.OpenGL
             {
                 if (this.major > major)
                     return true;
+
                 return this.major == major && this.minor >= minor;
             }
 

@@ -312,6 +312,7 @@ namespace Veldrid.Vk
                         {
                             ulong alignmentCorrection = alignment - freeBlock.Offset % alignment;
                             if (alignedBlockSize <= alignmentCorrection) continue;
+
                             alignedBlockSize -= alignmentCorrection;
                         }
 

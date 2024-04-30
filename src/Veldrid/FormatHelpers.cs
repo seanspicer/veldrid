@@ -178,6 +178,7 @@ namespace Veldrid
         {
             if (IsCompressedFormat(realFormat))
                 return isSrgbCounterpart(viewFormat, realFormat);
+
             return GetViewFamilyFormat(viewFormat) == GetViewFamilyFormat(realFormat);
         }
 

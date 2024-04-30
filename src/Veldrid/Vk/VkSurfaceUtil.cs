@@ -26,21 +26,25 @@ namespace Veldrid.Vk
                 case XlibSwapchainSource xlibSource:
                     if (doCheck && !gd.HasSurfaceExtension(CommonStrings.VkKhrXlibSurfaceExtensionName))
                         throw new VeldridException($"The required instance extension was not available: {CommonStrings.VkKhrXlibSurfaceExtensionName}");
+
                     return createXlib(instance, xlibSource);
 
                 case WaylandSwapchainSource waylandSource:
                     if (doCheck && !gd.HasSurfaceExtension(CommonStrings.VkKhrWaylandSurfaceExtensionName))
                         throw new VeldridException($"The required instance extension was not available: {CommonStrings.VkKhrWaylandSurfaceExtensionName}");
+
                     return createWayland(instance, waylandSource);
 
                 case Win32SwapchainSource win32Source:
                     if (doCheck && !gd.HasSurfaceExtension(CommonStrings.VkKhrWin32SurfaceExtensionName))
                         throw new VeldridException($"The required instance extension was not available: {CommonStrings.VkKhrWin32SurfaceExtensionName}");
+
                     return createWin32(instance, win32Source);
 
                 case AndroidSurfaceSwapchainSource androidSource:
                     if (doCheck && !gd.HasSurfaceExtension(CommonStrings.VkKhrAndroidSurfaceExtensionName))
                         throw new VeldridException($"The required instance extension was not available: {CommonStrings.VkKhrAndroidSurfaceExtensionName}");
+
                     return createAndroidSurface(instance, androidSource);
 
                 case NSWindowSwapchainSource nsWindowSource:
@@ -49,6 +53,7 @@ namespace Veldrid.Vk
                         bool hasMetalExtension = gd.HasSurfaceExtension(CommonStrings.VkExtMetalSurfaceExtensionName);
                         if (hasMetalExtension || gd.HasSurfaceExtension(CommonStrings.VkMvkMacosSurfaceExtensionName))
                             return createNSWindowSurface(gd, instance, nsWindowSource, hasMetalExtension);
+
                         throw new VeldridException("Neither macOS surface extension was available: " +
                                                    $"{CommonStrings.VkMvkMacosSurfaceExtensionName}, {CommonStrings.VkExtMetalSurfaceExtensionName}");
                     }
@@ -61,6 +66,7 @@ namespace Veldrid.Vk
                         bool hasMetalExtension = gd.HasSurfaceExtension(CommonStrings.VkExtMetalSurfaceExtensionName);
                         if (hasMetalExtension || gd.HasSurfaceExtension(CommonStrings.VkMvkMacosSurfaceExtensionName))
                             return createNSViewSurface(gd, instance, nsViewSource, hasMetalExtension);
+
                         throw new VeldridException("Neither macOS surface extension was available: " +
                                                    $"{CommonStrings.VkMvkMacosSurfaceExtensionName}, {CommonStrings.VkExtMetalSurfaceExtensionName}");
                     }
@@ -73,6 +79,7 @@ namespace Veldrid.Vk
                         bool hasMetalExtension = gd.HasSurfaceExtension(CommonStrings.VkExtMetalSurfaceExtensionName);
                         if (hasMetalExtension || gd.HasSurfaceExtension(CommonStrings.VkMvkIOSSurfaceExtensionName))
                             return createUIViewSurface(gd, instance, uiViewSource, hasMetalExtension);
+
                         throw new VeldridException("Neither macOS surface extension was available: " +
                                                    $"{CommonStrings.VkMvkMacosSurfaceExtensionName}, {CommonStrings.VkMvkIOSSurfaceExtensionName}");
                     }

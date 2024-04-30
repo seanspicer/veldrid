@@ -946,11 +946,13 @@ namespace Veldrid
             if (width == 0 || height == 0 || depth == 0) throw new VeldridException("The given copy region is empty.");
 
             if (layerCount == 0) throw new VeldridException($"{nameof(layerCount)} must be greater than 0.");
+
             Util.GetMipDimensions(source, srcMipLevel, out uint srcWidth, out uint srcHeight, out uint srcDepth);
             uint srcBlockSize = FormatHelpers.IsCompressedFormat(source.Format) ? 4u : 1u;
             uint roundedSrcWidth = (srcWidth + srcBlockSize - 1) / srcBlockSize * srcBlockSize;
             uint roundedSrcHeight = (srcHeight + srcBlockSize - 1) / srcBlockSize * srcBlockSize;
             if (srcX + width > roundedSrcWidth || srcY + height > roundedSrcHeight || srcZ + depth > srcDepth) throw new VeldridException("The given copy region is not valid for the source Texture.");
+
             Util.GetMipDimensions(destination, dstMipLevel, out uint dstWidth, out uint dstHeight, out uint dstDepth);
             uint dstBlockSize = FormatHelpers.IsCompressedFormat(destination.Format) ? 4u : 1u;
             uint roundedDstWidth = (dstWidth + dstBlockSize - 1) / dstBlockSize * dstBlockSize;
@@ -959,12 +961,14 @@ namespace Veldrid
                 throw new VeldridException("The given copy region is not valid for the destination Texture.");
 
             if (srcMipLevel >= source.MipLevels) throw new VeldridException($"{nameof(srcMipLevel)} must be less than the number of mip levels in the source Texture.");
+
             uint effectiveSrcArrayLayers = (source.Usage & TextureUsage.Cubemap) != 0
                 ? source.ArrayLayers * 6
                 : source.ArrayLayers;
             if (srcBaseArrayLayer + layerCount > effectiveSrcArrayLayers) throw new VeldridException("An invalid mip range was given for the source Texture.");
 
             if (dstMipLevel >= destination.MipLevels) throw new VeldridException($"{nameof(dstMipLevel)} must be less than the number of mip levels in the destination Texture.");
+
             uint effectiveDstArrayLayers = (destination.Usage & TextureUsage.Cubemap) != 0
                 ? destination.ArrayLayers * 6
                 : destination.ArrayLayers;

@@ -39,6 +39,7 @@ namespace Veldrid.OpenGL
             {
                 if (this.gd.BackendType == GraphicsBackend.OpenGLES)
                     throw new VeldridException("Compute shaders require OpenGL ES 3.1.");
+
                 throw new VeldridException("Compute shaders require OpenGL 4.3 or ARB_compute_shader.");
             }
 #endif

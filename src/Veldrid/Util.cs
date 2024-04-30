@@ -13,6 +13,7 @@ namespace Veldrid
                 return min;
             if (value >= max)
                 return max;
+
             return value;
         }
 
@@ -74,6 +75,7 @@ namespace Veldrid
         {
             if (resource is DeviceBufferRange range)
                 return new DeviceBufferRange(range.Buffer, range.Offset + additionalOffset, range.SizeInBytes);
+
             var buffer = (DeviceBuffer)resource;
             return new DeviceBufferRange(buffer, additionalOffset, buffer.SizeInBytes);
         }
@@ -247,6 +249,7 @@ namespace Veldrid
 
             if (resource is Texture tex)
                 return tex.GetFullTextureView(gd);
+
             throw new VeldridException(
                 $"Unexpected resource type. Expected Texture or TextureView but found {resource.GetType().Name}");
         }

@@ -572,6 +572,7 @@ namespace Veldrid.Vk
             {
                 if (RuntimeInformation.OSDescription.Contains("Unix")) // Android
                     return instanceExtensions.Contains(CommonStrings.VkKhrAndroidSurfaceExtensionName);
+
                 return instanceExtensions.Contains(CommonStrings.VkKhrXlibSurfaceExtensionName);
             }
 
@@ -723,6 +724,7 @@ namespace Veldrid.Vk
         {
             if (availableSubmissionFences.TryDequeue(out var availableFence))
                 return availableFence;
+
             var fenceCi = VkFenceCreateInfo.New();
             var result = vkCreateFence(device, ref fenceCi, null, out var newFence);
             CheckResult(result);
@@ -1079,6 +1081,7 @@ namespace Veldrid.Vk
         {
             IntPtr funcPtr = getInstanceProcAddr(name);
             if (funcPtr != IntPtr.Zero) return Marshal.GetDelegateForFunctionPointer<T>(funcPtr);
+
             return default;
         }
 
@@ -1097,6 +1100,7 @@ namespace Veldrid.Vk
         {
             IntPtr funcPtr = getDeviceProcAddr(name);
             if (funcPtr != IntPtr.Zero) return Marshal.GetDelegateForFunctionPointer<T>(funcPtr);
+
             return default;
         }
 
@@ -1167,6 +1171,7 @@ namespace Veldrid.Vk
         {
             if (buffer.Memory.IsPersistentMapped)
                 return (IntPtr)buffer.Memory.BlockMappedPointer;
+
             void* mappedPtr;
             var result = vkMapMemory(Device, buffer.Memory.DeviceMemory, buffer.Memory.Offset, numBytes, 0, &mappedPtr);
             CheckResult(result);

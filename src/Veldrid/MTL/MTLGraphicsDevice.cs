@@ -296,6 +296,7 @@ namespace Veldrid.MTL
         {
             if (resource is MtlBuffer buffer)
                 return mapBuffer(buffer, mode);
+
             var texture = Util.AssertSubtype<IMappableResource, MtlTexture>(resource);
             return mapTexture(texture, mode, subresource);
         }

@@ -72,6 +72,7 @@ namespace Veldrid.Vk
                 Surface = existingSurface;
 
             if (!getPresentQueueIndex(out presentQueueIndex)) throw new VeldridException("The system does not support presenting the given Vulkan surface.");
+
             vkGetDeviceQueue(this.gd.Device, presentQueueIndex, 0, out presentQueue);
 
             framebuffer = new VkSwapchainFramebuffer(gd, this, Surface, description.Width, description.Height, description.DepthFormat);

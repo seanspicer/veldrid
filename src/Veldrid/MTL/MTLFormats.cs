@@ -334,6 +334,7 @@ namespace Veldrid.MTL
                         return arrayLayers > 1 ? MTLTextureType.TypeCubeArray : MTLTextureType.TypeCube;
                     if (multiSampled)
                         return MTLTextureType.Type2DMultisample;
+
                     return arrayLayers > 1 ? MTLTextureType.Type2DArray : MTLTextureType.Type2D;
 
                 case TextureType.Texture3D:
