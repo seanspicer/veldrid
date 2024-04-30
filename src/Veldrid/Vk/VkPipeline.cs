@@ -12,7 +12,7 @@ namespace Veldrid.Vk
         public VkPipelineLayout PipelineLayout => pipelineLayout;
 
         public uint ResourceSetCount { get; }
-        public int DynamicOffsetsCount { get; }
+        public uint DynamicOffsetsCount { get; }
         public bool ScissorTestEnabled { get; }
 
         public override bool IsComputePipeline { get; }
@@ -292,11 +292,11 @@ namespace Veldrid.Vk
             var depthAttachmentDesc = new VkAttachmentDescription();
             var depthAttachmentRef = new VkAttachmentReference();
 
-            if (outputDesc.DepthAttachment != null)
+            if (outputDesc.DepthAttachment is OutputAttachmentDescription depthAttachment)
             {
-                var depthFormat = outputDesc.DepthAttachment.Value.Format;
+                var depthFormat = depthAttachment.Format;
                 bool hasStencil = FormatHelpers.IsStencilFormat(depthFormat);
-                depthAttachmentDesc.format = VkFormats.VdToVkPixelFormat(outputDesc.DepthAttachment.Value.Format, true);
+                depthAttachmentDesc.format = VkFormats.VdToVkPixelFormat(depthAttachment.Format, true);
                 depthAttachmentDesc.samples = vkSampleCount;
                 depthAttachmentDesc.loadOp = VkAttachmentLoadOp.DontCare;
                 depthAttachmentDesc.storeOp = VkAttachmentStoreOp.Store;
@@ -348,7 +348,8 @@ namespace Veldrid.Vk
 
             ResourceSetCount = (uint)description.ResourceLayouts.Length;
             DynamicOffsetsCount = 0;
-            foreach (VkResourceLayout layout in description.ResourceLayouts) DynamicOffsetsCount += layout.DynamicBufferCount;
+            foreach (ResourceLayout layout in description.ResourceLayouts)
+                DynamicOffsetsCount += layout.DynamicBufferCount;
         }
 
         public VkPipeline(VkGraphicsDevice gd, ref ComputePipelineDescription description)
@@ -423,7 +424,8 @@ namespace Veldrid.Vk
 
             ResourceSetCount = (uint)description.ResourceLayouts.Length;
             DynamicOffsetsCount = 0;
-            foreach (VkResourceLayout layout in description.ResourceLayouts) DynamicOffsetsCount += layout.DynamicBufferCount;
+            foreach (ResourceLayout layout in description.ResourceLayouts)
+                DynamicOffsetsCount += layout.DynamicBufferCount;
         }
 
         #region Disposal

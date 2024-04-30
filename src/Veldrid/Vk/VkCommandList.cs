@@ -174,12 +174,13 @@ namespace Veldrid.Vk
             commandBufferBegun = false;
             commandBufferEnded = true;
 
-            if (!currentFramebufferEverActive && currentFramebuffer != null) beginCurrentRenderPass();
+            if (!currentFramebufferEverActive && currentFramebuffer != null)
+                beginCurrentRenderPass();
 
             if (activeRenderPass != VkRenderPass.Null)
             {
                 endCurrentRenderPass();
-                currentFramebuffer.TransitionToFinalLayout(CommandBuffer);
+                currentFramebuffer?.TransitionToFinalLayout(CommandBuffer);
             }
 
             vkEndCommandBuffer(CommandBuffer);
@@ -340,7 +341,7 @@ namespace Veldrid.Vk
                     baseArrayLayer = dstBaseArrayLayer
                 };
 
-                Util.GetMipDimensions(srcVkTexture, srcMipLevel, out uint mipWidth, out uint mipHeight, out uint mipDepth);
+                Util.GetMipDimensions(srcVkTexture, srcMipLevel, out uint mipWidth, out uint mipHeight, out uint _);
                 uint blockSize = FormatHelpers.IsCompressedFormat(srcVkTexture.Format) ? 4u : 1u;
                 uint bufferRowLength = Math.Max(mipWidth, blockSize);
                 uint bufferImageHeight = Math.Max(mipHeight, blockSize);
@@ -381,7 +382,7 @@ namespace Veldrid.Vk
                         VkImageLayout.ShaderReadOnlyOptimal);
                 }
             }
-            else if (!sourceIsStaging && destIsStaging)
+            else if (!sourceIsStaging)
             {
                 var srcImage = srcVkTexture.OptimalDeviceImage;
                 srcVkTexture.TransitionImageLayout(
@@ -398,7 +399,7 @@ namespace Veldrid.Vk
                     ? VkImageAspectFlags.Depth
                     : VkImageAspectFlags.Color;
 
-                Util.GetMipDimensions(dstVkTexture, dstMipLevel, out uint mipWidth, out uint mipHeight, out uint mipDepth);
+                Util.GetMipDimensions(dstVkTexture, dstMipLevel, out uint mipWidth, out uint mipHeight, out uint _);
                 uint blockSize = FormatHelpers.IsCompressedFormat(srcVkTexture.Format) ? 4u : 1u;
                 uint bufferRowLength = Math.Max(mipWidth, blockSize);
                 uint bufferImageHeight = Math.Max(mipHeight, blockSize);
@@ -617,7 +618,7 @@ namespace Veldrid.Vk
                 currentGraphicsResourceSets[slot].Offsets.Dispose();
                 currentGraphicsResourceSets[slot] = new BoundResourceSetInfo(rs, dynamicOffsetsCount, ref dynamicOffsets);
                 graphicsResourceSetsChanged[slot] = true;
-                var vkRs = Util.AssertSubtype<ResourceSet, VkResourceSet>(rs);
+                Util.AssertSubtype<ResourceSet, VkResourceSet>(rs);
             }
         }
 
@@ -628,7 +629,7 @@ namespace Veldrid.Vk
                 currentComputeResourceSets[slot].Offsets.Dispose();
                 currentComputeResourceSets[slot] = new BoundResourceSetInfo(rs, dynamicOffsetsCount, ref dynamicOffsets);
                 computeResourceSetsChanged[slot] = true;
-                var vkRs = Util.AssertSubtype<ResourceSet, VkResourceSet>(rs);
+                Util.AssertSubtype<ResourceSet, VkResourceSet>(rs);
             }
         }
 
@@ -741,7 +742,7 @@ namespace Veldrid.Vk
             var pipeline = bindPoint == VkPipelineBindPoint.Graphics ? currentGraphicsPipeline : currentComputePipeline;
 
             var descriptorSets = stackalloc VkDescriptorSet[(int)resourceSetCount];
-            uint* dynamicOffsets = stackalloc uint[pipeline.DynamicOffsetsCount];
+            uint* dynamicOffsets = stackalloc uint[(int)pipeline.DynamicOffsetsCount];
             uint currentBatchCount = 0;
             uint currentBatchFirstSet = 0;
             uint currentBatchDynamicOffsetCount = 0;
@@ -1105,9 +1106,10 @@ namespace Veldrid.Vk
 
             if (activeRenderPass != VkRenderPass.Null)
             {
-                var aspect = FormatHelpers.IsStencilFormat(currentFramebuffer.DepthTarget.Value.Target.Format)
+                var aspect = currentFramebuffer.DepthTarget is FramebufferAttachment depthAttachment && FormatHelpers.IsStencilFormat(depthAttachment.Target.Format)
                     ? VkImageAspectFlags.Depth | VkImageAspectFlags.Stencil
                     : VkImageAspectFlags.Depth;
+
                 var clearAttachment = new VkClearAttachment
                 {
                     aspectMask = aspect,
@@ -1204,8 +1206,6 @@ namespace Veldrid.Vk
             uint layerCount = vkTex.ArrayLayers;
             if ((vkTex.Usage & TextureUsage.Cubemap) != 0) layerCount *= 6;
 
-            VkImageBlit region;
-
             uint width = vkTex.Width;
             uint height = vkTex.Height;
             uint depth = vkTex.Depth;
@@ -1220,26 +1220,28 @@ namespace Veldrid.Vk
                 uint mipHeight = Math.Max(height >> 1, 1);
                 uint mipDepth = Math.Max(depth >> 1, 1);
 
-                region.srcSubresource = new VkImageSubresourceLayers
+                VkImageBlit region = new VkImageBlit
                 {
-                    aspectMask = VkImageAspectFlags.Color,
-                    baseArrayLayer = 0,
-                    layerCount = layerCount,
-                    mipLevel = level - 1
+                    srcSubresource = new VkImageSubresourceLayers
+                    {
+                        aspectMask = VkImageAspectFlags.Color,
+                        baseArrayLayer = 0,
+                        layerCount = layerCount,
+                        mipLevel = level - 1
+                    },
+                    srcOffsets_0 = new VkOffset3D(),
+                    srcOffsets_1 = new VkOffset3D { x = (int)width, y = (int)height, z = (int)depth },
+                    dstOffsets_0 = new VkOffset3D(),
+                    dstSubresource = new VkImageSubresourceLayers
+                    {
+                        aspectMask = VkImageAspectFlags.Color,
+                        baseArrayLayer = 0,
+                        layerCount = layerCount,
+                        mipLevel = level
+                    },
+                    dstOffsets_1 = new VkOffset3D { x = (int)mipWidth, y = (int)mipHeight, z = (int)mipDepth }
                 };
-                region.srcOffsets_0 = new VkOffset3D();
-                region.srcOffsets_1 = new VkOffset3D { x = (int)width, y = (int)height, z = (int)depth };
-                region.dstOffsets_0 = new VkOffset3D();
 
-                region.dstSubresource = new VkImageSubresourceLayers
-                {
-                    aspectMask = VkImageAspectFlags.Color,
-                    baseArrayLayer = 0,
-                    layerCount = layerCount,
-                    mipLevel = level
-                };
-
-                region.dstOffsets_1 = new VkOffset3D { x = (int)mipWidth, y = (int)mipHeight, z = (int)mipDepth };
                 vkCmdBlitImage(
                     CommandBuffer,
                     deviceImage, VkImageLayout.TransferSrcOptimal,

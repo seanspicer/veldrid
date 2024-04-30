@@ -37,11 +37,9 @@ namespace Veldrid.Vk
             imageViewCi.image = tex.OptimalDeviceImage;
             imageViewCi.format = VkFormats.VdToVkPixelFormat(Format, (Target.Usage & TextureUsage.DepthStencil) != 0);
 
-            VkImageAspectFlags aspectFlags;
-            if ((description.Target.Usage & TextureUsage.DepthStencil) == TextureUsage.DepthStencil)
-                aspectFlags = VkImageAspectFlags.Depth;
-            else
-                aspectFlags = VkImageAspectFlags.Color;
+            var aspectFlags = (description.Target.Usage & TextureUsage.DepthStencil) == TextureUsage.DepthStencil
+                ? VkImageAspectFlags.Depth
+                : VkImageAspectFlags.Color;
 
             imageViewCi.subresourceRange = new VkImageSubresourceRange(
                 aspectFlags,

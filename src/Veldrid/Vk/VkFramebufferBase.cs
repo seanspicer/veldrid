@@ -16,7 +16,7 @@ namespace Veldrid.Vk
         public abstract VkRenderPass RenderPassClear { get; }
         public abstract uint AttachmentCount { get; }
 
-        public VkFramebufferBase(
+        protected VkFramebufferBase(
             FramebufferAttachmentDescription? depthTexture,
             IReadOnlyList<FramebufferAttachmentDescription> colorTextures)
             : base(depthTexture, colorTextures)
@@ -24,7 +24,7 @@ namespace Veldrid.Vk
             RefCount = new ResourceRefCount(DisposeCore);
         }
 
-        public VkFramebufferBase()
+        protected VkFramebufferBase()
         {
             RefCount = new ResourceRefCount(DisposeCore);
         }

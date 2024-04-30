@@ -686,7 +686,7 @@ namespace Veldrid.D3D11
 
         private void bindTextureView(D3D11TextureView texView, int slot, ShaderStages stages, uint resourceSet)
         {
-            var srv = texView?.ShaderResourceView ?? null;
+            var srv = texView?.ShaderResourceView;
 
             if (srv != null)
             {
@@ -738,7 +738,7 @@ namespace Veldrid.D3D11
                 else
                     bind = true;
 
-                if (bind) DeviceContext.PSSetShaderResource(slot, srv);
+                if (bind) DeviceContext.PSSetShaderResource(slot, srv!);
             }
 
             if ((stages & ShaderStages.Compute) == ShaderStages.Compute) DeviceContext.CSSetShaderResource(slot, srv);
@@ -924,7 +924,7 @@ namespace Veldrid.D3D11
             if (compute)
                 DeviceContext.CSSetUnorderedAccessView(actualSlot, uav);
             else
-                DeviceContext.OMSetUnorderedAccessView(actualSlot, uav);
+                DeviceContext.OMSetUnorderedAccessView(actualSlot, uav!);
         }
 
         private void trackBoundUavBuffer(DeviceBuffer buffer, int slot, bool compute)
@@ -1062,87 +1062,65 @@ namespace Veldrid.D3D11
                 clearSets(graphicsResourceSets); // Invalidate resource set bindings -- they may be invalid.
                 Util.ClearArray(invalidatedGraphicsResourceSets);
 
-                var blendState = d3dPipeline.BlendState;
-                var blendFactor = d3dPipeline.BlendFactor;
-
-                if (this.blendState != blendState || this.blendFactor != blendFactor)
+                if (blendState != d3dPipeline.BlendState || blendFactor != d3dPipeline.BlendFactor)
                 {
-                    this.blendState = blendState;
-                    this.blendFactor = blendFactor;
+                    blendState = d3dPipeline.BlendState;
+                    blendFactor = d3dPipeline.BlendFactor;
                     DeviceContext.OMSetBlendState(blendState, blendFactor);
                 }
 
-                var depthStencilState = d3dPipeline.DepthStencilState;
-                uint stencilReference = d3dPipeline.StencilReference;
-
-                if (this.depthStencilState != depthStencilState || this.stencilReference != stencilReference)
+                if (depthStencilState != d3dPipeline.DepthStencilState || stencilReference != d3dPipeline.StencilReference)
                 {
-                    this.depthStencilState = depthStencilState;
-                    this.stencilReference = stencilReference;
+                    depthStencilState = d3dPipeline.DepthStencilState;
+                    stencilReference = d3dPipeline.StencilReference;
                     DeviceContext.OMSetDepthStencilState(depthStencilState, (int)stencilReference);
                 }
 
-                var rasterizerState = d3dPipeline.RasterizerState;
-
-                if (this.rasterizerState != rasterizerState)
+                if (rasterizerState != d3dPipeline.RasterizerState)
                 {
-                    this.rasterizerState = rasterizerState;
+                    rasterizerState = d3dPipeline.RasterizerState;
                     DeviceContext.RSSetState(rasterizerState);
                 }
 
-                var primitiveTopology = d3dPipeline.PrimitiveTopology;
-
-                if (this.primitiveTopology != primitiveTopology)
+                if (primitiveTopology != d3dPipeline.PrimitiveTopology)
                 {
-                    this.primitiveTopology = primitiveTopology;
+                    primitiveTopology = d3dPipeline.PrimitiveTopology;
                     DeviceContext.IASetPrimitiveTopology(primitiveTopology);
                 }
 
-                var inputLayout = d3dPipeline.InputLayout;
-
-                if (this.inputLayout != inputLayout)
+                if (inputLayout != d3dPipeline.InputLayout)
                 {
-                    this.inputLayout = inputLayout;
+                    inputLayout = d3dPipeline.InputLayout;
                     DeviceContext.IASetInputLayout(inputLayout);
                 }
 
-                var vertexShader = d3dPipeline.VertexShader;
-
-                if (this.vertexShader != vertexShader)
+                if (vertexShader != d3dPipeline.VertexShader)
                 {
-                    this.vertexShader = vertexShader;
+                    vertexShader = d3dPipeline.VertexShader;
                     DeviceContext.VSSetShader(vertexShader);
                 }
 
-                var geometryShader = d3dPipeline.GeometryShader;
-
-                if (this.geometryShader != geometryShader)
+                if (geometryShader != d3dPipeline.GeometryShader)
                 {
-                    this.geometryShader = geometryShader;
+                    geometryShader = d3dPipeline.GeometryShader;
                     DeviceContext.GSSetShader(geometryShader);
                 }
 
-                var hullShader = d3dPipeline.HullShader;
-
-                if (this.hullShader != hullShader)
+                if (hullShader != d3dPipeline.HullShader)
                 {
-                    this.hullShader = hullShader;
+                    hullShader = d3dPipeline.HullShader;
                     DeviceContext.HSSetShader(hullShader);
                 }
 
-                var domainShader = d3dPipeline.DomainShader;
-
-                if (this.domainShader != domainShader)
+                if (domainShader != d3dPipeline.DomainShader)
                 {
-                    this.domainShader = domainShader;
+                    domainShader = d3dPipeline.DomainShader;
                     DeviceContext.DSSetShader(domainShader);
                 }
 
-                var pixelShader = d3dPipeline.PixelShader;
-
-                if (this.pixelShader != pixelShader)
+                if (pixelShader != d3dPipeline.PixelShader)
                 {
-                    this.pixelShader = pixelShader;
+                    pixelShader = d3dPipeline.PixelShader;
                     DeviceContext.PSSetShader(pixelShader);
                 }
 
@@ -1237,20 +1215,22 @@ namespace Veldrid.D3D11
 
             if (useUpdateSubresource)
             {
-                Box? subregion = new Box((int)bufferOffsetInBytes, 0, 0, (int)(sizeInBytes + bufferOffsetInBytes), 1, 1);
-                if (isUniformBuffer) subregion = null;
+                Box subregion = new Box((int)bufferOffsetInBytes, 0, 0, (int)(sizeInBytes + bufferOffsetInBytes), 1, 1);
+
+                if (isUniformBuffer)
+                    subregion = default;
 
                 if (bufferOffsetInBytes == 0)
                     DeviceContext.UpdateSubresource(d3dBuffer.Buffer, 0, subregion, source, 0, 0);
                 else
-                    UpdateSubresource_Workaround(d3dBuffer.Buffer, 0, subregion.Value, source);
+                    UpdateSubresource_Workaround(d3dBuffer.Buffer, 0, subregion, source);
             }
             else if (useMap && updateFullBuffer) // Can only update full buffer with WriteDiscard.
             {
                 var msb = DeviceContext.Map(
                     d3dBuffer.Buffer,
                     0,
-                    D3D11Formats.VdToD3D11MapMode(isDynamic, MapMode.Write));
+                    D3D11Formats.VdToD3D11MapMode(true, MapMode.Write));
                 if (sizeInBytes < 1024)
                     Unsafe.CopyBlock(msb.DataPointer.ToPointer(), source.ToPointer(), sizeInBytes);
                 else

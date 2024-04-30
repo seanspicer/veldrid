@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.Contracts;
 using System.Runtime.InteropServices;
 using static Veldrid.MetalBindings.ObjectiveCRuntime;
 
@@ -71,6 +72,7 @@ namespace Veldrid.MetalBindings
             return new MTLRenderPipelineState(ret);
         }
 
+        [Pure]
         public MTLComputePipelineState newComputePipelineStateWithDescriptor(
             MTLComputePipelineDescriptor descriptor)
         {

@@ -1,18 +1,14 @@
-﻿using Vulkan;
-
-namespace Veldrid.Vk
+﻿namespace Veldrid.Vk
 {
     internal class VkResourceFactory : ResourceFactory
     {
         public override GraphicsBackend BackendType => GraphicsBackend.Vulkan;
         private readonly VkGraphicsDevice gd;
-        private readonly VkDevice device;
 
         public VkResourceFactory(VkGraphicsDevice vkGraphicsDevice)
             : base(vkGraphicsDevice.Features)
         {
             gd = vkGraphicsDevice;
-            device = vkGraphicsDevice.Device;
         }
 
         public override CommandList CreateCommandList(ref CommandListDescription description)

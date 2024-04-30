@@ -12,7 +12,6 @@ namespace Veldrid.Vk
         private const ulong min_dedicated_allocation_size_dynamic = 1024 * 1024 * 64;
         private const ulong min_dedicated_allocation_size_non_dynamic = 1024 * 1024 * 256;
         private readonly VkDevice device;
-        private readonly VkPhysicalDevice physicalDevice;
         private readonly ulong bufferImageGranularity;
         private readonly object @lock = new object();
         private readonly Dictionary<uint, ChunkAllocatorSet> allocatorsByMemoryTypeUnmapped = new Dictionary<uint, ChunkAllocatorSet>();
@@ -20,17 +19,14 @@ namespace Veldrid.Vk
 
         private readonly VkGetBufferMemoryRequirements2T getBufferMemoryRequirements2;
         private readonly VkGetImageMemoryRequirements2T getImageMemoryRequirements2;
-        private ulong totalAllocatedBytes;
 
         public VkDeviceMemoryManager(
             VkDevice device,
-            VkPhysicalDevice physicalDevice,
             ulong bufferImageGranularity,
             VkGetBufferMemoryRequirements2T getBufferMemoryRequirements2,
             VkGetImageMemoryRequirements2T getImageMemoryRequirements2)
         {
             this.device = device;
-            this.physicalDevice = physicalDevice;
             this.bufferImageGranularity = bufferImageGranularity;
             this.getBufferMemoryRequirements2 = getBufferMemoryRequirements2;
             this.getImageMemoryRequirements2 = getImageMemoryRequirements2;
@@ -103,8 +99,6 @@ namespace Veldrid.Vk
                 size = (size / bufferImageGranularity + 1) * bufferImageGranularity;
             }
 
-            totalAllocatedBytes += size;
-
             lock (@lock)
             {
                 if (!TryFindMemoryType(memProperties, memoryTypeBits, flags, out uint memoryTypeIndex)) throw new VeldridException("No suitable memory type.");
@@ -119,6 +113,7 @@ namespace Veldrid.Vk
                     allocateInfo.allocationSize = size;
                     allocateInfo.memoryTypeIndex = memoryTypeIndex;
 
+                    // ReSharper disable once TooWideLocalVariableScope
                     VkMemoryDedicatedAllocateInfoKHR dedicatedAi;
 
                     if (dedicated)
@@ -153,8 +148,6 @@ namespace Veldrid.Vk
 
         public void Free(VkMemoryBlock block)
         {
-            totalAllocatedBytes -= block.Size;
-
             lock (@lock)
             {
                 if (block.DedicatedAllocation)
@@ -174,7 +167,7 @@ namespace Veldrid.Vk
 
         private ChunkAllocatorSet getAllocator(uint memoryTypeIndex, bool persistentMapped)
         {
-            ChunkAllocatorSet ret = null;
+            ChunkAllocatorSet ret;
 
             if (persistentMapped)
             {
@@ -249,20 +242,15 @@ namespace Veldrid.Vk
             private const ulong unmapped_chunk_size = 1024 * 1024 * 256;
             private readonly VkDevice device;
             private readonly uint memoryTypeIndex;
-            private readonly bool persistentMapped;
             private readonly List<VkMemoryBlock> freeBlocks = new List<VkMemoryBlock>();
             private readonly VkDeviceMemory memory;
             private readonly void* mappedPtr;
-
-            private readonly ulong totalMemorySize;
-            private ulong totalAllocatedBytes;
 
             public ChunkAllocator(VkDevice device, uint memoryTypeIndex, bool persistentMapped)
             {
                 this.device = device;
                 this.memoryTypeIndex = memoryTypeIndex;
-                this.persistentMapped = persistentMapped;
-                totalMemorySize = persistentMapped ? persistent_mapped_chunk_size : unmapped_chunk_size;
+                ulong totalMemorySize = persistentMapped ? persistent_mapped_chunk_size : unmapped_chunk_size;
 
                 var memoryAi = VkMemoryAllocateInfo.New();
                 memoryAi.allocationSize = totalMemorySize;
@@ -270,22 +258,22 @@ namespace Veldrid.Vk
                 var result = vkAllocateMemory(this.device, ref memoryAi, null, out memory);
                 CheckResult(result);
 
-                void* mappedPtr = null;
-
                 if (persistentMapped)
                 {
-                    result = vkMapMemory(this.device, memory, 0, totalMemorySize, 0, &mappedPtr);
-                    CheckResult(result);
-                }
+                    void* ptr = null;
 
-                this.mappedPtr = mappedPtr;
+                    result = vkMapMemory(this.device, memory, 0, totalMemorySize, 0, &ptr);
+                    CheckResult(result);
+
+                    mappedPtr = ptr;
+                }
 
                 var initialBlock = new VkMemoryBlock(
                     memory,
                     0,
                     totalMemorySize,
                     this.memoryTypeIndex,
-                    this.mappedPtr,
+                    mappedPtr,
                     false);
                 freeBlocks.Add(initialBlock);
             }
@@ -342,7 +330,6 @@ namespace Veldrid.Vk
 #if DEBUG
                             checkAllocatedBlock(block);
 #endif
-                            totalAllocatedBytes += alignedBlockSize;
                             return true;
                         }
                     }
@@ -371,7 +358,6 @@ namespace Veldrid.Vk
 #if DEBUG
                 removeAllocatedBlock(block);
 #endif
-                totalAllocatedBytes -= block.Size;
             }
 
             private void mergeContiguousBlocks()

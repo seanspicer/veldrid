@@ -9,6 +9,8 @@ namespace Veldrid.MTL
     internal unsafe class MtlcvDisplayLink : IMtlDisplayLink
     {
         private CVDisplayLink displayLink;
+
+        // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
         private readonly CVDisplayLinkOutputCallbackDelegate cvDisplayLinkCallbackHandler;
 
         public MtlcvDisplayLink()

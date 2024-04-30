@@ -45,7 +45,6 @@ namespace Veldrid.Vk
         }
 
         private readonly VkGraphicsDevice gd;
-        private readonly VkSurfaceKHR surface;
         private readonly PixelFormat? depthFormat;
 
         private VkFramebuffer[] scFramebuffers;
@@ -71,7 +70,6 @@ namespace Veldrid.Vk
         {
             this.gd = gd;
             Swapchain = swapchain;
-            this.surface = surface;
             this.depthFormat = depthFormat;
 
             AttachmentCount = depthFormat.HasValue ? 2u : 1u; // 1 Color + 1 Depth

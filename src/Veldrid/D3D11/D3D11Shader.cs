@@ -115,8 +115,8 @@ namespace Veldrid.D3D11
             }
 
             var flags = description.Debug ? ShaderFlags.Debug : ShaderFlags.OptimizationLevel3;
-            Compiler.Compile(description.ShaderBytes, null, null,
-                description.EntryPoint, null,
+            Compiler.Compile(description.ShaderBytes, null!, null!,
+                description.EntryPoint, null!,
                 profile, flags, out var result, out var error);
 
             if (result == null) throw new VeldridException($"Failed to compile HLSL code: {Encoding.ASCII.GetString(error.AsBytes())}");

@@ -99,9 +99,7 @@ namespace Veldrid
         {
             lock (fullTextureViewLock)
             {
-                if (fullTextureView == null) fullTextureView = CreateFullTextureView(gd);
-
-                return fullTextureView;
+                return fullTextureView ??= CreateFullTextureView(gd);
             }
         }
 

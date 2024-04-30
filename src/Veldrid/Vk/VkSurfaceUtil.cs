@@ -58,7 +58,7 @@ namespace Veldrid.Vk
                                                    $"{CommonStrings.VkMvkMacosSurfaceExtensionName}, {CommonStrings.VkExtMetalSurfaceExtensionName}");
                     }
 
-                    return createNSWindowSurface(gd, instance, nsWindowSource, false);
+                    return createNSWindowSurface(null, instance, nsWindowSource, false);
 
                 case NSViewSwapchainSource nsViewSource:
                     if (doCheck)
@@ -71,7 +71,7 @@ namespace Veldrid.Vk
                                                    $"{CommonStrings.VkMvkMacosSurfaceExtensionName}, {CommonStrings.VkExtMetalSurfaceExtensionName}");
                     }
 
-                    return createNSViewSurface(gd, instance, nsViewSource, false);
+                    return createNSViewSurface(null, instance, nsViewSource, false);
 
                 case UIViewSwapchainSource uiViewSource:
                     if (doCheck)
@@ -84,7 +84,7 @@ namespace Veldrid.Vk
                                                    $"{CommonStrings.VkMvkMacosSurfaceExtensionName}, {CommonStrings.VkMvkIOSSurfaceExtensionName}");
                     }
 
-                    return createUIViewSurface(gd, instance, uiViewSource, false);
+                    return createUIViewSurface(null, instance, uiViewSource, false);
 
                 default:
                     throw new VeldridException("The provided SwapchainSource cannot be used to create a Vulkan surface.");
@@ -199,7 +199,7 @@ namespace Veldrid.Vk
             {
                 var surfaceCi = VkIOSSurfaceCreateInfoMVK.New();
                 surfaceCi.pView = uiView.NativePtr.ToPointer();
-                var result = vkCreateIOSSurfaceMVK(instance, ref surfaceCi, null, out var surface);
+                vkCreateIOSSurfaceMVK(instance, ref surfaceCi, null, out var surface);
                 return surface;
             }
         }
