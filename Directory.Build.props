@@ -16,11 +16,11 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <PackageLicenseUrl>https://raw.githubusercontent.com/mellinoe/veldrid/master/LICENSE</PackageLicenseUrl>
+    <PackageLicenseUrl>https://raw.githubusercontent.com/ppy/veldrid/master/LICENSE</PackageLicenseUrl>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <Copyright>Copyright 2020 (c) Eric Mellino. All rights reserved.</Copyright>
-    <Authors>Eric Mellino</Authors>
-    <RepositoryUrl>https://github.com/mellinoe/veldrid</RepositoryUrl>
+    <Copyright>Copyright 2024 (c) Eric Mellino and Veldrid contributors. All rights reserved.</Copyright>
+    <Authors>Eric Mellino, ppy Pty Ltd</Authors>
+    <RepositoryUrl>https://github.com/ppy/veldrid</RepositoryUrl>
   </PropertyGroup>
 
   <PropertyGroup>
