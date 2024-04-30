@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -89,7 +90,6 @@ namespace Veldrid.OpenGL
         private uint vao;
         private IntPtr glContext;
         private Action<IntPtr> makeCurrent;
-        private Func<IntPtr> getCurrentContext;
         private Action<IntPtr> deleteContext;
         private Action swapBuffers;
         private Action<bool> setSyncToVBlank;
@@ -101,8 +101,8 @@ namespace Veldrid.OpenGL
 
         private TextureSampleCount maxColorTextureSamples;
         private uint maxTextureSize;
-        private uint maxTexDepth;
-        private uint maxTexArrayLayers;
+        private uint maxTextureDepth;
+        private uint maxTextureArrayLayers;
         private uint minUboOffsetAlignment;
         private uint minSsboOffsetAlignment;
         private BlockingCollection<ExecutionThreadWorkItem> workItems;
@@ -167,10 +167,10 @@ namespace Veldrid.OpenGL
             bool result;
 
             if (waitAll)
-                result = WaitHandle.WaitAll(events, msTimeout);
+                result = WaitHandle.WaitAll(events.Cast<WaitHandle>().ToArray(), msTimeout);
             else
             {
-                int index = WaitHandle.WaitAny(events, msTimeout);
+                int index = WaitHandle.WaitAny(events.Cast<WaitHandle>().ToArray(), msTimeout);
                 result = index != WaitHandle.WaitTimeout;
             }
 
@@ -327,7 +327,6 @@ namespace Veldrid.OpenGL
             syncToVBlank = options.SyncToVerticalBlank;
             glContext = platformInfo.OpenGLContextHandle;
             makeCurrent = platformInfo.MakeCurrent;
-            getCurrentContext = platformInfo.GetCurrentContext;
             deleteContext = platformInfo.DeleteContext;
             swapBuffers = platformInfo.SwapBuffers;
             setSyncToVBlank = platformInfo.SetSyncToVerticalBlank;
@@ -336,7 +335,7 @@ namespace Veldrid.OpenGL
             ShadingLanguageVersion = Util.GetString(glGetString(StringName.ShadingLanguageVersion));
             vendorName = Util.GetString(glGetString(StringName.Vendor));
             deviceName = Util.GetString(glGetString(StringName.Renderer));
-            backendType = Version.StartsWith("OpenGL ES") ? GraphicsBackend.OpenGLES : GraphicsBackend.OpenGL;
+            backendType = Version.StartsWith("OpenGL ES", StringComparison.Ordinal) ? GraphicsBackend.OpenGLES : GraphicsBackend.OpenGL;
 
             LoadAllFunctions(glContext, platformInfo.GetProcAddress, backendType == GraphicsBackend.OpenGLES);
 
@@ -445,34 +444,30 @@ namespace Veldrid.OpenGL
             TextureSamplerManager = new OpenGLTextureSamplerManager(Extensions);
             commandExecutor = new OpenGLCommandExecutor(this, platformInfo);
 
-            int maxColorTextureSamples;
+            int maxColorTextureSamplesInt;
 
             if (backendType == GraphicsBackend.OpenGL)
             {
-                glGetIntegerv(GetPName.MaxColorTextureSamples, &maxColorTextureSamples);
+                glGetIntegerv(GetPName.MaxColorTextureSamples, &maxColorTextureSamplesInt);
                 CheckLastError();
             }
             else
             {
-                glGetIntegerv(GetPName.MaxSamples, &maxColorTextureSamples);
+                glGetIntegerv(GetPName.MaxSamples, &maxColorTextureSamplesInt);
                 CheckLastError();
             }
 
-            if (maxColorTextureSamples >= 32)
-                this.maxColorTextureSamples = TextureSampleCount.Count32;
-            else if (maxColorTextureSamples >= 16)
-                this.maxColorTextureSamples = TextureSampleCount.Count16;
-            else if (maxColorTextureSamples >= 8)
-                this.maxColorTextureSamples = TextureSampleCount.Count8;
-            else if (maxColorTextureSamples >= 4)
-                this.maxColorTextureSamples = TextureSampleCount.Count4;
-            else if (maxColorTextureSamples >= 2)
-                this.maxColorTextureSamples = TextureSampleCount.Count2;
-            else
-                this.maxColorTextureSamples = TextureSampleCount.Count1;
+            maxColorTextureSamples = maxColorTextureSamplesInt switch
+            {
+                >= 32 => TextureSampleCount.Count32,
+                >= 16 => TextureSampleCount.Count16,
+                >= 8 => TextureSampleCount.Count8,
+                >= 4 => TextureSampleCount.Count4,
+                >= 2 => TextureSampleCount.Count2,
+                _ => TextureSampleCount.Count1
+            };
 
             int maxTexSize;
-
             glGetIntegerv(GetPName.MaxTextureSize, &maxTexSize);
             CheckLastError();
 
@@ -492,8 +487,8 @@ namespace Veldrid.OpenGL
             }
 
             maxTextureSize = (uint)maxTexSize;
-            this.maxTexDepth = (uint)maxTexDepth;
-            this.maxTexArrayLayers = (uint)maxTexArrayLayers;
+            maxTextureDepth = (uint)maxTexDepth;
+            maxTextureArrayLayers = (uint)maxTexArrayLayers;
 
             mainSwapchain = new OpenGLSwapchain(
                 this,
@@ -633,9 +628,9 @@ namespace Veldrid.OpenGL
             CheckLastError();
 
             uint depthRb = 0;
-            bool hasDepth = options.SwapchainDepthFormat != null;
+            PixelFormat? depthFormat = options.SwapchainDepthFormat;
 
-            if (hasDepth)
+            if (depthFormat != null)
             {
                 glGenRenderbuffers(1, out depthRb);
                 CheckLastError();
@@ -645,7 +640,7 @@ namespace Veldrid.OpenGL
 
                 glRenderbufferStorage(
                     RenderbufferTarget.Renderbuffer,
-                    (uint)OpenGLFormats.VdToGLSizedInternalFormat(options.SwapchainDepthFormat.Value, true),
+                    (uint)OpenGLFormats.VdToGLSizedInternalFormat(depthFormat.Value, true),
                     (uint)fbWidth,
                     (uint)fbHeight);
                 CheckLastError();
@@ -670,7 +665,7 @@ namespace Veldrid.OpenGL
                 if (!EaglContext.SetCurrentContext(ctx)) throw new VeldridException("Unable to set the thread's current GL context.");
             };
 
-            Action swapBuffers = () =>
+            Action swapBuffersFunc = () =>
             {
                 glBindRenderbuffer(RenderbufferTarget.Renderbuffer, colorRb);
                 CheckLastError();
@@ -712,7 +707,7 @@ namespace Veldrid.OpenGL
                         out int newHeight);
                     CheckLastError();
 
-                    if (hasDepth)
+                    if (depthFormat != null)
                     {
                         Debug.Assert(depthRb != 0);
                         glBindRenderbuffer(RenderbufferTarget.Renderbuffer, depthRb);
@@ -720,7 +715,7 @@ namespace Veldrid.OpenGL
 
                         glRenderbufferStorage(
                             RenderbufferTarget.Renderbuffer,
-                            (uint)OpenGLFormats.VdToGLSizedInternalFormat(options.SwapchainDepthFormat.Value, true),
+                            (uint)OpenGLFormats.VdToGLSizedInternalFormat(depthFormat.Value, true),
                             (uint)newWidth,
                             (uint)newHeight);
                         CheckLastError();
@@ -743,7 +738,7 @@ namespace Veldrid.OpenGL
                 () => EaglContext.CurrentContext.NativePtr,
                 () => setCurrentContext(IntPtr.Zero),
                 destroyContext,
-                swapBuffers,
+                swapBuffersFunc,
                 syncInterval => { },
                 setSwapchainFramebuffer,
                 resizeSwapchain);
@@ -807,19 +802,19 @@ namespace Veldrid.OpenGL
             IntPtr context = eglCreateContext(display, bestConfig, IntPtr.Zero, contextAttribs);
             if (context == IntPtr.Zero) throw new VeldridException("Failed to create an EGLContext: " + eglGetError());
 
-            Action<IntPtr> makeCurrent = ctx =>
+            Action<IntPtr> makeCurrentFunc = ctx =>
             {
                 if (eglMakeCurrent(display, eglWindowSurface, eglWindowSurface, ctx) == 0) throw new VeldridException($"Failed to make the EGLContext {ctx} current: {eglGetError()}");
             };
 
-            makeCurrent(context);
+            makeCurrentFunc(context);
 
             Action clearContext = () =>
             {
                 if (eglMakeCurrent(display, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero) == 0) throw new VeldridException("Failed to clear the current EGLContext: " + eglGetError());
             };
 
-            Action swapBuffers = () =>
+            Action swapBuffersFunc = () =>
             {
                 if (eglSwapBuffers(display, eglWindowSurface) == 0) throw new VeldridException("Failed to swap buffers: " + eglGetError());
             };
@@ -840,11 +835,11 @@ namespace Veldrid.OpenGL
             var platformInfo = new OpenGLPlatformInfo(
                 context,
                 eglGetProcAddress,
-                makeCurrent,
+                makeCurrentFunc,
                 eglGetCurrentContext,
                 clearContext,
                 destroyContext,
-                swapBuffers,
+                swapBuffersFunc,
                 setSync);
 
             init(options, platformInfo, swapchainDescription.Width, swapchainDescription.Height, true);
@@ -975,9 +970,9 @@ namespace Veldrid.OpenGL
             properties = new PixelFormatProperties(
                 maxTextureSize,
                 type == TextureType.Texture1D ? 1 : maxTextureSize,
-                type != TextureType.Texture3D ? 1 : maxTexDepth,
+                type != TextureType.Texture3D ? 1 : maxTextureDepth,
                 uint.MaxValue,
-                type == TextureType.Texture3D ? 1 : maxTexArrayLayers,
+                type == TextureType.Texture3D ? 1 : maxTextureArrayLayers,
                 sampleCounts);
             return true;
         }
@@ -1280,7 +1275,7 @@ namespace Veldrid.OpenGL
 
                         case WorkItemType.SetSyncToVerticalBlank:
                         {
-                            bool value = workItem.UInt0 == 1 ? true : false;
+                            bool value = workItem.UInt0 == 1;
                             gd.setSyncToVBlank(value);
                         }
                             break;
@@ -1695,6 +1690,8 @@ namespace Veldrid.OpenGL
             public readonly object Object1;
             public readonly uint UInt0;
             public readonly uint UInt1;
+
+            // ReSharper disable once NotAccessedField.Local
             public readonly uint UInt2;
 
             public ExecutionThreadWorkItem(

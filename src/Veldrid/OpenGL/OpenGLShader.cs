@@ -34,18 +34,19 @@ namespace Veldrid.OpenGL
         public OpenGLShader(OpenGLGraphicsDevice gd, ShaderStages stage, StagingBlock stagingBlock, string entryPoint)
             : base(stage, entryPoint)
         {
+            this.gd = gd;
+            this.stagingBlock = stagingBlock;
+            shaderType = OpenGLFormats.VdToGLShaderType(stage);
+
 #if VALIDATE_USAGE
             if (stage == ShaderStages.Compute && !gd.Extensions.ComputeShaders)
             {
-                if (this.gd.BackendType == GraphicsBackend.OpenGLES)
+                if (gd.BackendType == GraphicsBackend.OpenGLES)
                     throw new VeldridException("Compute shaders require OpenGL ES 3.1.");
 
                 throw new VeldridException("Compute shaders require OpenGL 4.3 or ARB_compute_shader.");
             }
 #endif
-            this.gd = gd;
-            shaderType = OpenGLFormats.VdToGLShaderType(stage);
-            this.stagingBlock = stagingBlock;
         }
 
         #region Disposal
@@ -118,9 +119,7 @@ namespace Veldrid.OpenGL
                 glGetShaderInfoLog(Shader, (uint)infoLogLength, &returnedInfoLength, infoLog);
                 CheckLastError();
 
-                string message = infoLog != null
-                    ? Encoding.UTF8.GetString(infoLog, (int)returnedInfoLength)
-                    : "<null>";
+                string message = Encoding.UTF8.GetString(infoLog, (int)returnedInfoLength);
 
                 throw new VeldridException($"Unable to compile shader code for shader [{name}] of type {shaderType}: {message}");
             }

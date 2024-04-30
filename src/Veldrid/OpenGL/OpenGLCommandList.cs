@@ -185,7 +185,7 @@ namespace Veldrid.OpenGL
             {
                 if (availableLists.Count > 0)
                 {
-                    var ret = availableLists[availableLists.Count - 1];
+                    var ret = availableLists[^1];
                     availableLists.RemoveAt(availableLists.Count - 1);
                     return ret;
                 }

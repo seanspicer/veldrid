@@ -71,13 +71,14 @@ namespace Veldrid.OpenGL
 
             if (gd.Extensions.ArbDirectStateAccess)
             {
-                uint buffer;
-                glCreateBuffers(1, &buffer);
+                uint b;
+                glCreateBuffers(1, &b);
                 CheckLastError();
-                this.buffer = buffer;
+
+                buffer = b;
 
                 glNamedBufferData(
-                    this.buffer,
+                    buffer,
                     SizeInBytes,
                     null,
                     dynamic ? BufferUsageHint.DynamicDraw : BufferUsageHint.StaticDraw);
@@ -104,8 +105,8 @@ namespace Veldrid.OpenGL
 
         public void DestroyGLResources()
         {
-            uint buffer = this.buffer;
-            glDeleteBuffers(1, ref buffer);
+            uint b = buffer;
+            glDeleteBuffers(1, ref b);
             CheckLastError();
         }
     }

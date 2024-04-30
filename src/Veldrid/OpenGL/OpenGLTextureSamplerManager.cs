@@ -11,7 +11,6 @@ namespace Veldrid.OpenGL
     internal unsafe class OpenGLTextureSamplerManager
     {
         private readonly bool dsaAvailable;
-        private readonly int maxTextureUnits;
         private readonly uint lastTextureUnit;
         private readonly OpenGLTextureView[] textureUnitTextures;
         private readonly BoundSamplerStateInfo[] textureUnitSamplers;
@@ -20,14 +19,15 @@ namespace Veldrid.OpenGL
         public OpenGLTextureSamplerManager(OpenGLExtensions extensions)
         {
             dsaAvailable = extensions.ArbDirectStateAccess;
-            int maxTextureUnits;
-            glGetIntegerv(GetPName.MaxCombinedTextureImageUnits, &maxTextureUnits);
-            CheckLastError();
-            this.maxTextureUnits = Math.Max(maxTextureUnits, 8); // OpenGL spec indicates that implementations must support at least 8.
-            textureUnitTextures = new OpenGLTextureView[this.maxTextureUnits];
-            textureUnitSamplers = new BoundSamplerStateInfo[this.maxTextureUnits];
 
-            lastTextureUnit = (uint)(this.maxTextureUnits - 1);
+            int maxTexUnits;
+            glGetIntegerv(GetPName.MaxCombinedTextureImageUnits, &maxTexUnits);
+            CheckLastError();
+            maxTexUnits = Math.Max(maxTexUnits, 8); // OpenGL spec indicates that implementations must support at least 8.
+
+            textureUnitTextures = new OpenGLTextureView[maxTexUnits];
+            textureUnitSamplers = new BoundSamplerStateInfo[maxTexUnits];
+            lastTextureUnit = (uint)(maxTexUnits - 1);
         }
 
         public void SetTexture(uint textureUnit, OpenGLTextureView textureView)

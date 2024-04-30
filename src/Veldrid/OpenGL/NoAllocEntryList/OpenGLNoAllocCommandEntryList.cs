@@ -623,7 +623,7 @@ namespace Veldrid.OpenGL.NoAllocEntryList
         {
             private const int default_storage_block_size = 40000;
             private readonly byte[] bytes;
-            private readonly GCHandle gcHandle;
+            private GCHandle gcHandle;
             public readonly byte* BasePtr;
 
             private uint unusedStart;
@@ -683,7 +683,7 @@ namespace Veldrid.OpenGL.NoAllocEntryList
     {
         private readonly int index;
 
-        public T Get(List<object> list)
+        public readonly T Get(List<object> list)
         {
             return (T)list[index];
         }
