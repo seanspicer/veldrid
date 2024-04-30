@@ -180,7 +180,7 @@ namespace Veldrid.Vk
             if (activeRenderPass != VkRenderPass.Null)
             {
                 endCurrentRenderPass();
-                currentFramebuffer?.TransitionToFinalLayout(CommandBuffer);
+                currentFramebuffer!.TransitionToFinalLayout(CommandBuffer);
             }
 
             vkEndCommandBuffer(CommandBuffer);
