@@ -176,7 +176,7 @@ namespace Veldrid.MTL
 
         public override void UpdateActiveDisplay(int x, int y, int w, int h)
         {
-            if (displayLink != null) displayLink.UpdateActiveDisplay(x, y, w, h);
+            displayLink?.UpdateActiveDisplay(x, y, w, h);
         }
 
         public override double GetActualRefreshPeriod()

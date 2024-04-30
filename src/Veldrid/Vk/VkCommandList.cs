@@ -594,7 +594,7 @@ namespace Veldrid.Vk
                 endCurrentRenderPass();
             }
 
-            if (currentFramebuffer != null) currentFramebuffer.TransitionToFinalLayout(CommandBuffer);
+            currentFramebuffer?.TransitionToFinalLayout(CommandBuffer);
 
             var vkFb = Util.AssertSubtype<Framebuffer, VkFramebufferBase>(fb);
             currentFramebuffer = vkFb;
@@ -1275,9 +1275,8 @@ namespace Veldrid.Vk
         private protected override void PopDebugGroupCore()
         {
             var func = gd.MarkerEnd;
-            if (func == null) return;
 
-            func(CommandBuffer);
+            func?.Invoke(CommandBuffer);
         }
 
         private protected override void InsertDebugMarkerCore(string name)

@@ -38,7 +38,7 @@ namespace Veldrid.OpenGL
         public override void Begin()
         {
             ClearCachedState();
-            if (CurrentCommands != null) CurrentCommands.Dispose();
+            CurrentCommands?.Dispose();
 
             CurrentCommands = getFreeCommandList();
             CurrentCommands.Begin();

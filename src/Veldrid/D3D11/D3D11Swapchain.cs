@@ -169,7 +169,7 @@ namespace Veldrid.D3D11
             if (framebuffer != null)
             {
                 resizeBuffers = true;
-                if (depthTexture != null) depthTexture.Dispose();
+                depthTexture?.Dispose();
 
                 backBufferTexture.Dispose();
                 framebuffer.Dispose();

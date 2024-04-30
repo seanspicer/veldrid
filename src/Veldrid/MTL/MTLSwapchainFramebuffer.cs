@@ -74,7 +74,7 @@ namespace Veldrid.MTL
         private void recreateDepthTexture(uint width, uint height)
         {
             Debug.Assert(depthFormat.HasValue);
-            if (depthTexture != null) depthTexture.Dispose();
+            depthTexture?.Dispose();
 
             depthTexture = Util.AssertSubtype<Texture, MtlTexture>(
                 gd.ResourceFactory.CreateTexture(TextureDescription.Texture2D(
