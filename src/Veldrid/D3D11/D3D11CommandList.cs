@@ -1009,16 +1009,16 @@ namespace Veldrid.D3D11
         private unsafe void UpdateSubresource_Workaround(
             ID3D11Resource resource,
             int subresource,
-            Box region,
+            Box? region,
             IntPtr data)
         {
             bool needWorkaround = !gd.SupportsCommandLists;
             var pAdjustedSrcData = data.ToPointer();
 
-            if (needWorkaround)
+            if (needWorkaround && region is Box dstRegion)
             {
-                Debug.Assert(region.Top == 0 && region.Front == 0);
-                pAdjustedSrcData = (byte*)data - region.Left;
+                Debug.Assert(dstRegion.Top == 0 && dstRegion.Front == 0);
+                pAdjustedSrcData = (byte*)data - dstRegion.Left;
             }
 
             DeviceContext.UpdateSubresource(resource, subresource, region, (IntPtr)pAdjustedSrcData, 0, 0);
@@ -1215,10 +1215,10 @@ namespace Veldrid.D3D11
 
             if (useUpdateSubresource)
             {
-                Box subregion = new Box((int)bufferOffsetInBytes, 0, 0, (int)(sizeInBytes + bufferOffsetInBytes), 1, 1);
+                Box? subregion = new Box((int)bufferOffsetInBytes, 0, 0, (int)(sizeInBytes + bufferOffsetInBytes), 1, 1);
 
                 if (isUniformBuffer)
-                    subregion = default;
+                    subregion = null;
 
                 if (bufferOffsetInBytes == 0)
                     DeviceContext.UpdateSubresource(d3dBuffer.Buffer, 0, subregion, source, 0, 0);
