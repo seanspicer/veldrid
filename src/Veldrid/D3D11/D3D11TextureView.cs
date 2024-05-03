@@ -37,7 +37,11 @@ namespace Veldrid.D3D11
                 description.BaseArrayLayer,
                 description.ArrayLayers,
                 Format);
+
             ShaderResourceView = device.CreateShaderResourceView(d3dTex.DeviceTexture, srvDesc);
+
+            // See: https://github.com/ppy/veldrid/issues/53
+            GC.SuppressFinalize(ShaderResourceView);
 
             if ((d3dTex.Usage & TextureUsage.Storage) == TextureUsage.Storage)
             {
@@ -93,6 +97,9 @@ namespace Veldrid.D3D11
                 }
 
                 UnorderedAccessView = device.CreateUnorderedAccessView(d3dTex.DeviceTexture, uavDesc);
+
+                // See: https://github.com/ppy/veldrid/issues/53
+                GC.SuppressFinalize(UnorderedAccessView);
             }
         }
 
