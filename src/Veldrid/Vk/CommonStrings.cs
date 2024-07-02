@@ -1,4 +1,4 @@
-﻿namespace Veldrid.Vk
+namespace Veldrid.Vk
 {
     internal static class CommonStrings
     {
@@ -16,8 +16,9 @@
         public static FixedUtf8String VkExtDebugMarkerExtensionName { get; } = "VK_EXT_debug_marker";
         public static FixedUtf8String StandardValidationLayerName { get; } = "VK_LAYER_LUNARG_standard_validation";
         public static FixedUtf8String KhronosValidationLayerName { get; } = "VK_LAYER_KHRONOS_validation";
-        public static FixedUtf8String Main { get; } = "main";
-        public static FixedUtf8String VkKhrGetPhysicalDeviceProperties2 { get; } = "VK_KHR_get_physical_device_properties2";
-        public static FixedUtf8String VkKhrPortabilitySubset { get; } = "VK_KHR_portability_subset";
+        public static FixedUtf8String main { get; } = "main";
+        public static FixedUtf8String VK_KHR_get_physical_device_properties2 { get; } = "VK_KHR_get_physical_device_properties2";
+        public static FixedUtf8String VK_KHR_portability_subset { get; } = "VK_KHR_portability_subset";
+        public static FixedUtf8String VK_KHR_portability_enumeration { get; } = "VK_KHR_portability_enumeration";
     }
 }

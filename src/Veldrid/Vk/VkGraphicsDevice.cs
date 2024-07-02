@@ -14,6 +14,9 @@ namespace Veldrid.Vk
     internal unsafe class VkGraphicsDevice : GraphicsDevice
     {
         public override string DeviceName => deviceName;
+        private const uint VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR = 0x00000001;
+        private static readonly FixedUtf8String s_name = "Veldrid-VkGraphicsDevice";
+        private static readonly Lazy<bool> s_isSupported = new Lazy<bool>(CheckIsSupported, isThreadSafe: true);
 
         public override string VendorName => vendorName;
 
@@ -767,6 +770,11 @@ namespace Veldrid.Vk
             if (availableInstanceExtensions.Contains(CommonStrings.VkKhrPortabilitySubset)) surfaceExtensions.Add(CommonStrings.VkKhrPortabilitySubset);
 
             if (availableInstanceExtensions.Contains(CommonStrings.VkKhrSurfaceExtensionName)) surfaceExtensions.Add(CommonStrings.VkKhrSurfaceExtensionName);
+            if (availableInstanceExtensions.Contains(CommonStrings.VK_KHR_portability_enumeration))
+            {
+                instanceExtensions.Add(CommonStrings.VK_KHR_portability_enumeration);
+                instanceCI.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+            }
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
