@@ -409,7 +409,7 @@ namespace Veldrid.Vk
             var stageCi = VkPipelineShaderStageCreateInfo.New();
             stageCi.module = vkShader.ShaderModule;
             stageCi.stage = VkFormats.VdToVkShaderStages(shader.Stage);
-            stageCi.pName = CommonStrings.Main; // Meh
+            stageCi.pName = CommonStrings.main; // Meh
             stageCi.pSpecializationInfo = &specializationInfo;
             pipelineCi.stage = stageCi;
 

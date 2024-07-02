@@ -16,7 +16,7 @@ namespace Veldrid.Vk
         public override string DeviceName => deviceName;
         private const uint VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR = 0x00000001;
         private static readonly FixedUtf8String s_name = "Veldrid-VkGraphicsDevice";
-        private static readonly Lazy<bool> s_isSupported = new Lazy<bool>(CheckIsSupported, isThreadSafe: true);
+        private static readonly Lazy<bool> s_isSupported = new Lazy<bool>(checkIsSupported, isThreadSafe: true);
 
         public override string VendorName => vendorName;
 
@@ -65,7 +65,6 @@ namespace Veldrid.Vk
         public VkCreateMetalSurfaceExtT CreateMetalSurfaceExt { get; private set; }
 
         public override ResourceFactory ResourceFactory { get; }
-        private static readonly FixedUtf8String s_name = "Veldrid-VkGraphicsDevice";
         private static readonly Lazy<bool> s_is_supported = new Lazy<bool>(checkIsSupported, true);
         private readonly object graphicsCommandPoolLock = new object();
         private readonly object graphicsQueueLock = new object();
@@ -767,13 +766,13 @@ namespace Veldrid.Vk
             var instanceExtensions = new StackList<IntPtr, Size64Bytes>();
             var instanceLayers = new StackList<IntPtr, Size64Bytes>();
 
-            if (availableInstanceExtensions.Contains(CommonStrings.VkKhrPortabilitySubset)) surfaceExtensions.Add(CommonStrings.VkKhrPortabilitySubset);
+            if (availableInstanceExtensions.Contains(CommonStrings.VK_KHR_portability_subset)) surfaceExtensions.Add(CommonStrings.VK_KHR_portability_subset);
 
             if (availableInstanceExtensions.Contains(CommonStrings.VkKhrSurfaceExtensionName)) surfaceExtensions.Add(CommonStrings.VkKhrSurfaceExtensionName);
             if (availableInstanceExtensions.Contains(CommonStrings.VK_KHR_portability_enumeration))
             {
                 instanceExtensions.Add(CommonStrings.VK_KHR_portability_enumeration);
-                instanceCI.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+                instanceCi.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
             }
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -806,8 +805,8 @@ namespace Veldrid.Vk
 
             foreach (var ext in surfaceExtensions) instanceExtensions.Add(ext);
 
-            bool hasDeviceProperties2 = availableInstanceExtensions.Contains(CommonStrings.VkKhrGetPhysicalDeviceProperties2);
-            if (hasDeviceProperties2) instanceExtensions.Add(CommonStrings.VkKhrGetPhysicalDeviceProperties2);
+            bool hasDeviceProperties2 = availableInstanceExtensions.Contains(CommonStrings.VK_KHR_get_physical_device_properties2);
+            if (hasDeviceProperties2) instanceExtensions.Add(CommonStrings.VK_KHR_get_physical_device_properties2);
 
             string[] requestedInstanceExtensions = options.InstanceExtensions ?? Array.Empty<string>();
             var tempStrings = new List<FixedUtf8String>();
@@ -988,7 +987,7 @@ namespace Veldrid.Vk
                         requiredInstanceExtensions.Remove(extensionName);
                         hasDriverProperties = true;
                     }
-                    else if (extensionName == CommonStrings.VkKhrPortabilitySubset)
+                    else if (extensionName == CommonStrings.VK_KHR_portability_subset)
                     {
                         activeExtensions[activeExtensionCount++] = (IntPtr)properties[property].extensionName;
                         requiredInstanceExtensions.Remove(extensionName);
