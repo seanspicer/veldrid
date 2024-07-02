@@ -221,6 +221,8 @@ namespace Veldrid.D3D11
 
         private void recreateSwapchain()
         {
+            if (!OperatingSystem.IsWindows()) return;
+
             DxgiSwapChain?.Release();
             DxgiSwapChain?.Dispose();
             DxgiSwapChain = null;
