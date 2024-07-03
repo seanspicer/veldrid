@@ -102,13 +102,13 @@ namespace Veldrid.NeoDemo
             ReflectionViewProjBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
 
             MirrorClipPlaneBuffer = factory.CreateBuffer(new BufferDescription(32, BufferUsage.UniformBuffer));
-            gd.UpdateBuffer(MirrorClipPlaneBuffer, 0, new ClipPlaneInfo(MirrorMesh.Plane, true));
+            cl.UpdateBuffer(MirrorClipPlaneBuffer, 0, new ClipPlaneInfo(MirrorMesh.Plane, true));
             NoClipPlaneBuffer = factory.CreateBuffer(new BufferDescription(32, BufferUsage.UniformBuffer));
-            gd.UpdateBuffer(NoClipPlaneBuffer, 0, new ClipPlaneInfo());
+            cl.UpdateBuffer(NoClipPlaneBuffer, 0, new ClipPlaneInfo());
 
             RecreateWindowSizedResources(gd, cl);
 
-            ShadowMaps.CreateDeviceResources(gd);
+            //ShadowMaps.CreateDeviceResources(gd);
         }
 
         public virtual void DestroyDeviceObjects()

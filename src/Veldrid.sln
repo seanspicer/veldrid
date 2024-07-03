@@ -27,6 +27,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Veldrid.SDL2", "Veldrid.SDL
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Veldrid.SPIRV", "..\..\veldrid-spirv\src\Veldrid.SPIRV\Veldrid.SPIRV.csproj", "{A43A97BD-9170-480B-B356-9F0E4F942B6D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Velrid.TinyDemo", "Veldrid.TinyDemo\Velrid.TinyDemo.csproj", "{1CD55233-F23A-4ACA-A39A-ADA65C0AD48D}"
+EndProject
 Global
 	GlobalSection(Performance) = preSolution
 		HasPerformanceSessions = true
@@ -234,6 +236,22 @@ Global
 		{A43A97BD-9170-480B-B356-9F0E4F942B6D}.Release|x64.Build.0 = Release|Any CPU
 		{A43A97BD-9170-480B-B356-9F0E4F942B6D}.Release|x86.ActiveCfg = Release|Any CPU
 		{A43A97BD-9170-480B-B356-9F0E4F942B6D}.Release|x86.Build.0 = Release|Any CPU
+		{1CD55233-F23A-4ACA-A39A-ADA65C0AD48D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1CD55233-F23A-4ACA-A39A-ADA65C0AD48D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1CD55233-F23A-4ACA-A39A-ADA65C0AD48D}.Debug|ARM.ActiveCfg = Debug|Any CPU
+		{1CD55233-F23A-4ACA-A39A-ADA65C0AD48D}.Debug|ARM.Build.0 = Debug|Any CPU
+		{1CD55233-F23A-4ACA-A39A-ADA65C0AD48D}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{1CD55233-F23A-4ACA-A39A-ADA65C0AD48D}.Debug|x64.Build.0 = Debug|Any CPU
+		{1CD55233-F23A-4ACA-A39A-ADA65C0AD48D}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{1CD55233-F23A-4ACA-A39A-ADA65C0AD48D}.Debug|x86.Build.0 = Debug|Any CPU
+		{1CD55233-F23A-4ACA-A39A-ADA65C0AD48D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1CD55233-F23A-4ACA-A39A-ADA65C0AD48D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1CD55233-F23A-4ACA-A39A-ADA65C0AD48D}.Release|ARM.ActiveCfg = Release|Any CPU
+		{1CD55233-F23A-4ACA-A39A-ADA65C0AD48D}.Release|ARM.Build.0 = Release|Any CPU
+		{1CD55233-F23A-4ACA-A39A-ADA65C0AD48D}.Release|x64.ActiveCfg = Release|Any CPU
+		{1CD55233-F23A-4ACA-A39A-ADA65C0AD48D}.Release|x64.Build.0 = Release|Any CPU
+		{1CD55233-F23A-4ACA-A39A-ADA65C0AD48D}.Release|x86.ActiveCfg = Release|Any CPU
+		{1CD55233-F23A-4ACA-A39A-ADA65C0AD48D}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
