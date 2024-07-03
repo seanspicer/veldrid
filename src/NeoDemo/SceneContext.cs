@@ -108,7 +108,7 @@ namespace Veldrid.NeoDemo
 
             RecreateWindowSizedResources(gd, cl);
 
-            //ShadowMaps.CreateDeviceResources(gd);
+            ShadowMaps.CreateDeviceResources(gd);
         }
 
         public virtual void DestroyDeviceObjects()
