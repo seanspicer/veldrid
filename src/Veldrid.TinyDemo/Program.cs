@@ -1,11 +1,24 @@
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Numerics;
+using System.Text;
 using Veldrid;
 using Veldrid.Sdl2;
+using Veldrid.SPIRV;
 using Veldrid.StartupUtilities;
 
 namespace SampleExe
 {
+    public struct SceneData
+    {
+        public DeviceBuffer VertexBuffer;
+        public DeviceBuffer IndexBuffer;
+        public DeviceBuffer ModelViewBuffer;
+        public ResourceSet ModelViewResourceSet;
+        public Pipeline Pipeline;
+    }
+
     public class Program
     {
         public static void Main(string[] args)
@@ -45,53 +58,199 @@ namespace SampleExe
                 out window,
                 out gd);
 
-            var vtxBufferDesc =
-                new BufferDescription((uint) (Cube.Vertices.Length * VertexPositionColor.SizeInBytes), BufferUsage.VertexBuffer);
-            var vbo = gd.ResourceFactory.CreateBuffer(vtxBufferDesc);
+            var sd = new SceneData();
 
-            var idxBufferDesc =
-                new BufferDescription((uint) (Cube.Indices.Length * sizeof(uint)), BufferUsage.IndexBuffer);
-            var ibo = gd.ResourceFactory.CreateBuffer(idxBufferDesc);
-
-            string folder = gd.BackendType == GraphicsBackend.Direct3D11 ? "HLSL" : "GLSL";
-            string extension = gd.BackendType == GraphicsBackend.Direct3D11 ? "hlsl" : "glsl";
-
-            var resourceLayoutElementDescriptionList = new List<ResourceLayoutElementDescription>();
-            var bindableResourceList = new List<IBindableResource>();
-
-            var pd = new GraphicsPipelineDescription();
-            pd.PrimitiveTopology = PrimitiveTopology.TriangleList;
-
-            var modelViewBuffer =
-                gd.ResourceFactory.CreateBuffer(new BufferDescription(64u,
-                    BufferUsage.UniformBuffer | BufferUsage.Dynamic));
-
-            resourceLayoutElementDescriptionList.Add(
-                new ResourceLayoutElementDescription("Model", ResourceKind.UniformBuffer, ShaderStages.Vertex,
-                    ResourceLayoutElementOptions.DynamicBinding));
-
-            //bindableResourceList.Add(ri.ModelViewBuffer);
-            bindableResourceList.Add(
-                new DeviceBufferRange(modelViewBuffer, 0, 64u));
-
-            var vtxLayoutDescription = new VertexLayoutDescription(
-                new VertexElementDescription("Position", VertexElementSemantic.Position,
-                    VertexElementFormat.Float3),
-                new VertexElementDescription("TexCoords", VertexElementSemantic.Color,
-                    VertexElementFormat.Float4));
-
-            gd.ResourceFactory.CreateResourceLayout(
-                new ResourceLayoutDescription(resourceLayoutElementDescriptionList.ToArray()));
-
-            gd.UpdateBuffer(vbo, 0, Cube.Vertices);
-            gd.UpdateBuffer(ibo, 0, Cube.Indices);
+            CreateAllObjects(gd, ref sd);
 
             while (window.Exists)
             {
                 window.PumpEvents();
 
+                Draw(gd, ref sd);
+
                 gd.SwapBuffers();
             }
+
+            DestroyAllObjects();
+            gd.Dispose();
+        }
+
+        private static void Draw(GraphicsDevice gd, ref SceneData sd)
+        {
+            var cl = gd.ResourceFactory.CreateCommandList();
+            cl.Name = "Draw List";
+            cl.Begin();
+            {
+                cl.SetFramebuffer(gd.SwapchainFramebuffer);
+                cl.ClearColorTarget(0, RgbaFloat.BLACK);
+                cl.SetFullViewports();
+                cl.SetPipeline(sd.Pipeline);
+                cl.SetGraphicsResourceSet(0, sd.ModelViewResourceSet);
+                cl.SetVertexBuffer(0, sd.VertexBuffer);
+                cl.SetIndexBuffer(sd.IndexBuffer, IndexFormat.UInt16);
+                float timeFactor = Environment.TickCount / 1000f;
+
+                var modelViewMat = Matrix4x4.CreateLookAt(
+                        new Vector3(2 * (float)Math.Sin(timeFactor), (float)Math.Sin(timeFactor), 2 * (float)Math.Cos(timeFactor)),
+                        Vector3.Zero,
+                        Vector3.UnitY)
+                    * Matrix4x4.CreatePerspectiveFieldOfView(1.05f, (float)1280 / 1024, .5f, 10f);
+
+                cl.UpdateBuffer(sd.ModelViewBuffer, 0, modelViewMat);
+                cl.DrawIndexed((uint)Cube.Indices.Length);
+            }
+            cl.End();
+            gd.SubmitCommands(cl);
+            cl.Dispose();
+        }
+
+        private static void DestroyAllObjects()
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public static void CreateAllObjects(GraphicsDevice gd, ref SceneData sd)
+        {
+            var cl = gd.ResourceFactory.CreateCommandList();
+            cl.Name = "Main Command List";
+            cl.Begin();
+            CreateAllDeviceObjects(gd, cl, ref sd);
+            cl.End();
+            gd.SubmitCommands(cl);
+            cl.Dispose();
+        }
+
+        public static void CreateAllDeviceObjects(GraphicsDevice gd, CommandList cl, ref SceneData sd)
+        {
+            ResourceFactory factory = gd.ResourceFactory;
+
+            var vtxBufferDesc =
+                new BufferDescription((uint) (Cube.Vertices.Length * VertexPositionColor.SizeInBytes), BufferUsage.VertexBuffer);
+            sd.VertexBuffer = factory.CreateBuffer(vtxBufferDesc);
+            cl.UpdateBuffer(sd.VertexBuffer, 0, Cube.Vertices);
+
+            var idxBufferDesc =
+                new BufferDescription((uint) (Cube.Indices.Length * sizeof(uint)), BufferUsage.IndexBuffer);
+            sd.IndexBuffer = factory.CreateBuffer(idxBufferDesc);
+            cl.UpdateBuffer(sd.IndexBuffer, 0, Cube.Indices);
+
+            // Load shaders
+            string vsPath = Path.Combine(AppContext.BaseDirectory, "Assets", "Shaders", $"TinyDemo.vert");
+            string fsPath = Path.Combine(AppContext.BaseDirectory, "Assets", "Shaders", $"TinyDemo.frag");
+
+            var vsBytes = Encoding.UTF8.GetBytes(File.ReadAllText(vsPath));
+            var fsBytes = Encoding.UTF8.GetBytes(File.ReadAllText(fsPath));
+
+            var vertexShaderDescription = new ShaderDescription(
+                ShaderStages.Vertex,
+                vsBytes,
+                "main", true);
+
+            var fragmentShaderDescription = new ShaderDescription(
+                ShaderStages.Fragment,
+                fsBytes,
+                "main", true);
+
+            (Shader vs, Shader fs) =
+                CrossCompileShaders(gd, vertexShaderDescription, fragmentShaderDescription);
+
+            var bindableResourceList = new List<IBindableResource>();
+
+            var pd = new GraphicsPipelineDescription();
+            pd.PrimitiveTopology = PrimitiveTopology.TriangleList;
+
+            sd.ModelViewBuffer =
+                factory.CreateBuffer(new BufferDescription(64u,
+                    BufferUsage.UniformBuffer | BufferUsage.Dynamic));
+
+            bindableResourceList.Add(
+                new DeviceBufferRange(sd.ModelViewBuffer, 0, 64u));
+
+            var modelViewResourceLayout = factory.CreateResourceLayout(new ResourceLayoutDescription(
+                new ResourceLayoutElementDescription("ModelView", ResourceKind.UniformBuffer, ShaderStages.Vertex)
+            ));
+
+            sd.ModelViewResourceSet = factory.CreateResourceSet(
+                new ResourceSetDescription(modelViewResourceLayout, sd.ModelViewBuffer));
+
+            VertexLayoutDescription[] vtxLayoutDescriptionArray =
+            {
+                new VertexLayoutDescription(
+                    new VertexElementDescription("Position", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float3),
+                    new VertexElementDescription("TexCoords", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float4))
+            };
+
+            ResourceLayout modelViewMatrixLayout = factory.CreateResourceLayout(
+                new ResourceLayoutDescription(
+                    new ResourceLayoutElementDescription("ModelView",
+                        ResourceKind.UniformBuffer,
+                        ShaderStages.Vertex,
+                        ResourceLayoutElementOptions.DynamicBinding)));
+
+            GraphicsPipelineDescription pipelineDescription = new GraphicsPipelineDescription(
+                BlendStateDescription.SINGLE_ALPHA_BLEND,
+                gd.IsDepthRangeZeroToOne ? DepthStencilStateDescription.DEPTH_ONLY_GREATER_EQUAL : DepthStencilStateDescription.DEPTH_ONLY_LESS_EQUAL,
+                RasterizerStateDescription.DEFAULT,
+                PrimitiveTopology.TriangleList,
+                new ShaderSetDescription(
+                    vtxLayoutDescriptionArray,
+                    new[] { vs, fs },
+                    new[] { new SpecializationConstant(100, gd.IsClipSpaceYInverted) }),
+                new ResourceLayout[] { modelViewMatrixLayout },
+                gd.SwapchainFramebuffer.OutputDescription);
+
+            sd.Pipeline = factory.CreateGraphicsPipeline(pipelineDescription);
+        }
+
+        private static (Shader, Shader) CrossCompileShaders(GraphicsDevice gd, ShaderDescription vsDesc, ShaderDescription fsDesc)
+        {
+            var result = SpirvCompilation.CompileVertexFragment(
+                vsDesc.ShaderBytes, fsDesc.ShaderBytes,
+                CrossCompileTarget.MSL,
+                GetOptions(gd));
+
+            var vertexShaderDescription = new ShaderDescription(
+                ShaderStages.Vertex,
+                Encoding.ASCII.GetBytes(result.VertexShader),
+                "main0", vsDesc.Debug);
+
+            var fragmentShaderDescription = new ShaderDescription(
+                ShaderStages.Fragment,
+                Encoding.ASCII.GetBytes(result.FragmentShader),
+                "main0", fsDesc.Debug);
+
+            var vs = gd.ResourceFactory.CreateShader(vertexShaderDescription);
+            var fs = gd.ResourceFactory.CreateShader(fragmentShaderDescription);
+
+            return (vs, fs);
+        }
+
+        public static CrossCompileOptions GetOptions(GraphicsDevice gd)
+        {
+            SpecializationConstant[] specializations = GetSpecializations(gd);
+
+            bool fixClipZ = (gd.BackendType == GraphicsBackend.OpenGL || gd.BackendType == GraphicsBackend.OpenGLES)
+                            && !gd.IsDepthRangeZeroToOne;
+            bool invertY = false;
+
+            return new CrossCompileOptions(fixClipZ, invertY, specializations);
+        }
+
+        private static SpecializationConstant[] GetSpecializations(GraphicsDevice gd)
+        {
+            bool glOrGles = gd.BackendType == GraphicsBackend.OpenGL || gd.BackendType == GraphicsBackend.OpenGLES;
+
+            List<SpecializationConstant> specializations = new List<SpecializationConstant>();
+            specializations.Add(new SpecializationConstant(100, gd.IsClipSpaceYInverted));
+            specializations.Add(new SpecializationConstant(101, glOrGles)); // TextureCoordinatesInvertedY
+            specializations.Add(new SpecializationConstant(102, gd.IsDepthRangeZeroToOne));
+
+            PixelFormat swapchainFormat = gd.MainSwapchain.Framebuffer.OutputDescription.ColorAttachments[0].Format;
+            bool swapchainIsSrgb = swapchainFormat == PixelFormat.B8G8R8A8UNormSRgb
+                                   || swapchainFormat == PixelFormat.R8G8B8A8UNormSRgb;
+            specializations.Add(new SpecializationConstant(103, swapchainIsSrgb));
+
+            return specializations.ToArray();
         }
     }
 }

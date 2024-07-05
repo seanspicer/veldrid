@@ -1,6 +1,5 @@
 ﻿using System;
 using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Veldrid.Sdl2
@@ -338,7 +337,7 @@ namespace Veldrid.Sdl2
         /// </summary>
         DropText = DropTest,
         /// <summary>
-        /// A new set of drops is beginning (NULL filename) 
+        /// A new set of drops is beginning (NULL filename)
         /// </summary>
         DropBegin,
         /// <summary>

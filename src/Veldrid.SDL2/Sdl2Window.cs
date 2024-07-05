@@ -8,8 +8,6 @@ using System.Diagnostics;
 using System.Text;
 
 using static Veldrid.Sdl2.Sdl2Native;
-using System.ComponentModel;
-using Veldrid;
 
 namespace Veldrid.Sdl2
 {
