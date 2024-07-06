@@ -21,18 +21,21 @@ namespace SampleExe
 
     public class Program
     {
+        private static int windowWidth { get; } = 960;
+        private static int windowHeight { get; } = 540;
+
         public static void Main(string[] args)
         {
             Sdl2Window window;
             GraphicsDevice gd;
-            bool colorSrgb = true;
+            const bool color_srgb = true;
 
-            WindowCreateInfo windowCI = new WindowCreateInfo
+            WindowCreateInfo windowCi = new WindowCreateInfo
             {
                 X = 100,
                 Y = 100,
-                WindowWidth = 960,
-                WindowHeight = 540,
+                WindowWidth = windowWidth,
+                WindowHeight = windowHeight,
                 WindowInitialState = WindowState.Normal,
                 WindowTitle = "Veldrid TinyDemo",
             };
@@ -43,39 +46,34 @@ namespace SampleExe
                 ResourceBindingModel.Improved,
                 true,
                 true,
-                colorSrgb);
+                color_srgb);
 #if DEBUG
             gdOptions.Debug = true;
 #endif
             VeldridStartup.CreateWindowAndGraphicsDevice(
-                windowCI,
+                windowCi,
                 gdOptions,
-                //VeldridStartup.GetPlatformDefaultBackend(),
-                //GraphicsBackend.Metal,
-                //GraphicsBackend.Vulkan,
-                //GraphicsBackend.OpenGL,
-                //GraphicsBackend.OpenGLES,
                 out window,
                 out gd);
 
             var sd = new SceneData();
 
-            CreateAllObjects(gd, ref sd);
+            createAllObjects(gd, ref sd);
 
             while (window.Exists)
             {
                 window.PumpEvents();
 
-                Draw(gd, ref sd);
+                draw(gd, ref sd);
 
                 gd.SwapBuffers();
             }
 
-            DestroyAllObjects();
+            destroyAllObjects(gd, sd);
             gd.Dispose();
         }
 
-        private static void Draw(GraphicsDevice gd, ref SceneData sd)
+        private static void draw(GraphicsDevice gd, ref SceneData sd)
         {
             var cl = gd.ResourceFactory.CreateCommandList();
             cl.Name = "Draw List";
@@ -90,56 +88,61 @@ namespace SampleExe
                 cl.SetIndexBuffer(sd.IndexBuffer, IndexFormat.UInt16);
                 float timeFactor = Environment.TickCount / 1000f;
 
-                var modelViewMat = Matrix4x4.CreateLookAt(
-                        new Vector3(2 * (float)Math.Sin(timeFactor), (float)Math.Sin(timeFactor), 2 * (float)Math.Cos(timeFactor)),
-                        Vector3.Zero,
-                        Vector3.UnitY)
-                    * Matrix4x4.CreatePerspectiveFieldOfView(1.05f, (float)1280 / 1024, .5f, 10f);
+                var modelViewMat =
+                    Matrix4x4.CreateLookAt(new Vector3(2 * (float)Math.Sin(timeFactor),
+                            (float)Math.Sin(timeFactor),
+                            2 * (float)Math.Cos(timeFactor)),
+                        Vector3.Zero, Vector3.UnitY)
+                    * Matrix4x4.CreatePerspectiveFieldOfView(1.05f,
+                        (float)windowWidth / windowHeight,
+                        .5f,
+                        10f);
 
                 cl.UpdateBuffer(sd.ModelViewBuffer, 0, modelViewMat);
-                cl.DrawIndexed((uint)Cube.Indices.Length);
+                cl.DrawIndexed((uint)Cube.INDICES.Length);
             }
             cl.End();
             gd.SubmitCommands(cl);
             cl.Dispose();
         }
 
-        private static void DestroyAllObjects()
+        private static void destroyAllObjects(GraphicsDevice gd, SceneData sd)
         {
-            throw new System.NotImplementedException();
+            gd.WaitForIdle();
+            destroyAllDeviceObjects(sd);
+            gd.WaitForIdle();
         }
 
-        public static void CreateAllObjects(GraphicsDevice gd, ref SceneData sd)
+        private static void createAllObjects(GraphicsDevice gd, ref SceneData sd)
         {
             var cl = gd.ResourceFactory.CreateCommandList();
             cl.Name = "Main Command List";
             cl.Begin();
-            CreateAllDeviceObjects(gd, cl, ref sd);
+            createAllDeviceObjects(gd, cl, ref sd);
             cl.End();
             gd.SubmitCommands(cl);
             cl.Dispose();
         }
 
-        public static void CreateAllDeviceObjects(GraphicsDevice gd, CommandList cl, ref SceneData sd)
+        private static void createAllDeviceObjects(GraphicsDevice gd, CommandList cl, ref SceneData sd)
         {
             ResourceFactory factory = gd.ResourceFactory;
 
-            var vtxBufferDesc =
-                new BufferDescription((uint) (Cube.Vertices.Length * VertexPositionColor.SizeInBytes), BufferUsage.VertexBuffer);
+            var vtxBufferDesc = new BufferDescription((uint)(Cube.VERTICES.Length * VertexPositionColor.SIZE_IN_BYTES), BufferUsage.VertexBuffer);
             sd.VertexBuffer = factory.CreateBuffer(vtxBufferDesc);
-            cl.UpdateBuffer(sd.VertexBuffer, 0, Cube.Vertices);
+            cl.UpdateBuffer(sd.VertexBuffer, 0, Cube.VERTICES);
 
             var idxBufferDesc =
-                new BufferDescription((uint) (Cube.Indices.Length * sizeof(uint)), BufferUsage.IndexBuffer);
+                new BufferDescription((uint)(Cube.INDICES.Length * sizeof(uint)), BufferUsage.IndexBuffer);
             sd.IndexBuffer = factory.CreateBuffer(idxBufferDesc);
-            cl.UpdateBuffer(sd.IndexBuffer, 0, Cube.Indices);
+            cl.UpdateBuffer(sd.IndexBuffer, 0, Cube.INDICES);
 
             // Load shaders
-            string vsPath = Path.Combine(AppContext.BaseDirectory, "Assets", "Shaders", $"TinyDemo.vert");
-            string fsPath = Path.Combine(AppContext.BaseDirectory, "Assets", "Shaders", $"TinyDemo.frag");
+            string vsPath = Path.Combine(AppContext.BaseDirectory, "Assets", "Shaders", "TinyDemo.vert");
+            string fsPath = Path.Combine(AppContext.BaseDirectory, "Assets", "Shaders", "TinyDemo.frag");
 
-            var vsBytes = Encoding.UTF8.GetBytes(File.ReadAllText(vsPath));
-            var fsBytes = Encoding.UTF8.GetBytes(File.ReadAllText(fsPath));
+            byte[] vsBytes = Encoding.UTF8.GetBytes(File.ReadAllText(vsPath));
+            byte[] fsBytes = Encoding.UTF8.GetBytes(File.ReadAllText(fsPath));
 
             var vertexShaderDescription = new ShaderDescription(
                 ShaderStages.Vertex,
@@ -152,12 +155,9 @@ namespace SampleExe
                 "main", true);
 
             (Shader vs, Shader fs) =
-                CrossCompileShaders(gd, vertexShaderDescription, fragmentShaderDescription);
+                crossCompileShaders(gd, vertexShaderDescription, fragmentShaderDescription);
 
             var bindableResourceList = new List<IBindableResource>();
-
-            var pd = new GraphicsPipelineDescription();
-            pd.PrimitiveTopology = PrimitiveTopology.TriangleList;
 
             sd.ModelViewBuffer =
                 factory.CreateBuffer(new BufferDescription(64u,
@@ -202,7 +202,16 @@ namespace SampleExe
             sd.Pipeline = factory.CreateGraphicsPipeline(pipelineDescription);
         }
 
-        private static (Shader, Shader) CrossCompileShaders(GraphicsDevice gd, ShaderDescription vsDesc, ShaderDescription fsDesc)
+        private static void destroyAllDeviceObjects(SceneData sd)
+        {
+            sd.VertexBuffer.Dispose();
+            sd.IndexBuffer.Dispose();
+            sd.ModelViewBuffer.Dispose();
+            sd.ModelViewResourceSet.Dispose();
+            sd.Pipeline.Dispose();
+        }
+
+        private static (Shader, Shader) crossCompileShaders(GraphicsDevice gd, ShaderDescription vsDesc, ShaderDescription fsDesc)
         {
             var result = SpirvCompilation.CompileVertexFragment(
                 vsDesc.ShaderBytes, fsDesc.ShaderBytes,
@@ -227,22 +236,22 @@ namespace SampleExe
 
         public static CrossCompileOptions GetOptions(GraphicsDevice gd)
         {
-            SpecializationConstant[] specializations = GetSpecializations(gd);
+            SpecializationConstant[] specializations = getSpecializations(gd);
 
             bool fixClipZ = (gd.BackendType == GraphicsBackend.OpenGL || gd.BackendType == GraphicsBackend.OpenGLES)
                             && !gd.IsDepthRangeZeroToOne;
-            bool invertY = false;
+            const bool invert_y = false;
 
-            return new CrossCompileOptions(fixClipZ, invertY, specializations);
+            return new CrossCompileOptions(fixClipZ, invert_y, specializations);
         }
 
-        private static SpecializationConstant[] GetSpecializations(GraphicsDevice gd)
+        private static SpecializationConstant[] getSpecializations(GraphicsDevice gd)
         {
             bool glOrGles = gd.BackendType == GraphicsBackend.OpenGL || gd.BackendType == GraphicsBackend.OpenGLES;
 
             List<SpecializationConstant> specializations = new List<SpecializationConstant>();
             specializations.Add(new SpecializationConstant(100, gd.IsClipSpaceYInverted));
-            specializations.Add(new SpecializationConstant(101, glOrGles)); // TextureCoordinatesInvertedY
+            specializations.Add(new SpecializationConstant(101, glOrGles));
             specializations.Add(new SpecializationConstant(102, gd.IsDepthRangeZeroToOne));
 
             PixelFormat swapchainFormat = gd.MainSwapchain.Framebuffer.OutputDescription.ColorAttachments[0].Format;
@@ -255,95 +264,43 @@ namespace SampleExe
     }
 }
 
-//     VertexBuffer vb = gd.ResourceFactory.CreateVertexBuffer(Cube.Vertices, new VertexDescriptor(VertexPositionColor.SizeInBytes, 2), false);
-        //     IndexBuffer ib = gd.ResourceFactory.CreateIndexBuffer(Cube.Indices, false);
-        //
-        //     string folder = rc.BackendType == GraphicsBackend.Direct3D11 ? "HLSL" : "GLSL";
-        //     string extension = rc.BackendType == GraphicsBackend.Direct3D11 ? "hlsl" : "glsl";
-        //
-        //     VertexInputLayout inputLayout = rc.ResourceFactory.CreateInputLayout(new VertexInputDescription[]
-        //     {
-        //         new VertexInputDescription(
-        //             new VertexInputElement("Position", VertexSemanticType.Position, VertexElementFormat.Float3),
-        //             new VertexInputElement("Color", VertexSemanticType.Color, VertexElementFormat.Float4))
-        //     });
-        //
-        //     string vsPath = Path.Combine(AppContext.BaseDirectory, folder, $"vertex.{extension}");
-        //     string fsPath = Path.Combine(AppContext.BaseDirectory, folder, $"fragment.{extension}");
-        //
-        //     Shader vs = gd.ResourceFactory.CreateShader(ShaderStages.Vertex, File.ReadAllText(vsPath));
-        //     Shader fs = gd.ResourceFactory.CreateShader(ShaderStages.Fragment, File.ReadAllText(fsPath));
-        //
-        //     ShaderSet shaderSet = rc.ResourceFactory.CreateShaderSet(inputLayout, vs, fs);
-        //     ShaderResourceBindingSlots bindingSlots = rc.ResourceFactory.CreateShaderResourceBindingSlots(
-        //         shaderSet,
-        //         new ShaderResourceDescription("ViewProjectionMatrix", ShaderConstantType.Matrix4x4));
-        //     ConstantBuffer viewProjectionBuffer = rc.ResourceFactory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
-        //
-        //     while (window.Exists)
-        //     {
-        //         InputSnapshot snapshot = window.PumpEvents();
-        //         gd.ClearBuffer();
-        //
-        //         gd.SetViewport(0, 0, window.Width, window.Height);
-        //         float timeFactor = Environment.TickCount / 1000f;
-        //         viewProjectionBuffer.SetData(
-        //             Matrix4x4.CreateLookAt(
-        //                 new Vector3(2 * (float)Math.Sin(timeFactor), (float)Math.Sin(timeFactor), 2 * (float)Math.Cos(timeFactor)),
-        //                 Vector3.Zero,
-        //                 Vector3.UnitY)
-        //                 * Matrix4x4.CreatePerspectiveFieldOfView(1.05f, (float)window.Width / window.Height, .5f, 10f));
-        //         rc.SetVertexBuffer(0, vb);
-        //         rc.IndexBuffer = ib;
-        //         rc.ShaderSet = shaderSet;
-        //         rc.ShaderResourceBindingSlots = bindingSlots;
-        //         rc.SetConstantBuffer(0, viewProjectionBuffer);
-        //         rc.DrawIndexedPrimitives(Cube.Indices.Length);
-        //
-        //         rc.SwapBuffers();
-        //     }
-        // }
-        //
-        public struct VertexPositionColor
-        {
-            public const uint SizeInBytes = 32;
+public struct VertexPositionColor
+{
+    public const uint SIZE_IN_BYTES = 32;
 
-            public Vector3 Position;
-            public RgbaFloat Color;
+    public Vector3 Position;
+    public RgbaFloat Color;
 
-            public VertexPositionColor(Vector3 position, RgbaFloat color)
-            {
-                Position = position;
-                Color = color;
-            }
-
-        }
-
-        public static class Cube
-        {
-            public static readonly VertexPositionColor[] Vertices =
-            {
-                // Front & Back
-                new VertexPositionColor(new Vector3(-0.5f, 0.5f, 0.5f), RgbaFloat.RED), new VertexPositionColor(new Vector3(0.5f, 0.5f, 0.5f), RgbaFloat.RED),
-                new VertexPositionColor(new Vector3(0.5f, -0.5f, 0.5f), RgbaFloat.RED), new VertexPositionColor(new Vector3(-0.5f, -0.5f, 0.5f), RgbaFloat.RED),
-                new VertexPositionColor(new Vector3(-0.5f, 0.5f, -0.5f), RgbaFloat.ORANGE), new VertexPositionColor(new Vector3(0.5f, 0.5f, -0.5f), RgbaFloat.ORANGE),
-                new VertexPositionColor(new Vector3(0.5f, -0.5f, -0.5f), RgbaFloat.ORANGE), new VertexPositionColor(new Vector3(-0.5f, -0.5f, -0.5f), RgbaFloat.ORANGE),
-
-                // Top & Bottom
-                new VertexPositionColor(new Vector3(-0.5f, 0.5f, -0.5f), RgbaFloat.YELLOW), new VertexPositionColor(new Vector3(0.5f, 0.5f, -0.5f), RgbaFloat.YELLOW),
-                new VertexPositionColor(new Vector3(0.5f, 0.5f, 0.5f), RgbaFloat.YELLOW), new VertexPositionColor(new Vector3(-0.5f, 0.5f, 0.5f), RgbaFloat.YELLOW),
-                new VertexPositionColor(new Vector3(-0.5f, -0.5f, -0.5f), RgbaFloat.GREEN), new VertexPositionColor(new Vector3(0.5f, -0.5f, -0.5f), RgbaFloat.GREEN),
-                new VertexPositionColor(new Vector3(0.5f, -0.5f, 0.5f), RgbaFloat.GREEN), new VertexPositionColor(new Vector3(-0.5f, -0.5f, 0.5f), RgbaFloat.GREEN),
-
-                // Left & Right
-                new VertexPositionColor(new Vector3(-0.5f, 0.5f, -0.5f), RgbaFloat.BLUE), new VertexPositionColor(new Vector3(-0.5f, 0.5f, 0.5f), RgbaFloat.BLUE),
-                new VertexPositionColor(new Vector3(-0.5f, -0.5f, 0.5f), RgbaFloat.BLUE), new VertexPositionColor(new Vector3(-0.5f, -0.5f, -0.5f), RgbaFloat.BLUE),
-                new VertexPositionColor(new Vector3(0.5f, 0.5f, 0.5f), RgbaFloat.PINK), new VertexPositionColor(new Vector3(0.5f, 0.5f, -0.5f), RgbaFloat.PINK),
-                new VertexPositionColor(new Vector3(0.5f, -0.5f, -0.5f), RgbaFloat.PINK), new VertexPositionColor(new Vector3(0.5f, -0.5f, 0.5f), RgbaFloat.PINK)
-            };
-
-        public static readonly ushort[] Indices =
-            { 0, 1, 2, 0, 2, 3, 4, 6, 5, 4, 7, 6, 8, 9, 10, 8, 10, 11, 12, 14, 13, 12, 15, 14, 16, 17, 18, 16, 18, 19, 20, 21, 22, 20, 22, 23 };
+    public VertexPositionColor(Vector3 position, RgbaFloat color)
+    {
+        Position = position;
+        Color = color;
     }
-    // }
-//}
+}
+
+public static class Cube
+{
+    public static readonly VertexPositionColor[] VERTICES =
+    {
+        // Front & Back
+        new VertexPositionColor(new Vector3(-0.5f, 0.5f, 0.5f), RgbaFloat.RED), new VertexPositionColor(new Vector3(0.5f, 0.5f, 0.5f), RgbaFloat.RED),
+        new VertexPositionColor(new Vector3(0.5f, -0.5f, 0.5f), RgbaFloat.RED), new VertexPositionColor(new Vector3(-0.5f, -0.5f, 0.5f), RgbaFloat.RED),
+        new VertexPositionColor(new Vector3(-0.5f, 0.5f, -0.5f), RgbaFloat.ORANGE), new VertexPositionColor(new Vector3(0.5f, 0.5f, -0.5f), RgbaFloat.ORANGE),
+        new VertexPositionColor(new Vector3(0.5f, -0.5f, -0.5f), RgbaFloat.ORANGE), new VertexPositionColor(new Vector3(-0.5f, -0.5f, -0.5f), RgbaFloat.ORANGE),
+
+        // Top & Bottom
+        new VertexPositionColor(new Vector3(-0.5f, 0.5f, -0.5f), RgbaFloat.YELLOW), new VertexPositionColor(new Vector3(0.5f, 0.5f, -0.5f), RgbaFloat.YELLOW),
+        new VertexPositionColor(new Vector3(0.5f, 0.5f, 0.5f), RgbaFloat.YELLOW), new VertexPositionColor(new Vector3(-0.5f, 0.5f, 0.5f), RgbaFloat.YELLOW),
+        new VertexPositionColor(new Vector3(-0.5f, -0.5f, -0.5f), RgbaFloat.GREEN), new VertexPositionColor(new Vector3(0.5f, -0.5f, -0.5f), RgbaFloat.GREEN),
+        new VertexPositionColor(new Vector3(0.5f, -0.5f, 0.5f), RgbaFloat.GREEN), new VertexPositionColor(new Vector3(-0.5f, -0.5f, 0.5f), RgbaFloat.GREEN),
+
+        // Left & Right
+        new VertexPositionColor(new Vector3(-0.5f, 0.5f, -0.5f), RgbaFloat.BLUE), new VertexPositionColor(new Vector3(-0.5f, 0.5f, 0.5f), RgbaFloat.BLUE),
+        new VertexPositionColor(new Vector3(-0.5f, -0.5f, 0.5f), RgbaFloat.BLUE), new VertexPositionColor(new Vector3(-0.5f, -0.5f, -0.5f), RgbaFloat.BLUE),
+        new VertexPositionColor(new Vector3(0.5f, 0.5f, 0.5f), RgbaFloat.PINK), new VertexPositionColor(new Vector3(0.5f, 0.5f, -0.5f), RgbaFloat.PINK),
+        new VertexPositionColor(new Vector3(0.5f, -0.5f, -0.5f), RgbaFloat.PINK), new VertexPositionColor(new Vector3(0.5f, -0.5f, 0.5f), RgbaFloat.PINK)
+    };
+
+    public static readonly ushort[] INDICES =
+        [0, 1, 2, 0, 2, 3, 4, 6, 5, 4, 7, 6, 8, 9, 10, 8, 10, 11, 12, 14, 13, 12, 15, 14, 16, 17, 18, 16, 18, 19, 20, 21, 22, 20, 22, 23];
+}
