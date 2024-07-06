@@ -3,22 +3,75 @@ using System.Collections.Generic;
 using System.IO;
 using System.Numerics;
 using System.Text;
-using Veldrid;
 using Veldrid.Sdl2;
 using Veldrid.SPIRV;
 using Veldrid.StartupUtilities;
 
-namespace SampleExe
+namespace Veldrid.TinyDemo
 {
+    /// <summary>
+    /// This struct represents a vertex with a position and a color.
+    /// </summary>
+    public struct VertexPositionColor
+    {
+        public const uint SIZE_IN_BYTES = 32;
+
+        public Vector3 Position;
+        public RgbaFloat Color;
+
+        public VertexPositionColor(Vector3 position, RgbaFloat color)
+        {
+            Position = position;
+            Color = color;
+        }
+    }
+
+    /// <summary>
+    /// This class represents a cube with 8 vertices and 36 indices.
+    /// </summary>
+    public static class Cube
+    {
+        public static readonly VertexPositionColor[] VERTICES =
+        {
+            // Front & Back
+            new VertexPositionColor(new Vector3(-0.5f, 0.5f, 0.5f), RgbaFloat.RED), new VertexPositionColor(new Vector3(0.5f, 0.5f, 0.5f), RgbaFloat.RED),
+            new VertexPositionColor(new Vector3(0.5f, -0.5f, 0.5f), RgbaFloat.RED), new VertexPositionColor(new Vector3(-0.5f, -0.5f, 0.5f), RgbaFloat.RED),
+            new VertexPositionColor(new Vector3(-0.5f, 0.5f, -0.5f), RgbaFloat.ORANGE), new VertexPositionColor(new Vector3(0.5f, 0.5f, -0.5f), RgbaFloat.ORANGE),
+            new VertexPositionColor(new Vector3(0.5f, -0.5f, -0.5f), RgbaFloat.ORANGE), new VertexPositionColor(new Vector3(-0.5f, -0.5f, -0.5f), RgbaFloat.ORANGE),
+
+            // Top & Bottom
+            new VertexPositionColor(new Vector3(-0.5f, 0.5f, -0.5f), RgbaFloat.YELLOW), new VertexPositionColor(new Vector3(0.5f, 0.5f, -0.5f), RgbaFloat.YELLOW),
+            new VertexPositionColor(new Vector3(0.5f, 0.5f, 0.5f), RgbaFloat.YELLOW), new VertexPositionColor(new Vector3(-0.5f, 0.5f, 0.5f), RgbaFloat.YELLOW),
+            new VertexPositionColor(new Vector3(-0.5f, -0.5f, -0.5f), RgbaFloat.GREEN), new VertexPositionColor(new Vector3(0.5f, -0.5f, -0.5f), RgbaFloat.GREEN),
+            new VertexPositionColor(new Vector3(0.5f, -0.5f, 0.5f), RgbaFloat.GREEN), new VertexPositionColor(new Vector3(-0.5f, -0.5f, 0.5f), RgbaFloat.GREEN),
+
+            // Left & Right
+            new VertexPositionColor(new Vector3(-0.5f, 0.5f, -0.5f), RgbaFloat.BLUE), new VertexPositionColor(new Vector3(-0.5f, 0.5f, 0.5f), RgbaFloat.BLUE),
+            new VertexPositionColor(new Vector3(-0.5f, -0.5f, 0.5f), RgbaFloat.BLUE), new VertexPositionColor(new Vector3(-0.5f, -0.5f, -0.5f), RgbaFloat.BLUE),
+            new VertexPositionColor(new Vector3(0.5f, 0.5f, 0.5f), RgbaFloat.PINK), new VertexPositionColor(new Vector3(0.5f, 0.5f, -0.5f), RgbaFloat.PINK),
+            new VertexPositionColor(new Vector3(0.5f, -0.5f, -0.5f), RgbaFloat.PINK), new VertexPositionColor(new Vector3(0.5f, -0.5f, 0.5f), RgbaFloat.PINK)
+        };
+
+        public static readonly ushort[] INDICES =
+            [0, 1, 2, 0, 2, 3, 4, 6, 5, 4, 7, 6, 8, 9, 10, 8, 10, 11, 12, 14, 13, 12, 15, 14, 16, 17, 18, 16, 18, 19, 20, 21, 22, 20, 22, 23];
+    }
+
+    /// <summary>
+    /// This struct represents the minimal data needed to render a scene.
+    /// </summary>
     public struct SceneData
     {
         public DeviceBuffer VertexBuffer;
         public DeviceBuffer IndexBuffer;
-        public DeviceBuffer ModelViewBuffer;
-        public ResourceSet ModelViewResourceSet;
+        public DeviceBuffer ModelViewProjectionBuffer;
+        public ResourceLayout ModelViewProjectionResourceLayout;
+        public ResourceSet ModelViewProjectionResourceSet;
         public Pipeline Pipeline;
     }
 
+    /// <summary>
+    /// Main Program class.
+    /// </summary>
     public class Program
     {
         private static int windowWidth { get; } = 960;
@@ -26,8 +79,41 @@ namespace SampleExe
 
         public static void Main(string[] args)
         {
-            Sdl2Window window;
-            GraphicsDevice gd;
+            //
+            // Step 1 - Create a window to draw into
+            //
+            createWindow(out var window, out var gd);
+
+            //
+            // Step 2 - Create the scene data necessary to render the scene, and allocate the device objects.
+            //
+            var sd = new SceneData();
+            createAllObjects(gd, ref sd);
+
+            //
+            // Step 3 - Main loop
+            //
+            while (window.Exists)
+            {
+                window.PumpEvents();
+                draw(gd, ref sd);
+                gd.SwapBuffers();
+            }
+
+            //
+            // Step 4 - Cleanup
+            //
+            destroyAllObjects(gd, sd);
+            gd.Dispose();
+        }
+
+        /// <summary>
+        /// Create a window and a graphics device.
+        /// </summary>
+        /// <param name="window"></param>
+        /// <param name="gd"></param>
+        private static void createWindow(out Sdl2Window window, out GraphicsDevice gd)
+        {
             const bool color_srgb = true;
 
             WindowCreateInfo windowCi = new WindowCreateInfo
@@ -55,24 +141,31 @@ namespace SampleExe
                 gdOptions,
                 out window,
                 out gd);
-
-            var sd = new SceneData();
-
-            createAllObjects(gd, ref sd);
-
-            while (window.Exists)
-            {
-                window.PumpEvents();
-
-                draw(gd, ref sd);
-
-                gd.SwapBuffers();
-            }
-
-            destroyAllObjects(gd, sd);
-            gd.Dispose();
         }
 
+        /// <summary>
+        /// Create all the device objects necessary to render the scene.  This is done by constructing
+        /// A command list and submitting it to the graphics device.
+        /// </summary>
+        /// <param name="gd"></param>
+        /// <param name="sd"></param>
+        private static void createAllObjects(GraphicsDevice gd, ref SceneData sd)
+        {
+            var cl = gd.ResourceFactory.CreateCommandList();
+            cl.Name = "Main Command List";
+            cl.Begin();
+            createAllDeviceObjects(gd, cl, ref sd);
+            cl.End();
+            gd.SubmitCommands(cl);
+            cl.Dispose();
+        }
+
+        /// <summary>
+        /// Draw the scene.  This is done by constructing a command list and submitting it to the
+        /// graphics device.
+        /// </summary>
+        /// <param name="gd"></param>
+        /// <param name="sd"></param>
         private static void draw(GraphicsDevice gd, ref SceneData sd)
         {
             var cl = gd.ResourceFactory.CreateCommandList();
@@ -83,7 +176,7 @@ namespace SampleExe
                 cl.ClearColorTarget(0, RgbaFloat.BLACK);
                 cl.SetFullViewports();
                 cl.SetPipeline(sd.Pipeline);
-                cl.SetGraphicsResourceSet(0, sd.ModelViewResourceSet);
+                cl.SetGraphicsResourceSet(0, sd.ModelViewProjectionResourceSet);
                 cl.SetVertexBuffer(0, sd.VertexBuffer);
                 cl.SetIndexBuffer(sd.IndexBuffer, IndexFormat.UInt16);
                 float timeFactor = Environment.TickCount / 1000f;
@@ -98,7 +191,7 @@ namespace SampleExe
                         .5f,
                         10f);
 
-                cl.UpdateBuffer(sd.ModelViewBuffer, 0, modelViewMat);
+                cl.UpdateBuffer(sd.ModelViewProjectionBuffer, 0, modelViewMat);
                 cl.DrawIndexed((uint)Cube.INDICES.Length);
             }
             cl.End();
@@ -106,6 +199,11 @@ namespace SampleExe
             cl.Dispose();
         }
 
+        /// <summary>
+        /// Destroy all the device objects necessary to render the scene.
+        /// </summary>
+        /// <param name="gd"></param>
+        /// <param name="sd"></param>
         private static void destroyAllObjects(GraphicsDevice gd, SceneData sd)
         {
             gd.WaitForIdle();
@@ -113,80 +211,76 @@ namespace SampleExe
             gd.WaitForIdle();
         }
 
-        private static void createAllObjects(GraphicsDevice gd, ref SceneData sd)
-        {
-            var cl = gd.ResourceFactory.CreateCommandList();
-            cl.Name = "Main Command List";
-            cl.Begin();
-            createAllDeviceObjects(gd, cl, ref sd);
-            cl.End();
-            gd.SubmitCommands(cl);
-            cl.Dispose();
-        }
-
+        /// <summary>
+        /// This is a helper function to create all the device objects necessary to render the scene.
+        /// </summary>
+        /// <param name="gd"></param>
+        /// <param name="cl"></param>
+        /// <param name="sd"></param>
         private static void createAllDeviceObjects(GraphicsDevice gd, CommandList cl, ref SceneData sd)
         {
+            // Get a reference to the graphics device's resource factory.
             ResourceFactory factory = gd.ResourceFactory;
 
+            // Create the vertex buffer and initialize
             var vtxBufferDesc = new BufferDescription((uint)(Cube.VERTICES.Length * VertexPositionColor.SIZE_IN_BYTES), BufferUsage.VertexBuffer);
             sd.VertexBuffer = factory.CreateBuffer(vtxBufferDesc);
             cl.UpdateBuffer(sd.VertexBuffer, 0, Cube.VERTICES);
 
-            var idxBufferDesc =
-                new BufferDescription((uint)(Cube.INDICES.Length * sizeof(uint)), BufferUsage.IndexBuffer);
+            // Create the index buffer and initialize
+            var idxBufferDesc = new BufferDescription((uint)(Cube.INDICES.Length * sizeof(uint)), BufferUsage.IndexBuffer);
             sd.IndexBuffer = factory.CreateBuffer(idxBufferDesc);
             cl.UpdateBuffer(sd.IndexBuffer, 0, Cube.INDICES);
 
-            // Load shaders
-            string vsPath = Path.Combine(AppContext.BaseDirectory, "Assets", "Shaders", "TinyDemo.vert");
-            string fsPath = Path.Combine(AppContext.BaseDirectory, "Assets", "Shaders", "TinyDemo.frag");
+            // Get the Shader file bytes.  These shaders are written in GLSL
+            byte[] vsBytes = Encoding.UTF8.GetBytes(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Assets", "Shaders", "TinyDemo.vert")));
+            byte[] fsBytes = Encoding.UTF8.GetBytes(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Assets", "Shaders", "TinyDemo.frag")));
 
-            byte[] vsBytes = Encoding.UTF8.GetBytes(File.ReadAllText(vsPath));
-            byte[] fsBytes = Encoding.UTF8.GetBytes(File.ReadAllText(fsPath));
-
+            // Construct a vertex shader description
             var vertexShaderDescription = new ShaderDescription(
                 ShaderStages.Vertex,
                 vsBytes,
                 "main", true);
 
+            // Construct a fragment shader description.
             var fragmentShaderDescription = new ShaderDescription(
                 ShaderStages.Fragment,
                 fsBytes,
                 "main", true);
 
+            // Build the shader objects. This method cross-compiles the shaders for the
+            // current graphics device backend.
             (Shader vs, Shader fs) =
                 crossCompileShaders(gd, vertexShaderDescription, fragmentShaderDescription);
 
-            var bindableResourceList = new List<IBindableResource>();
-
-            sd.ModelViewBuffer =
+            // Create the buffer that will be used for the ModelViewProjection matrix.  This
+            // Is a uniform buffer, with dynamic usage, as we will be altering its contents
+            // on every frame.
+            sd.ModelViewProjectionBuffer =
                 factory.CreateBuffer(new BufferDescription(64u,
                     BufferUsage.UniformBuffer | BufferUsage.Dynamic));
 
-            bindableResourceList.Add(
-                new DeviceBufferRange(sd.ModelViewBuffer, 0, 64u));
-
-            var modelViewResourceLayout = factory.CreateResourceLayout(new ResourceLayoutDescription(
-                new ResourceLayoutElementDescription("ModelView", ResourceKind.UniformBuffer, ShaderStages.Vertex)
+            // Create the resource layout for the ModelViewProjection buffer.  This is necessary
+            // to describe the layout of the buffer to the pipeline.
+            sd.ModelViewProjectionResourceLayout = factory.CreateResourceLayout(new ResourceLayoutDescription(
+                new ResourceLayoutElementDescription("ModelViewProjection", ResourceKind.UniformBuffer, ShaderStages.Vertex)
             ));
 
-            sd.ModelViewResourceSet = factory.CreateResourceSet(
-                new ResourceSetDescription(modelViewResourceLayout, sd.ModelViewBuffer));
+            // Use the resource layout to create the ResourceSet for the ModelViewProjection buffer.
+            // This will be bound on every draw call prior to updating the buffer.
+            sd.ModelViewProjectionResourceSet = factory.CreateResourceSet(
+                new ResourceSetDescription(sd.ModelViewProjectionResourceLayout, sd.ModelViewProjectionBuffer));
 
+            // Create the vertex layout description.  This describes the layout of the vertex buffer.
             VertexLayoutDescription[] vtxLayoutDescriptionArray =
             {
                 new VertexLayoutDescription(
-                    new VertexElementDescription("Position", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float3),
-                    new VertexElementDescription("TexCoords", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float4))
+                    new VertexElementDescription("Position", VertexElementSemantic.Position, VertexElementFormat.Float3),
+                    new VertexElementDescription("Color", VertexElementSemantic.Color, VertexElementFormat.Float4))
             };
 
-            ResourceLayout modelViewMatrixLayout = factory.CreateResourceLayout(
-                new ResourceLayoutDescription(
-                    new ResourceLayoutElementDescription("ModelView",
-                        ResourceKind.UniformBuffer,
-                        ShaderStages.Vertex,
-                        ResourceLayoutElementOptions.DynamicBinding)));
-
+            // Create the Graphics pipeline description. This describes the pipeline state that will be set
+            // on the graphics device for rendering
             GraphicsPipelineDescription pipelineDescription = new GraphicsPipelineDescription(
                 BlendStateDescription.SINGLE_ALPHA_BLEND,
                 gd.IsDepthRangeZeroToOne ? DepthStencilStateDescription.DEPTH_ONLY_GREATER_EQUAL : DepthStencilStateDescription.DEPTH_ONLY_LESS_EQUAL,
@@ -196,26 +290,46 @@ namespace SampleExe
                     vtxLayoutDescriptionArray,
                     new[] { vs, fs },
                     new[] { new SpecializationConstant(100, gd.IsClipSpaceYInverted) }),
-                new ResourceLayout[] { modelViewMatrixLayout },
+                new ResourceLayout[] { sd.ModelViewProjectionResourceLayout },
                 gd.SwapchainFramebuffer.OutputDescription);
 
+            // Create the graphics pipeline
             sd.Pipeline = factory.CreateGraphicsPipeline(pipelineDescription);
         }
 
+        /// <summary>
+        /// Destroy all the device objects necessary to render the scene.
+        /// </summary>
+        /// <param name="sd"></param>
         private static void destroyAllDeviceObjects(SceneData sd)
         {
             sd.VertexBuffer.Dispose();
             sd.IndexBuffer.Dispose();
-            sd.ModelViewBuffer.Dispose();
-            sd.ModelViewResourceSet.Dispose();
+            sd.ModelViewProjectionBuffer.Dispose();
+            sd.ModelViewProjectionResourceLayout.Dispose();
+            sd.ModelViewProjectionResourceSet.Dispose();
             sd.Pipeline.Dispose();
         }
 
+        /// <summary>
+        /// Cross compile the shaders for the current graphics device backend.
+        /// </summary>
+        /// <param name="gd"></param>
+        /// <param name="vsDesc"></param>
+        /// <param name="fsDesc"></param>
+        /// <returns></returns>
         private static (Shader, Shader) crossCompileShaders(GraphicsDevice gd, ShaderDescription vsDesc, ShaderDescription fsDesc)
         {
+            var target = gd.BackendType switch
+            {
+                GraphicsBackend.Metal => CrossCompileTarget.MSL,
+                GraphicsBackend.Direct3D11 => CrossCompileTarget.HLSL,
+                _ => CrossCompileTarget.GLSL
+            };
+
             var result = SpirvCompilation.CompileVertexFragment(
                 vsDesc.ShaderBytes, fsDesc.ShaderBytes,
-                CrossCompileTarget.MSL,
+                target,
                 GetOptions(gd));
 
             var vertexShaderDescription = new ShaderDescription(
@@ -234,6 +348,11 @@ namespace SampleExe
             return (vs, fs);
         }
 
+        /// <summary>
+        /// Get any required options for cross compiling the shaders.
+        /// </summary>
+        /// <param name="gd"></param>
+        /// <returns></returns>
         public static CrossCompileOptions GetOptions(GraphicsDevice gd)
         {
             SpecializationConstant[] specializations = getSpecializations(gd);
@@ -245,6 +364,11 @@ namespace SampleExe
             return new CrossCompileOptions(fixClipZ, invert_y, specializations);
         }
 
+        /// <summary>
+        /// Get any required specializations for cross compiling the shaders.
+        /// </summary>
+        /// <param name="gd"></param>
+        /// <returns></returns>
         private static SpecializationConstant[] getSpecializations(GraphicsDevice gd)
         {
             bool glOrGles = gd.BackendType == GraphicsBackend.OpenGL || gd.BackendType == GraphicsBackend.OpenGLES;
@@ -264,43 +388,4 @@ namespace SampleExe
     }
 }
 
-public struct VertexPositionColor
-{
-    public const uint SIZE_IN_BYTES = 32;
 
-    public Vector3 Position;
-    public RgbaFloat Color;
-
-    public VertexPositionColor(Vector3 position, RgbaFloat color)
-    {
-        Position = position;
-        Color = color;
-    }
-}
-
-public static class Cube
-{
-    public static readonly VertexPositionColor[] VERTICES =
-    {
-        // Front & Back
-        new VertexPositionColor(new Vector3(-0.5f, 0.5f, 0.5f), RgbaFloat.RED), new VertexPositionColor(new Vector3(0.5f, 0.5f, 0.5f), RgbaFloat.RED),
-        new VertexPositionColor(new Vector3(0.5f, -0.5f, 0.5f), RgbaFloat.RED), new VertexPositionColor(new Vector3(-0.5f, -0.5f, 0.5f), RgbaFloat.RED),
-        new VertexPositionColor(new Vector3(-0.5f, 0.5f, -0.5f), RgbaFloat.ORANGE), new VertexPositionColor(new Vector3(0.5f, 0.5f, -0.5f), RgbaFloat.ORANGE),
-        new VertexPositionColor(new Vector3(0.5f, -0.5f, -0.5f), RgbaFloat.ORANGE), new VertexPositionColor(new Vector3(-0.5f, -0.5f, -0.5f), RgbaFloat.ORANGE),
-
-        // Top & Bottom
-        new VertexPositionColor(new Vector3(-0.5f, 0.5f, -0.5f), RgbaFloat.YELLOW), new VertexPositionColor(new Vector3(0.5f, 0.5f, -0.5f), RgbaFloat.YELLOW),
-        new VertexPositionColor(new Vector3(0.5f, 0.5f, 0.5f), RgbaFloat.YELLOW), new VertexPositionColor(new Vector3(-0.5f, 0.5f, 0.5f), RgbaFloat.YELLOW),
-        new VertexPositionColor(new Vector3(-0.5f, -0.5f, -0.5f), RgbaFloat.GREEN), new VertexPositionColor(new Vector3(0.5f, -0.5f, -0.5f), RgbaFloat.GREEN),
-        new VertexPositionColor(new Vector3(0.5f, -0.5f, 0.5f), RgbaFloat.GREEN), new VertexPositionColor(new Vector3(-0.5f, -0.5f, 0.5f), RgbaFloat.GREEN),
-
-        // Left & Right
-        new VertexPositionColor(new Vector3(-0.5f, 0.5f, -0.5f), RgbaFloat.BLUE), new VertexPositionColor(new Vector3(-0.5f, 0.5f, 0.5f), RgbaFloat.BLUE),
-        new VertexPositionColor(new Vector3(-0.5f, -0.5f, 0.5f), RgbaFloat.BLUE), new VertexPositionColor(new Vector3(-0.5f, -0.5f, -0.5f), RgbaFloat.BLUE),
-        new VertexPositionColor(new Vector3(0.5f, 0.5f, 0.5f), RgbaFloat.PINK), new VertexPositionColor(new Vector3(0.5f, 0.5f, -0.5f), RgbaFloat.PINK),
-        new VertexPositionColor(new Vector3(0.5f, -0.5f, -0.5f), RgbaFloat.PINK), new VertexPositionColor(new Vector3(0.5f, -0.5f, 0.5f), RgbaFloat.PINK)
-    };
-
-    public static readonly ushort[] INDICES =
-        [0, 1, 2, 0, 2, 3, 4, 6, 5, 4, 7, 6, 8, 9, 10, 8, 10, 11, 12, 14, 13, 12, 15, 14, 16, 17, 18, 16, 18, 19, 20, 21, 22, 20, 22, 23];
-}
