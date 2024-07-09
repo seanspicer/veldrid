@@ -206,7 +206,7 @@ namespace Veldrid
         /// <param name="rs">The new <see cref="ResourceSet"/>.</param>
         /// <param name="dynamicOffsets">A span of offsets which will be applied to the dynamic
         /// buffers contained in the <see cref="ResourceSet"/>. The length must be equal to the number of
-        /// dynamic buffers (<see cref="ResourceLayoutElementOptions.DynamicBinding"/>) contained in the <see cref="ResourceSet"/>.
+        /// dynamic buffers (<see cref="ResourceLayoutElementOptions.DynamicBinding"/>) containReadOnlySpan<uint>the <see cref="ResourceSet"/>.
         /// These offsets are applied in the order that dynamic buffer
         /// elements appear in the <see cref="ResourceSet"/>. Each of these offsets must be a multiple of either
         /// <see cref="GraphicsDevice.UniformBufferMinOffsetAlignment"/> or

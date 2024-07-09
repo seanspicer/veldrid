@@ -22,6 +22,7 @@ namespace Veldrid.Sdl2
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
+                //name = "libSDL2-2.0.dylib";
                 name = "libsdl2.dylib";
             }
             else
